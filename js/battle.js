@@ -89,42 +89,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (fighter.role === "Captain") {
 
-            fighter.hp *= 1.2;
-            fighter.attack *= 1.2;
-            fighter.defense *= 1.2;
-            fighter.speed *= 1.2;
+            fighter.hp *= 2.5;
+            fighter.attack *= 2.5;
+            fighter.defense *= 2.5;
+            fighter.speed *= 2.5;
 
         }
 
 
         if (fighter.role === "Vice Captain") {
 
-            fighter.hp *= 1.1;
-            fighter.attack *= 1.1;
-            fighter.defense *= 1.1;
-            fighter.speed *= 1.1;
+            fighter.hp *= 2.0;
+            fighter.attack *= 2.0;
+            fighter.defense *= 2.0;
+            fighter.speed *= 2.0;
 
         }
 
 
         if (fighter.role === "Tank") {
 
-            fighter.hp *= 1.3;
-            fighter.defense *= 1.3;
+            fighter.hp *= 2.2;
+            fighter.defense *= 2.2;
 
         }
 
 
         if (fighter.role === "Healer") {
 
-            fighter.hp *= 1.2;
+            fighter.hp *= 1.5;
 
         }
 
 
         if (fighter.role === "Support") {
 
-            fighter.speed *= 1.15;
+            fighter.speed *= 1.2;
 
         }
 
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             container.innerHTML += `
 
-            <div class="fighter-card">
+            <div class="fighter-card ${fighter.hp <= 0 ? "dead" : ""}">
 
                 <h3>
                 ${fighter.emoji} ${fighter.name}
@@ -189,15 +189,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <div class="hp-bar">
 
-                    <div class="hp-fill"></div>
-
-                </div>
+                 <div 
+                    class="hp-fill"
+                    style="width:${(fighter.hp / fighter.maxHp) * 100}%">
+                 </div>
 
 
                 <p>
-                ❤️ ${Math.floor(fighter.hp)}
-                /
-                ${Math.floor(fighter.maxHp)}
+                ❤️ ${Math.floor(fighter.hp)} / ${Math.floor(fighter.maxHp)}
                 </p>
 
 
@@ -357,13 +356,23 @@ async function startBattle() {
 
             if (p2.hp <= 0) {
 
-                logBattle(
-                    `💀 ${p2.name} defeated!`
-                );
+    logBattle(
+        `💀 ${p2.emoji} ${p2.name} has been defeated!`
+    );
 
-                p2Index++;
+    p2Index++;
 
-            }
+    if (p2Index < player2Fighters.length) {
+
+        const next = player2Fighters[p2Index];
+
+        logBattle(
+            `⚡ ${next.emoji} ${next.name} enters the battle!`
+        );
+
+    }
+
+}
 
 
             else {
@@ -387,13 +396,23 @@ async function startBattle() {
 
             if (p1.hp <= 0) {
 
-                logBattle(
-                    `💀 ${p1.name} defeated!`
-                );
+    logBattle(
+        `💀 ${p1.emoji} ${p1.name} has been defeated!`
+    );
 
-                p1Index++;
+    p1Index++;
 
-            }
+    if (p1Index < player1Fighters.length) {
+
+        const next = player1Fighters[p1Index];
+
+        logBattle(
+            `⚡ ${next.emoji} ${next.name} enters the battle!`
+        );
+
+    }
+
+}
 
 
             else {

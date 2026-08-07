@@ -119,3 +119,46 @@ button:disabled {
     filter: grayscale(1);
 
 }
+.fighter-card.dead {
+
+    opacity: 0.45;
+    filter: grayscale(100%);
+
+    animation: defeated 0.6s ease;
+
+}
+
+
+@keyframes defeated {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+.fighter-card.active {
+
+    border: 3px solid gold;
+
+    animation: pulse 1s infinite;
+
+}
+
+
+@keyframes pulse {
+
+    50% {
+
+        transform: scale(1.03);
+
+    }
+
+}
