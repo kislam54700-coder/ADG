@@ -1,22 +1,41 @@
-const playBtn = document.getElementById("playBtn");
-const animeMenu = document.getElementById("animeMenu");
+document.addEventListener("DOMContentLoaded", () => {
+  const animeButtons = document.querySelectorAll(".animeBtn");
 
-playBtn.addEventListener("click", () => {
-  playBtn.style.display = "none";
-  animeMenu.classList.remove("hidden");
-});
+  animeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      // Ignore disabled buttons
+      if (button.disabled) return;
 
-const animeButtons = document.querySelectorAll(".animeBtn");
+      // Get selected anime
+      const anime = button.dataset.anime;
 
-animeButtons.forEach(button => {
-  button.addEventListener("click", () => {
-    if (button.disabled) return;
+      // Save selected anime
+      localStorage.setItem("selectedAnime", anime);
 
-    const anime = button.dataset.anime;
-
-    alert("Welcome to ADG!\n\nSelected Anime: " + anime + "\n\nDraft Screen coming next!");
+      // Go to Draft/Game screen
+      window.location.href = "game.html";
+    });
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
