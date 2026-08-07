@@ -103,7 +103,11 @@ const ONE_PIECE_CHARACTERS = [
 "Sentomaru",
 
 "Imu",
-"Five Elders",
+"Saint Saturn",
+"Saint Mars",
+"Saint Warcury",
+"Saint Nusjuro",
+"Saint Ju Peter",
 
 "Arlong",
 "Don Krieg",
@@ -112,6 +116,8 @@ const ONE_PIECE_CHARACTERS = [
 "Mr. 3",
 "Mr. 5",
 "Bellamy",
-"Caesar",
+
 "Hody Jones"
 ];
+
+window.ONE_PIECE_CHARACTERS = ONE_PIECE_CHARACTERS;

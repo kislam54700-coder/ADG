@@ -1,73 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ADG Draft</title>
 
-  <link rel="stylesheet" href="css/style.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ADG Draft</title>
+
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-  <h1>ADG Draft</h1>
+        <h1>ADG Draft</h1>
 
-  <h2 id="animeTitle">Loading...</h2>
+        <h2 id="animeTitle">
+            Loading...
+        </h2>
 
-  <div id="currentPlayer">
-    <h3>Player 1 Turn</h3>
-  </div>
+        <div id="currentPlayer">
+            <h3>Player 1 Turn</h3>
+        </div>
 
-  <div id="draftContainer">
+        <button id="drawBtn">
+            Draw Character
+        </button>
 
-    <div class="character-card">
-      Press "Draw Character"
+        <div class="character-card" id="characterCard">
+            Press "Draw Character"
+        </div>
+
+        <button id="backBtn">
+            ⬅ Back
+        </button>
+
     </div>
 
-  </div>
 
-  <button id="drawBtn">
-    Draw Character
-  </button>
-
-  <button id="backBtn">
-    ⬅ Back
-  </button>
-
-</div>
-<script src="js/database.js"></script>
-<script src="js/draft.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/draft.js"></script>
 
 
 </body>
+
+
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
