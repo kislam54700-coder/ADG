@@ -248,19 +248,203 @@ document.addEventListener("DOMContentLoaded", () => {
 
     `;
 
+let round = 1;
 
+let p1Index = 0;
+let p2Index = 0;
+
+
+function logBattle(message) {
+
+    battleLog.innerHTML += `
+        <p>${message}</p>
+    `;
+
+}
+
+
+
+function attack(attacker, defender) {
+
+
+    let damage =
+        attacker.attack -
+        (defender.defense * 0.5);
+
+
+    damage =
+        Math.floor(
+            damage *
+            (0.85 + Math.random() * 0.3)
+        );
+
+
+    if (damage < 1) {
+        damage = 1;
+    }
+
+
+    defender.hp -= damage;
+
+
+    if (defender.hp < 0) {
+        defender.hp = 0;
+    }
+
+
+    logBattle(
+        `⚔️ ${attacker.name} attacked ${defender.name} 💥 ${damage} damage`
+    );
+
+
+}
+
+
+
+function updateHP() {
+
+    displayTeam(
+        player1Fighters,
+        player1Battle
+    );
+
+
+    displayTeam(
+        player2Fighters,
+        player2Battle
+    );
+
+}
+
+
+
+async function startBattle() {
+
+
+    logBattle(
+        "🔥 Battle Started!"
+    );
+
+
+    while (
+
+        player1Fighters[p1Index].hp > 0 &&
+        player2Fighters[p2Index].hp > 0
+
+    ) {
+
+
+        logBattle(
+            `⚔️ ROUND ${round}`
+        );
+
+
+        let p1 =
+        player1Fighters[p1Index];
+
+
+        let p2 =
+        player2Fighters[p2Index];
+
+
+        if (p1.speed >= p2.speed) {
+
+
+            attack(p1,p2);
+
+            updateHP();
+
+
+            if (p2.hp <= 0) {
+
+                logBattle(
+                    `💀 ${p2.name} defeated!`
+                );
+
+                p2Index++;
+
+            }
+
+
+            else {
+
+                attack(p2,p1);
+
+                updateHP();
+
+            }
+
+
+        }
+
+        else {
+
+
+            attack(p2,p1);
+
+            updateHP();
+
+
+            if (p1.hp <= 0) {
+
+                logBattle(
+                    `💀 ${p1.name} defeated!`
+                );
+
+                p1Index++;
+
+            }
+
+
+            else {
+
+                attack(p1,p2);
+
+                updateHP();
+
+            }
+
+        }
+
+
+        round++;
+
+
+        await new Promise(
+            resolve =>
+            setTimeout(resolve,800)
+        );
+
+
+    }
+
+
+    if (p1Index >= player1Fighters.length) {
+
+        battleStatus.textContent =
+        "🏆 Player 2 Wins!";
+
+    }
+
+    else {
+
+        battleStatus.textContent =
+        "🏆 Player 1 Wins!";
+
+    }
+
+
+}
 
     startBattleBtn.addEventListener("click", () => {
 
-        battleLog.innerHTML += `
+    startBattleBtn.disabled = true;
 
-        <p>
-        ⚔️ Battle started!
-        </p>
+    battleLog.innerHTML = "";
 
-        `;
+    startBattle();
 
-    });
+});
 
 
 
