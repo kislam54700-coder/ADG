@@ -3,28 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ADG - Draft</title>
+  <title>ADG Draft</title>
+
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
 <div class="container">
 
-  <h1>One Piece Draft</h1>
+  <h1>ADG Draft</h1>
 
-  <p class="subtitle">Choose Your Captain</p>
+  <h2 id="animeTitle">Loading...</h2>
 
-  <button class="captain">Monkey D. Luffy</button>
-  <button class="captain">Roronoa Zoro</button>
-  <button class="captain">Vinsmoke Sanji</button>
-  <button class="captain">Trafalgar Law</button>
-  <button class="captain">Portgas D. Ace</button>
+  <div id="currentPlayer">
+    <h3>Player 1 Turn</h3>
+  </div>
 
-  <button id="backBtn">⬅ Back</button>
+  <div id="draftContainer">
+
+    <div class="character-card">
+      Press "Draw Character"
+    </div>
+
+  </div>
+
+  <button id="drawBtn">
+    Draw Character
+  </button>
+
+  <button id="backBtn">
+    ⬅ Back
+  </button>
 
 </div>
-
+<script src="js/database.js"></script>
 <script src="js/draft.js"></script>
+
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

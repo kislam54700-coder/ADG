@@ -1,23 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const selectedAnime = localStorage.getItem("selectedAnime");
 
-  if (!selectedAnime) {
-    window.location.href = "index.html";
-    return;
-  }
+    alert("draft.js loaded!");
 
-  const animeTitle = document.getElementById("animeTitle");
+    const animeTitle = document.getElementById("animeTitle");
 
-  if (animeTitle) {
-    animeTitle.textContent = selectedAnime + " Draft";
-  }
-});
+    if (animeTitle) {
+        animeTitle.textContent = "Working!";
+    }
 
-
-
-
-
-
-
-
-
+});document
