@@ -2,31 +2,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const player1Roles = document.getElementById("player1Roles");
     const player2Roles = document.getElementById("player2Roles");
+    const startBattleBtn = document.getElementById("startBattleBtn");
 
-    const player1Team = JSON.parse(
-        localStorage.getItem("player1Team")
-    ) || [];
+    const player1Team = JSON.parse(localStorage.getItem("player1Team")) || [];
+    const player2Team = JSON.parse(localStorage.getItem("player2Team")) || [];
 
-    const player2Team = JSON.parse(
-        localStorage.getItem("player2Team")
-    ) || [];
+    const roles = [
+        "",
+        "👑 Captain",
+        "⚔ Vice Captain",
+        "🛡 Tank",
+        "❤️ Healer",
+        "⭐ Support",
+        "☠ Wildcard"
+    ];
 
-    player1Team.forEach(character => {
+    function createRoleSelector(character, container, player) {
 
-        const p = document.createElement("p");
-        p.textContent = character;
+        const row = document.createElement("div");
+        row.style.marginBottom = "15px";
 
-        player1Roles.appendChild(p);
+        const name = document.createElement("strong");
+        name.textContent = character;
 
-    });
+        const select = document.createElement("select");
 
-    player2Team.forEach(character => {
+        roles.forEach(role => {
+            const option = document.createElement("option");
+            option.value = role;
+            option.textContent = role === "" ? "Select Role" : role;
+            select.appendChild(option);
+        });
 
-        const p = document.createElement("p");
-        p.textContent = character;
+        select.dataset.player = player;
+        select.dataset.character = character;
 
-        player2Roles.appendChild(p);
+        row.appendChild(name);
+        row.appendChild(document.createElement("br"));
+        row.appendChild(select);
 
-    });
+        container.appendChild(row);
+    }
+
+    player1Team.forEach(character =>
+        createRoleSelector(character, player1Roles, 1)
+    );
+
+    player2Team.forEach(character =>
+        createRoleSelector(character, player2Roles, 2)
+    );
 
 });
