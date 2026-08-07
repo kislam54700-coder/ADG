@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         container.innerHTML = "";
 
-        team.forEach(character => {
+        team.forEach((character) => {
 
             const row = document.createElement("div");
             row.className = "role-row";
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const usedRoles = Object.values(selections);
 
-            roles.forEach(role => {
+            roles.forEach((role) => {
 
                 if (
                     !usedRoles.includes(role) ||
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             startBattleBtn.classList.add("hidden");
-  
+ 
         }
     }
 
