@@ -1,8 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    const player1Battle = document.getElementById("player1Battle");
+    const player2Battle = document.getElementById("player2Battle");
+
     const battleLog = document.getElementById("battleLog");
     const battleStatus = document.getElementById("battleStatus");
     const startBattleBtn = document.getElementById("startBattleBtn");
+
 
     const player1Team =
         JSON.parse(localStorage.getItem("player1Team")) || [];
@@ -10,15 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const player2Team =
         JSON.parse(localStorage.getItem("player2Team")) || [];
 
+
     const player1Roles =
         JSON.parse(localStorage.getItem("player1Roles")) || {};
 
     const player2Roles =
         JSON.parse(localStorage.getItem("player2Roles")) || {};
 
-
-    let player1Fighters = [];
-    let player2Fighters = [];
 
 
     const baseStats = {
@@ -31,12 +33,37 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
+    let player1Fighters = [];
+    let player2Fighters = [];
+
+
+
+    function getRoleEmoji(role) {
+
+        const emojis = {
+
+            "Captain": "👑",
+            "Vice Captain": "⚔️",
+            "Tank": "🛡️",
+            "Healer": "❤️",
+            "Support": "⭐",
+            "Wildcard": "☠️"
+
+        };
+
+        return emojis[role] || "🔥";
+
+    }
+
+
+
     function createFighter(name, role) {
 
         let fighter = {
 
             name: name,
             role: role,
+            emoji: getRoleEmoji(role),
 
             hp: baseStats.hp,
             maxHp: baseStats.hp,
@@ -138,149 +165,103 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-    function log(message) {
-
-        battleLog.innerHTML +=
-            `<p>${message}</p>`;
-
-        battleLog.scrollTop =
-            battleLog.scrollHeight;
-
-    }
+    function displayTeam(team, container) {
 
 
-
-    function attack(attacker, defender) {
-
-
-        let damage =
-            attacker.attack -
-            defender.defense * 0.5;
+        container.innerHTML = "";
 
 
-        damage =
-            Math.floor(
-                damage *
-                (0.85 + Math.random() * 0.3)
-            );
+        team.forEach(fighter => {
 
 
-        if (damage < 1) {
-            damage = 1;
-        }
+            container.innerHTML += `
+
+            <div class="fighter-card">
+
+                <h3>
+                ${fighter.emoji} ${fighter.name}
+                </h3>
+
+                <p>
+                ${fighter.role}
+                </p>
 
 
-        defender.hp -= damage;
+                <div class="hp-bar">
+
+                    <div class="hp-fill"></div>
+
+                </div>
 
 
-        log(
-            `⚔ ${attacker.name} attacked ${defender.name} for ${damage} damage`
-        );
+                <p>
+                ❤️ ${Math.floor(fighter.hp)}
+                /
+                ${Math.floor(fighter.maxHp)}
+                </p>
 
 
-        if (defender.hp < 0) {
-            defender.hp = 0;
-        }
+                <p>
+                ⚔️ ${Math.floor(fighter.attack)}
+                🛡️ ${Math.floor(fighter.defense)}
+                ⚡ ${Math.floor(fighter.speed)}
+                </p>
 
 
-    }
+            </div>
 
+            `;
 
-
-    function getAlive(team) {
-
-        return team.filter(
-            fighter => fighter.hp > 0
-        );
+        });
 
     }
 
 
 
-    async function startBattle() {
-
-
-        startBattleBtn.disabled = true;
-
-        battleStatus.textContent =
-            "⚔ Battle Started";
-
-
-        let round = 1;
-
-
-        while (
-            getAlive(player1Fighters).length > 0 &&
-            getAlive(player2Fighters).length > 0
-        ) {
-
-
-            log(
-                `----- Round ${round} -----`
-            );
-
-
-            let p1 =
-                getAlive(player1Fighters)[0];
-
-
-            let p2 =
-                getAlive(player2Fighters)[0];
-
-
-            if (p1.speed >= p2.speed) {
-
-                attack(p1, p2);
-
-                if (p2.hp > 0) {
-                    attack(p2, p1);
-                }
-
-            } else {
-
-                attack(p2, p1);
-
-                if (p1.hp > 0) {
-                    attack(p1, p2);
-                }
-
-            }
-
-
-            await new Promise(
-                resolve =>
-                setTimeout(resolve, 700)
-            );
-
-
-            round++;
-
-        }
-
-
-
-        if (
-            getAlive(player1Fighters).length > 0
-        ) {
-
-            battleStatus.textContent =
-                "🏆 Player 1 Wins!";
-
-        } else {
-
-            battleStatus.textContent =
-                "🏆 Player 2 Wins!";
-
-        }
-
-    }
-
-
-
-    startBattleBtn.addEventListener(
-        "click",
-        startBattle
+    displayTeam(
+        player1Fighters,
+        player1Battle
     );
+
+
+    displayTeam(
+        player2Fighters,
+        player2Battle
+    );
+
+
+
+    battleStatus.textContent =
+        "⚔️ Teams Ready!";
+
+
+
+    battleLog.innerHTML = `
+
+        <p>
+        🏴 Player 1 and Player 2 teams loaded.
+        </p>
+
+        <p>
+        🔥 Battle system ready.
+        </p>
+
+    `;
+
+
+
+    startBattleBtn.addEventListener("click", () => {
+
+        battleLog.innerHTML += `
+
+        <p>
+        ⚔️ Battle started!
+        </p>
+
+        `;
+
+    });
+
 
 
 });
