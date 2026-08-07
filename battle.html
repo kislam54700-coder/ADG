@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ADG Battle</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>⚔ ADG BATTLE</h1>
+
+        <h2 id="battleStatus">
+            Ready for Battle
+        </h2>
+
+        <div class="battle-teams">
+
+            <!-- PLAYER 1 -->
+            <div class="team">
+
+                <h2>Player 1</h2>
+
+                <div id="player1Battle"></div>
+
+            </div>
+
+
+            <h2 class="vs">
+                VS
+            </h2>
+
+
+            <!-- PLAYER 2 -->
+            <div class="team">
+
+                <h2>Player 2</h2>
+
+                <div id="player2Battle"></div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <h2>⚡ Battle Log</h2>
+
+        <div id="battleLog" class="battle-log">
+
+            <p>Battle is ready...</p>
+
+        </div>
+
+        <button id="startBattleBtn">
+            ⚔ Start Battle
+        </button>
+
+        <button id="backBtn">
+            ⬅ Back
+        </button>
+
+    </div>
+
+    <script src="js/battle.js"></script>
+
+</body>
+
+</html>
