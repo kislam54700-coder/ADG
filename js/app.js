@@ -1,61 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const animeButtons = document.querySelectorAll(".animeBtn");
 
-  animeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      // Ignore disabled buttons
-      if (button.disabled) return;
+    const animeButtons = document.querySelectorAll(".animeBtn");
 
-      // Get selected anime
-      const anime = button.dataset.anime;
+    animeButtons.forEach((button) => {
 
-      // Save selected anime
-      localStorage.setItem("selectedAnime", anime);
+        button.addEventListener("click", () => {
 
-      // Go to Draft/Game screen
-      window.location.href = "game.html";
+            if (button.disabled) return;
+
+            const anime = button.dataset.anime;
+
+            localStorage.setItem("selectedAnime", anime);
+
+            window.location.href = "game.html";
+
+        });
+
     });
-  });
+
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
