@@ -11,18 +11,18 @@ document.addEventListener("DOMContentLoaded", () => {
         JSON.parse(localStorage.getItem("player2Team")) || [];
 
     const roles = [
-        "👑 Captain", 
-        "⚔ Vice Captain", 
-        "🛡 Tank", 
-        "❤️ Healer", 
-        "⭐ Support", 
-        "☠ Wildcard"
+        "Captain",
+        "Vice Captain",
+        "Tank",
+        "Healer",
+        "Support",
+        "Wildcard"
     ];
 
     const player1Selections = {};
     const player2Selections = {};
 
-    function createTeam(team, container, selections, player) {
+    function createTeam(team, container, selections) {
 
         container.innerHTML = "";
 
@@ -36,13 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const select = document.createElement("select");
 
-            const first = document.createElement("option");
-            first.value = "";
-            first.textContent = "Select Role";
-            select.appendChild(first);
+            const firstOption = document.createElement("option");
+            firstOption.value = "";
+            firstOption.textContent = "Select Role";
 
-            const usedRoles =
-                Object.values(selections);
+            select.appendChild(firstOption);
+
+            const usedRoles = Object.values(selections);
 
             roles.forEach(role => {
 
@@ -51,8 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     selections[character] === role
                 ) {
 
-                    const option =
-                        document.createElement("option");
+                    const option = document.createElement("option");
 
                     option.value = role;
                     option.textContent = role;
@@ -62,7 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     select.appendChild(option);
-
                 }
 
             });
@@ -70,29 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
             select.addEventListener("change", () => {
 
                 if (select.value === "") {
-
                     delete selections[character];
-
                 } else {
-
                     selections[character] = select.value;
-
                 }
 
                 refresh();
-
             });
 
             row.appendChild(name);
             row.appendChild(select);
 
             container.appendChild(row);
-
         });
-
     }
 
-    function refresh() {
     function checkFinished() {
 
         const player1Ready =
@@ -117,10 +107,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } else {
 
+
             startBattleBtn.classList.add("hidden");
-
+  
         }
+    }
 
+    function refresh() {
+
+        createTeam(
+            player1Team,
+            player1Roles,
+            player1Selections
+        );
+
+        createTeam(
+            player2Team,
+            player2Roles,
+            player2Selections
+        );
+
+        checkFinished();
     }
 
     startBattleBtn.addEventListener("click", () => {
@@ -131,21 +138,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     refresh();
 
+
 });
-        createTeam(
-            player1Team,
-            player1Roles,
-            player1Selections,
-            1
-        );
-
-        createTeam(
-            player2Team,
-            player2Roles,
-            player2Selections,
-            2
-        );
-
-        checkFinished();
-
-    }
