@@ -26,15 +26,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const draftedCharacters = [];
 
+    // Continue button
     nextPhaseBtn.addEventListener("click", () => {
+        window.location.href = "roles.html";
+    });
 
-    window.location.href = "roles.html";
+    // Draw button
+    drawBtn.addEventListener("click", () => {
 
-});
         if (selectedAnime !== "One Piece") return;
 
         let character;
 
+        // Prevent duplicate characters
         do {
 
             const randomIndex = Math.floor(
@@ -47,11 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         draftedCharacters.push(character);
 
+        // Show drawn character
         characterCard.innerHTML = `
             <h2>${character}</h2>
             <p>Drafted!</p>
         `;
 
+        // Player 1
         if (currentPlayer === 1) {
 
             player1Team.push(character);
@@ -64,7 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             currentPlayer = 2;
 
-        } else {
+        }
+
+        // Player 2
+        else {
 
             player2Team.push(character);
 
@@ -78,48 +87,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
-        if (player1Team.length === player2Team.length && player1Team.length < 6) {
+        // Update round after both players draw
+        if (
+            player1Team.length === player2Team.length &&
+            player1Team.length < 6
+        ) {
 
             roundCounter.textContent =
                 `Round ${player1Team.length + 1} / 6`;
 
         }
 
+        // Update turn text
         if (currentPlayer === 1) {
 
-            currentPlayerText.innerHTML = "<h3>Player 1 Turn</h3>";
+            currentPlayerText.innerHTML =
+                "<h3>Player 1 Turn</h3>";
 
         } else {
 
-            currentPlayerText.innerHTML = "<h3>Player 2 Turn</h3>";
+            currentPlayerText.innerHTML =
+                "<h3>Player 2 Turn</h3>";
 
         }
 
-    if (
-    player1Team.length === 6 &&
-    player2Team.length === 6
-) {
+        // Draft finished
+        if (
+            player1Team.length === 6 &&
+            player2Team.length === 6
+        ) {
 
-    // Save both teams
-    localStorage.setItem(
-        "player1Team",
-        JSON.stringify(player1Team)
-    );
+            // Save teams
+            localStorage.setItem(
+                "player1Team",
+                JSON.stringify(player1Team)
+            );
 
-    localStorage.setItem(
-        "player2Team",
-        JSON.stringify(player2Team)
-    );
+            localStorage.setItem(
+                "player2Team",
+                JSON.stringify(player2Team)
+            );
 
-    drawBtn.disabled = true;
-    drawBtn.classList.add("hidden");
+            drawBtn.disabled = true;
+            drawBtn.classList.add("hidden");
 
-    currentPlayerText.innerHTML =
-        "<h3>✅ Draft Complete!</h3>";
+            currentPlayerText.innerHTML =
+                "<h3>✅ Draft Complete!</h3>";
 
-    nextPhaseBtn.classList.remove("hidden");
+            nextPhaseBtn.classList.remove("hidden");
 
-}
+        }
+
     });
 
 });
