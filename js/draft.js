@@ -26,8 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const draftedCharacters = [];
 
-    drawBtn.addEventListener("click", () => {
+    nextPhaseBtn.addEventListener("click", () => {
 
+    window.location.href = "roles.html";
+
+});
         if (selectedAnime !== "One Piece") return;
 
         let character;
@@ -92,20 +95,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
-        if (
-            player1Team.length === 6 &&
-            player2Team.length === 6
-        ) {
+    if (
+    player1Team.length === 6 &&
+    player2Team.length === 6
+) {
 
-            drawBtn.disabled = true;
+    // Save both teams
+    localStorage.setItem(
+        "player1Team",
+        JSON.stringify(player1Team)
+    );
 
-            currentPlayerText.innerHTML =
-                "<h3>Draft Complete!</h3>";
+    localStorage.setItem(
+        "player2Team",
+        JSON.stringify(player2Team)
+    );
 
-            nextPhaseBtn.classList.remove("hidden");
+    drawBtn.disabled = true;
+    drawBtn.classList.add("hidden");
 
-        }
+    currentPlayerText.innerHTML =
+        "<h3>✅ Draft Complete!</h3>";
 
+    nextPhaseBtn.classList.remove("hidden");
+
+}
     });
 
 });
