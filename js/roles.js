@@ -687,4 +687,4 @@ document.addEventListener("DOMContentLoaded", function () {
     validateTeams();
 
 });
-```
+
