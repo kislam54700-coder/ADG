@@ -1,8 +1,7 @@
-```javascript
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================================================
-       ADG ROLE ASSIGNMENT
+       ELEMENTS
        ===================================================== */
 
     const player1Container =
@@ -25,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       AVAILABLE ROLES
+       ROLES
        ===================================================== */
 
     const ROLES = [
@@ -63,22 +62,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       LOAD TEAMS
+       LOAD DRAFTED TEAMS
        ===================================================== */
 
-    const player1Team =
-        JSON.parse(
-            localStorage.getItem("player1Team")
-        ) || [];
+    let player1Team = [];
+    let player2Team = [];
 
-    const player2Team =
-        JSON.parse(
-            localStorage.getItem("player2Team")
-        ) || [];
+    try {
+
+        player1Team =
+            JSON.parse(
+                localStorage.getItem("player1Team")
+            ) || [];
+
+        player2Team =
+            JSON.parse(
+                localStorage.getItem("player2Team")
+            ) || [];
+
+    } catch (error) {
+
+        console.error(
+            "Could not load drafted teams:",
+            error
+        );
+
+    }
 
 
     /* =====================================================
-       ROLE STORAGE
+       ROLE DATA
        ===================================================== */
 
     const player1Roles = {};
@@ -86,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       VALIDATE TEAMS
+       CHECK TEAM SIZE
        ===================================================== */
 
     if (
@@ -95,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
 
         roleStatus.textContent =
-            "⚠️ Both teams must contain 6 characters.";
+            "⚠️ Both players must have 6 characters.";
 
         roleStatus.classList.add("error");
 
@@ -111,17 +124,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function createCharacterCard(
         character,
-        playerNumber,
-        index
+        playerNumber
     ) {
 
         const card =
             document.createElement("div");
 
-        card.className = "character-card";
+        card.className =
+            "character-card";
 
-        card.dataset.character = character;
-        card.dataset.player = playerNumber;
+        card.dataset.character =
+            character;
+
+        card.dataset.player =
+            playerNumber;
 
 
         /* Character image */
@@ -132,26 +148,17 @@ document.addEventListener("DOMContentLoaded", () => {
         image.className =
             "character-image";
 
-        /*
-         * Your database currently stores character
-         * names. We therefore use a clean placeholder
-         * until character image paths are added.
-         */
-
-        image.innerHTML = `
-            <span
-                style="
-                    display:flex;
-                    width:100%;
-                    height:100%;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:42px;
-                "
-            >
-                🎴
-            </span>
-        `;
+        image.innerHTML =
+            '<span style="' +
+            'display:flex;' +
+            'width:100%;' +
+            'height:100%;' +
+            'align-items:center;' +
+            'justify-content:center;' +
+            'font-size:42px;' +
+            '">' +
+            '🎴' +
+            '</span>';
 
 
         /* Character name */
@@ -182,10 +189,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "role-selector-title";
 
         selectorTitle.textContent =
-            "Choose Role";
+            "CHOOSE ROLE";
 
-
-        /* Role buttons */
 
         const roleOptions =
             document.createElement("div");
@@ -194,12 +199,15 @@ document.addEventListener("DOMContentLoaded", () => {
             "role-options";
 
 
-        ROLES.forEach(role => {
+        /* Create role buttons */
+
+        ROLES.forEach(function (role) {
 
             const button =
                 document.createElement("button");
 
-            button.type = "button";
+            button.type =
+                "button";
 
             button.className =
                 "role-option";
@@ -222,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             button.addEventListener(
                 "click",
-                () => {
+                function () {
 
                     assignRole(
                         playerNumber,
@@ -235,24 +243,41 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-            roleOptions.appendChild(button);
+            roleOptions.appendChild(
+                button
+            );
 
         });
 
 
-        selector.appendChild(selectorTitle);
-        selector.appendChild(roleOptions);
+        selector.appendChild(
+            selectorTitle
+        );
 
-        card.appendChild(image);
-        card.appendChild(name);
-        card.appendChild(selector);
+        selector.appendChild(
+            roleOptions
+        );
+
+
+        card.appendChild(
+            image
+        );
+
+        card.appendChild(
+            name
+        );
+
+        card.appendChild(
+            selector
+        );
+
 
         return card;
     }
 
 
     /* =====================================================
-       RENDER PLAYER TEAMS
+       DISPLAY TEAMS
        ===================================================== */
 
     function renderTeams() {
@@ -262,32 +287,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         player1Team.forEach(
-            (character, index) => {
+            function (character) {
 
                 const card =
                     createCharacterCard(
                         character,
-                        1,
-                        index
+                        1
                     );
 
-                player1Container.appendChild(card);
+                player1Container.appendChild(
+                    card
+                );
 
             }
         );
 
 
         player2Team.forEach(
-            (character, index) => {
+            function (character) {
 
                 const card =
                     createCharacterCard(
                         character,
-                        2,
-                        index
+                        2
                     );
 
-                player2Container.appendChild(card);
+                player2Container.appendChild(
+                    card
+                );
 
             }
         );
@@ -296,10 +323,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       CHECK IF ROLE IS ALREADY USED
+       CHECK DUPLICATE ROLE
        ===================================================== */
 
-    function isRoleAlreadyUsed(
+    function roleAlreadyUsed(
         playerNumber,
         role,
         currentCharacter
@@ -311,12 +338,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 : player2Roles;
 
 
-        return Object.keys(roles).some(
-            character =>
+        for (
+            const character in roles
+        ) {
+
+            if (
                 character !== currentCharacter &&
                 roles[character] === role
-        );
+            ) {
 
+                return true;
+
+            }
+
+        }
+
+
+        return false;
     }
 
 
@@ -340,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
         /* Prevent duplicate role */
 
         if (
-            isRoleAlreadyUsed(
+            roleAlreadyUsed(
                 playerNumber,
                 role,
                 character
@@ -348,11 +386,17 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
 
             roleStatus.textContent =
-                `⚠️ ${getRoleName(role)} is already assigned to another character.`;
+                "⚠️ " +
+                getRoleName(role) +
+                " is already assigned to another character.";
 
-            roleStatus.classList.remove("valid");
+            roleStatus.classList.remove(
+                "valid"
+            );
 
-            roleStatus.classList.add("error");
+            roleStatus.classList.add(
+                "error"
+            );
 
             return;
         }
@@ -360,10 +404,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /* Save role */
 
-        roles[character] = role;
+        roles[character] =
+            role;
 
 
-        /* Remove previous selected states */
+        /* Remove previous selection */
 
         const buttons =
             card.querySelectorAll(
@@ -371,20 +416,24 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        buttons.forEach(button => {
+        buttons.forEach(
+            function (button) {
 
-            button.classList.remove(
-                "selected"
-            );
+                button.classList.remove(
+                    "selected"
+                );
 
-        });
+            }
+        );
 
 
         /* Highlight selected role */
 
         const selectedButton =
             card.querySelector(
-                `.role-option[data-role="${role}"]`
+                '.role-option[data-role="' +
+                role +
+                '"]'
             );
 
 
@@ -396,8 +445,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
-
-        /* Remove card error */
 
         card.classList.remove(
             "role-error"
@@ -412,21 +459,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       GET ROLE NAME
+       ROLE NAME
        ===================================================== */
 
     function getRoleName(roleId) {
 
-        const role =
-            ROLES.find(
-                item =>
-                    item.id === roleId
-            );
+        for (
+            let i = 0;
+            i < ROLES.length;
+            i++
+        ) {
+
+            if (
+                ROLES[i].id === roleId
+            ) {
+
+                return (
+                    ROLES[i].emoji +
+                    " " +
+                    ROLES[i].name
+                );
+
+            }
+
+        }
 
 
-        return role
-            ? `${role.emoji} ${role.name}`
-            : roleId;
+        return roleId;
     }
 
 
@@ -448,16 +507,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         player1RoleCount.textContent =
-            `${p1Count} / 6`;
+            p1Count + " / 6";
 
         player2RoleCount.textContent =
-            `${p2Count} / 6`;
+            p2Count + " / 6";
 
     }
 
 
     /* =====================================================
-       VALIDATE TEAMS
+       VALIDATE
        ===================================================== */
 
     function validateTeams() {
@@ -473,55 +532,58 @@ document.addEventListener("DOMContentLoaded", () => {
             ).length;
 
 
-        /* Not complete */
+        continueBattleBtn.disabled =
+            true;
+
+        roleStatus.classList.remove(
+            "valid"
+        );
+
+
+        /* Player 1 incomplete */
 
         if (
-            p1Count !== 6 ||
-            p2Count !== 6
+            p1Count < 6
         ) {
 
-            continueBattleBtn.disabled =
-                true;
-
-
-            roleStatus.classList.remove(
-                "valid"
-            );
-
-
-            const remainingP1 =
+            const remaining =
                 6 - p1Count;
 
-            const remainingP2 =
-                6 - p2Count;
-
-
-            if (remainingP1 > 0) {
-
-                roleStatus.textContent =
-                    `Player 1 needs ${remainingP1} more role${
-                        remainingP1 === 1 ? "" : "s"
-                    }.`;
-
-            } else {
-
-                roleStatus.textContent =
-                    `Player 2 needs ${remainingP2} more role${
-                        remainingP2 === 1 ? "" : "s"
-                    }.`;
-
-            }
-
+            roleStatus.textContent =
+                "Player 1 needs " +
+                remaining +
+                " more role" +
+                (remaining === 1 ? "" : "s") +
+                ".";
 
             return;
         }
 
 
-        /* Both complete */
+        /* Player 2 incomplete */
+
+        if (
+            p2Count < 6
+        ) {
+
+            const remaining =
+                6 - p2Count;
+
+            roleStatus.textContent =
+                "Player 2 needs " +
+                remaining +
+                " more role" +
+                (remaining === 1 ? "" : "s") +
+                ".";
+
+            return;
+        }
+
+
+        /* Both teams complete */
 
         continueBattleBtn.disabled =
             false;
-
 
         roleStatus.classList.remove(
             "error"
@@ -530,7 +592,6 @@ document.addEventListener("DOMContentLoaded", () => {
         roleStatus.classList.add(
             "valid"
         );
-
 
         roleStatus.textContent =
             "✅ Both teams have valid roles. Ready for battle!";
@@ -568,15 +629,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     continueBattleBtn.addEventListener(
         "click",
-        () => {
+        function () {
+
+            const p1Count =
+                Object.keys(
+                    player1Roles
+                ).length;
+
+            const p2Count =
+                Object.keys(
+                    player2Roles
+                ).length;
+
 
             if (
-                Object.keys(player1Roles).length !== 6 ||
-                Object.keys(player2Roles).length !== 6
+                p1Count !== 6 ||
+                p2Count !== 6
             ) {
 
                 roleStatus.textContent =
-                    "⚠️ Both teams must have all 6 roles assigned.";
+                    "⚠️ Assign all 6 roles to both teams.";
 
                 roleStatus.classList.remove(
                     "valid"
@@ -590,14 +662,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            /* Save */
+
             saveRoles();
 
 
-            /*
-             * Do not modify battle.js.
-             * Simply send the game to the existing
-             * battle page.
-             */
+            /* Go to existing battle system */
 
             window.location.href =
                 "battle.html";
@@ -607,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       INITIALIZE
+       INITIAL LOAD
        ===================================================== */
 
     renderTeams();
