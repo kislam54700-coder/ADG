@@ -3365,10 +3365,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         logBattle(
-            "<strong>
-                🔥 BATTLE START!
-            </strong>"
-        );
+    `<strong>
+        🔥 BATTLE START!
+    </strong>`
+);
 
         logBattle(
             `🏴 Player 1:
