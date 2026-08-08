@@ -1,123 +1,210 @@
+// ============================================================
+// ADG - ONE PIECE CHARACTER DATABASE
+// ============================================================
+
 const ONE_PIECE_CHARACTERS = [
-"Luffy",
-"Zoro",
-"Sanji",
-"Nami",
-"Usopp",
-"Chopper",
-"Robin",
-"Franky",
-"Brook",
-"Jinbe",
 
-"Shanks",
-"Benn Beckman",
-"Yasopp",
-"Lucky Roux",
+    "Luffy",
+    "Zoro",
+    "Sanji",
+    "Nami",
+    "Usopp",
+    "Chopper",
+    "Robin",
+    "Franky",
+    "Brook",
+    "Jinbe",
 
-"Gol D. Roger",
-"Silvers Rayleigh",
-"Scopper Gaban",
+    "Shanks",
+    "Benn Beckman",
+    "Yasopp",
+    "Lucky Roux",
 
-"Portgas D. Ace",
-"Sabo",
-"Monkey D. Dragon",
-"Garp",
+    "Gol D. Roger",
+    "Silvers Rayleigh",
+    "Scopper Gaban",
 
-"Trafalgar Law",
-"Eustass Kid",
-"Killer",
-"Jewelry Bonney",
-"Basil Hawkins",
-"X Drake",
-"Scratchmen Apoo",
-"Capone Bege",
-"Urouge",
+    "Portgas D. Ace",
+    "Sabo",
+    "Monkey D. Dragon",
+    "Garp",
 
-"Whitebeard",
-"Marco",
-"Jozu",
-"Vista",
-"Izo",
+    "Trafalgar Law",
+    "Eustass Kid",
+    "Killer",
+    "Jewelry Bonney",
+    "Basil Hawkins",
+    "X Drake",
+    "Scratchmen Apoo",
+    "Capone Bege",
+    "Urouge",
 
-"Kaido",
-"King",
-"Queen",
-"Jack",
-"Yamato",
+    "Whitebeard",
+    "Marco",
+    "Jozu",
+    "Vista",
+    "Izo",
 
-"Big Mom",
-"Katakuri",
-"Smoothie",
-"Cracker",
-"Perospero",
+    "Kaido",
+    "King",
+    "Queen",
+    "Jack",
+    "Yamato",
 
-"Blackbeard",
-"Shiryu",
-"Van Augur",
-"Jesus Burgess",
-"Laffitte",
-"Doc Q",
-"Avalo Pizarro",
+    "Big Mom",
+    "Katakuri",
+    "Smoothie",
+    "Cracker",
+    "Perospero",
 
-"Mihawk",
-"Crocodile",
-"Doflamingo",
-"Boa Hancock",
-"Buggy",
+    "Blackbeard",
+    "Shiryu",
+    "Van Augur",
+    "Jesus Burgess",
+    "Laffitte",
+    "Doc Q",
+    "Avalo Pizarro",
 
-"Akainu",
-"Aokiji",
-"Kizaru",
-"Fujitora",
-"Ryokugyu",
+    "Mihawk",
+    "Crocodile",
+    "Doflamingo",
+    "Boa Hancock",
+    "Buggy",
 
-"Sengoku",
-"Tsuru",
-"Koby",
-"Helmeppo",
-"Smoker",
-"Tashigi",
+    "Akainu",
+    "Aokiji",
+    "Kizaru",
+    "Fujitora",
+    "Ryokugyu",
 
-"Enel",
-"Rob Lucci",
-"Kaku",
-"Blueno",
-"Magellan",
-"Caesar Clown",
-"Gecko Moria",
-"Bartholomew Kuma",
+    "Sengoku",
+    "Tsuru",
+    "Koby",
+    "Helmeppo",
+    "Smoker",
+    "Tashigi",
 
-"Oden",
-"Kin'emon",
-"Denjiro",
-"Kawamatsu",
-"Raizo",
-"Kikunojo",
-"Ashura Doji",
-"Inuarashi",
-"Nekomamushi",
+    "Enel",
+    "Rob Lucci",
+    "Kaku",
+    "Blueno",
+    "Magellan",
+    "Caesar Clown",
+    "Gecko Moria",
+    "Bartholomew Kuma",
 
-"Vegapunk",
-"Stussy",
-"Sentomaru",
+    "Oden",
+    "Kin'emon",
+    "Denjiro",
+    "Kawamatsu",
+    "Raizo",
+    "Kikunojo",
+    "Ashura Doji",
+    "Inuarashi",
+    "Nekomamushi",
 
-"Imu",
-"Saint Saturn",
-"Saint Mars",
-"Saint Warcury",
-"Saint Nusjuro",
-"Saint Ju Peter",
+    "Vegapunk",
+    "Stussy",
+    "Sentomaru",
 
-"Arlong",
-"Don Krieg",
-"Mr. 1",
-"Mr. 2 Bon Clay",
-"Mr. 3",
-"Mr. 5",
-"Bellamy",
+    "Imu",
+    "Saint Saturn",
+    "Saint Mars",
+    "Saint Warcury",
+    "Saint Nusjuro",
+    "Saint Ju Peter",
 
-"Hody Jones"
+    "Arlong",
+    "Don Krieg",
+    "Mr. 1",
+    "Mr. 2 Bon Clay",
+    "Mr. 3",
+    "Mr. 5",
+    "Bellamy",
+    "Hody Jones"
 ];
 
+
+// ============================================================
+// IMAGE NAME CONVERTER
+// ============================================================
+
+function characterImageName(character) {
+
+    return character
+        .toLowerCase()
+        .replace(/'/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
+
+// ============================================================
+// CHARACTER IMAGE
+// ============================================================
+
+function getCharacterImage(character) {
+
+    const filename = characterImageName(character);
+
+    return `https://onepiece.fandom.com/wiki/Special:Redirect/file/${filename}.png`;
+}
+
+
+// ============================================================
+// CHARACTER DATA
+// ============================================================
+
+function getCharacterData(character) {
+
+    return {
+        name: character,
+        image: getCharacterImage(character)
+    };
+}
+
+
+// ============================================================
+// GLOBAL
+// ============================================================
+
 window.ONE_PIECE_CHARACTERS = ONE_PIECE_CHARACTERS;
+
+window.getCharacterImage = getCharacterImage;
+
+window.getCharacterData = getCharacterData;
+
+// ============================================================
+// ADG CHARACTER IMAGE SYSTEM - TEST
+// Luffy / Zoro / Sanji
+// ============================================================
+
+const CHARACTER_IMAGES = {
+
+    "Luffy":
+        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Monkey_D._Luffy_Anime_Post_Timeskip_Infobox.png",
+
+    "Zoro":
+        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Roronoa_Zoro_Anime_Post_Timeskip_Infobox.png",
+
+    "Sanji":
+        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Sanji_Anime_Post_Timeskip_Infobox.png"
+
+};
+
+
+// ============================================================
+// GET CHARACTER IMAGE
+// ============================================================
+
+function getCharacterImage(character) {
+
+    return CHARACTER_IMAGES[character] || "";
+}
+
+
+// ============================================================
+// EXPORT
+// ============================================================
+
+window.getCharacterImage = getCharacterImage;

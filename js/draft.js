@@ -52,10 +52,33 @@ document.addEventListener("DOMContentLoaded", () => {
         draftedCharacters.push(character);
 
         // Show drawn character
-        characterCard.innerHTML = `
-            <h2>${character}</h2>
-            <p>Drafted!</p>
-        `;
+        const image = getCharacterImage(character);
+
+characterCard.innerHTML = `
+    <div class="drawn-character">
+
+        ${
+            image
+            ? `
+                <img
+                    src="${image}"
+                    alt="${character}"
+                    class="character-image"
+                >
+              `
+            : `
+                <div class="character-image-placeholder">
+                    🎭
+                </div>
+              `
+        }
+
+        <h2>${character}</h2>
+
+        <p>Drafted!</p>
+
+    </div>
+`;
 
         // Player 1
         if (currentPlayer === 1) {
