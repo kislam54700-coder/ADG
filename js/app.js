@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
 
     const animeButtons =
@@ -8,7 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         button.addEventListener("click", () => {
 
-            if (button.disabled) return;
+            if (button.disabled) {
+                return;
+            }
 
             const anime =
                 button.dataset.anime;
@@ -26,4 +27,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
-```
