@@ -1,73 +1,353 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>ADG Battle</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="css/style.css">
+    <title>⚔️ ADG Battle</title>
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
 </head>
+
 
 <body>
 
+    <!-- =====================================================
+         ADG BATTLE
+         ===================================================== -->
+
     <div class="container">
 
-        <h1>⚔ ADG BATTLE</h1>
+        <h1>⚔️ ADG BATTLE</h1>
 
         <h2 id="battleStatus">
-            Ready for Battle
+            ⚔️ Teams Ready!
         </h2>
 
-        <div class="battle-teams">
 
-    <div class="team">
+        <!-- =================================================
+             BATTLE ARENA
+             ================================================= -->
 
-        <h2>🏴 Player 1</h2>
-
-        <div id="player1Battle" class="battle-team"></div>
-
-    </div>
+        <div class="battle-arena">
 
 
-    <h2 class="vs">
-        ⚔️ VS ⚔️
-    </h2>
+            <!-- =============================================
+                 PLAYER 1
+                 ============================================= -->
+
+            <div class="battle-side player1-side">
+
+                <h2>🏴 PLAYER 1</h2>
+
+                <div id="player1Battle"
+                     class="battle-team">
+
+                    <!-- battle.js creates fighters here -->
+
+                </div>
+
+            </div>
 
 
-    <div class="team">
+            <!-- =============================================
+                 VS
+                 ============================================= -->
 
-        <h2>🏴 Player 2</h2>
+            <div class="battle-vs">
 
-        <div id="player2Battle" class="battle-team"></div>
+                <div class="vs-text">
+                    ⚔️ VS ⚔️
+                </div>
 
-    </div>
+            </div>
 
-</div>
 
-        <hr>
+            <!-- =============================================
+                 PLAYER 2
+                 ============================================= -->
 
-        <h2>⚡ Battle Log</h2>
+            <div class="battle-side player2-side">
 
-        <div id="battleLog" class="battle-log">
+                <h2>🏴 PLAYER 2</h2>
 
-            <p>Battle is ready...</p>
+                <div id="player2Battle"
+                     class="battle-team">
+
+                    <!-- battle.js creates fighters here -->
+
+                </div>
+
+            </div>
 
         </div>
 
-        <button id="startBattleBtn">
-            ⚔ Start Battle
-        </button>
 
-        <button id="backBtn">
-            ⬅ Back
-        </button>
+        <!-- =================================================
+             BATTLE CONTROLS
+             ================================================= -->
+
+        <div class="battle-controls">
+
+            <button
+                id="startBattleBtn"
+                class="battle-btn">
+
+                ⚔️ Start Battle
+
+            </button>
+
+
+            <button
+                id="backBtn"
+                class="battle-btn"
+                onclick="history.back()">
+
+                ⬅️ Back
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             BATTLE LOG
+             ================================================= -->
+
+        <section class="battle-log-section">
+
+            <h2>
+                ⚡ Battle Log
+            </h2>
+
+            <div id="battleLog"
+                 class="battle-log">
+
+                <p>
+                    🏴 Player 1 and Player 2 teams loaded.
+                </p>
+
+                <p>
+                    🎭 Role abilities ready.
+                </p>
+
+                <p>
+                    🔥 Character special abilities ready.
+                </p>
+
+                <p>
+                    💫 Advanced battle effects ready.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PHASE 6.3 — BATTLE RESULT
+             ================================================= -->
+
+        <div id="battleResult"
+             class="battle-result hidden">
+
+            <div class="result-box">
+
+
+                <div class="result-title">
+                    🏆 BATTLE RESULT
+                </div>
+
+
+                <div id="winnerText"
+                     class="winner-text">
+
+                    🏆 PLAYER 1 WINS!
+
+                </div>
+
+
+                <div id="resultSummary"
+                     class="result-summary">
+
+                    Battle completed.
+
+                </div>
+
+
+                <!-- =========================================
+                     TEAM RESULTS
+                     ========================================= -->
+
+                <div class="result-teams">
+
+
+                    <!-- PLAYER 1 -->
+
+                    <div class="result-team player1-result">
+
+                        <h2>
+                            🏴 PLAYER 1
+                        </h2>
+
+                        <div id="player1ResultStats">
+
+                            <!-- JavaScript fills this -->
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PLAYER 2 -->
+
+                    <div class="result-team player2-result">
+
+                        <h2>
+                            🏴 PLAYER 2
+                        </h2>
+
+                        <div id="player2ResultStats">
+
+                            <!-- JavaScript fills this -->
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     MVP
+                     ========================================= -->
+
+                <div class="mvp-section">
+
+                    <h2>
+                        ⭐ MVP
+                    </h2>
+
+                    <div id="mvpResult">
+
+                        <!-- JavaScript fills this -->
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     BATTLE STATISTICS
+                     ========================================= -->
+
+                <div class="battle-result-stats">
+
+
+                    <div class="result-stat">
+
+                        <span>
+                            ⚡ Rounds
+                        </span>
+
+                        <strong id="resultRounds">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="result-stat">
+
+                        <span>
+                            💥 Total Damage
+                        </span>
+
+                        <strong id="resultDamage">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="result-stat">
+
+                        <span>
+                            💀 Total KOs
+                        </span>
+
+                        <strong id="resultKOs">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="result-stat">
+
+                        <span>
+                            🔥 Specials Used
+                        </span>
+
+                        <strong id="resultSpecials">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     RESULT ACTIONS
+                     ========================================= -->
+
+                <div class="result-actions">
+
+
+                    <button
+                        id="restartBattleBtn"
+                        class="result-btn">
+
+                        🔄 Restart Battle
+
+                    </button>
+
+
+                    <button
+                        id="backToDraftBtn"
+                        class="result-btn">
+
+                        ⬅️ Back to Draft
+
+                    </button>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
 
     </div>
 
+
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
+
     <script src="js/battle.js"></script>
+
 
 </body>
 
 </html>
+```

@@ -1,6 +1,8 @@
+```javascript
 document.addEventListener("DOMContentLoaded", () => {
 
-    const animeButtons = document.querySelectorAll(".animeBtn");
+    const animeButtons =
+        document.querySelectorAll(".animeBtn");
 
     animeButtons.forEach((button) => {
 
@@ -8,14 +10,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (button.disabled) return;
 
-            const anime = button.dataset.anime;
+            const anime =
+                button.dataset.anime;
 
-            localStorage.setItem("selectedAnime", anime);
+            localStorage.setItem(
+                "selectedAnime",
+                anime
+            );
 
-            window.location.href = "game.html";
+            window.location.href =
+                "game.html";
 
         });
 
     });
 
 });
+```

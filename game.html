@@ -1,58 +1,155 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADG Draft</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>🎌 ADG Draft</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
+
 
 <body>
 
+    <!-- =====================================================
+         ADG DRAFT
+         ===================================================== -->
+
     <div class="container">
 
-        <h1>ADG Draft</h1>
+        <h1>🎌 ADG Draft</h1>
 
-        <h2 id="animeTitle">Loading...</h2>
 
-        <h3 id="roundCounter">Round 1 / 6</h3>
+        <!-- =================================================
+             ANIME
+             ================================================= -->
+
+        <h2 id="animeTitle">
+            Loading...
+        </h2>
+
+
+        <!-- =================================================
+             DRAFT ROUND
+             ================================================= -->
+
+        <h3 id="roundCounter">
+            Round 1 / 6
+        </h3>
+
+
+        <!-- =================================================
+             CURRENT PLAYER
+             ================================================= -->
 
         <div id="currentPlayer">
-            <h3>Player 1 Turn</h3>
+
+            <h3>
+                🏴 Player 1 Turn
+            </h3>
+
         </div>
 
-        <button id="drawBtn">
+
+        <!-- =================================================
+             DRAW CHARACTER
+             ================================================= -->
+
+        <button
+            id="drawBtn"
+            type="button"
+        >
             🎲 Draw Character
         </button>
 
-        <div class="character-card" id="characterCard">
+
+        <!-- =================================================
+             CHARACTER CARD
+             ================================================= -->
+
+        <div
+            class="character-card"
+            id="characterCard"
+        >
+
             Press "Draw Character"
+
         </div>
+
 
         <hr>
 
-        <h3>Player 1 Team (<span id="p1Count">0</span>/6)</h3>
+
+        <!-- =================================================
+             PLAYER 1 TEAM
+             ================================================= -->
+
+        <h3>
+            🏴 Player 1 Team
+            (<span id="p1Count">0</span>/6)
+        </h3>
+
         <ul id="player1Team"></ul>
 
-        <h3>Player 2 Team (<span id="p2Count">0</span>/6)</h3>
+
+        <!-- =================================================
+             PLAYER 2 TEAM
+             ================================================= -->
+
+        <h3>
+            🏴 Player 2 Team
+            (<span id="p2Count">0</span>/6)
+        </h3>
+
         <ul id="player2Team"></ul>
 
-        <button id="nextPhaseBtn" class="hidden">
+
+        <!-- =================================================
+             CONTINUE
+             ================================================= -->
+
+        <button
+            id="nextPhaseBtn"
+            class="hidden"
+            type="button"
+        >
             Continue →
         </button>
 
-        <button id="backBtn">
-            ⬅ Back
+
+        <!-- =================================================
+             BACK
+             ================================================= -->
+
+        <button
+            id="backBtn"
+            type="button"
+        >
+            ⬅️ Back
         </button>
 
-
+        
     </div>
 
 
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
+
     <script src="js/database.js"></script>
-    
+
     <script src="js/draft.js"></script>
 
 
@@ -61,3 +158,4 @@
 
 
 </html>
+```

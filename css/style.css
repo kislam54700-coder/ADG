@@ -22,13 +22,22 @@ button {
     cursor: pointer;
 }
 
+button:hover {
+    transform: scale(1.04);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
 .hidden {
     display: none !important;
 }
 
 
 /* =========================================================
-   MAIN CONTAINER
+   CONTAINER
    ========================================================= */
 
 .container {
@@ -68,19 +77,11 @@ button {
     font-size: 16px;
     font-weight: bold;
     margin: 8px;
+
     transition:
         transform 0.2s ease,
         opacity 0.2s ease,
         box-shadow 0.2s ease;
-}
-
-button:hover {
-    transform: scale(1.04);
-}
-
-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
 }
 
 
@@ -96,12 +97,12 @@ button:disabled {
 
 .animeBtn:not(:disabled) {
     background: #ffcc00;
-    color: #111;
+    color: #111111;
 }
 
 .animeBtn:disabled {
-    background: #444;
-    color: #aaa;
+    background: #444444;
+    color: #aaaaaa;
 }
 
 
@@ -112,11 +113,15 @@ button:disabled {
 #characterCard {
     min-height: 140px;
     max-width: 500px;
+
     margin: 25px auto;
     padding: 25px;
+
     border-radius: 16px;
+
     background: #171722;
-    border: 1px solid #333;
+
+    border: 1px solid #333333;
 }
 
 #characterCard h2 {
@@ -134,34 +139,46 @@ button:disabled {
 
 
 /* =========================================================
-   TEAMS
+   TEAM CONTAINER
    ========================================================= */
 
 .team-container {
     display: flex;
+
     justify-content: center;
+
     gap: 30px;
+
     flex-wrap: wrap;
+
     margin-top: 25px;
 }
 
 .team {
     width: 300px;
+
     background: #15151f;
+
     border-radius: 15px;
+
     padding: 20px;
-    border: 1px solid #333;
+
+    border: 1px solid #333333;
 }
 
 .team ul {
     list-style: none;
+
     margin-top: 15px;
 }
 
 .team li {
     padding: 8px;
+
     margin: 5px 0;
+
     background: #22222e;
+
     border-radius: 8px;
 }
 
@@ -172,19 +189,28 @@ button:disabled {
 
 .role-card {
     background: #171722;
-    border: 1px solid #333;
+
+    border: 1px solid #333333;
+
     border-radius: 14px;
+
     padding: 15px;
+
     margin: 12px auto;
+
     max-width: 500px;
 }
 
 .role-select {
     padding: 9px;
+
     border-radius: 8px;
-    background: #222;
+
+    background: #222222;
+
     color: white;
-    border: 1px solid #555;
+
+    border: 1px solid #555555;
 }
 
 
@@ -194,13 +220,17 @@ button:disabled {
 
 .battle-container {
     width: 100%;
+
     max-width: 1400px;
+
     margin: 0 auto;
 }
 
 .battle-title {
     text-align: center;
+
     font-size: 42px;
+
     margin-bottom: 25px;
 }
 
@@ -211,8 +241,11 @@ button:disabled {
 
 #battleStatus {
     text-align: center;
+
     font-size: 25px;
+
     font-weight: bold;
+
     margin: 15px 0;
 }
 
@@ -223,30 +256,43 @@ button:disabled {
 
 .battle-arena {
     display: flex;
+
     align-items: flex-start;
+
     justify-content: center;
+
     gap: 25px;
+
     width: 100%;
 }
 
 .battle-side {
     flex: 1;
+
     min-width: 0;
 }
 
 .player-title {
     text-align: center;
+
     font-size: 25px;
+
     margin-bottom: 15px;
 }
 
 .vs-section {
     min-width: 100px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     font-size: 35px;
+
     font-weight: 900;
+
     padding-top: 50px;
 }
 
@@ -258,7 +304,10 @@ button:disabled {
 #player1Battle,
 #player2Battle {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
     gap: 15px;
 }
 
@@ -269,11 +318,12 @@ button:disabled {
 
 .fighter-card {
     position: relative;
+
     overflow: hidden;
 
     background: #171722;
 
-    border: 2px solid #333;
+    border: 2px solid #333333;
 
     border-radius: 15px;
 
@@ -304,9 +354,10 @@ button:disabled {
 
 .hp-bar {
     width: 100%;
+
     height: 14px;
 
-    background: #333;
+    background: #333333;
 
     border-radius: 20px;
 
@@ -317,6 +368,7 @@ button:disabled {
 
 .hp-fill {
     height: 100%;
+
     width: 100%;
 
     background: #28d45c;
@@ -329,23 +381,18 @@ button:disabled {
 
 
 /* =========================================================
-   LOW HP
-   ========================================================= */
-
-.fighter-card:has(.hp-fill[style*="width:0%"]) {
-    border-color: #555;
-}
-
-
-/* =========================================================
    STATUS EFFECTS
    ========================================================= */
 
 .battle-effects {
     display: flex;
+
     flex-wrap: wrap;
+
     justify-content: center;
+
     gap: 5px;
+
     margin-top: 8px;
 }
 
@@ -363,6 +410,18 @@ button:disabled {
 
 
 /* =========================================================
+   ACTIVE FIGHTER
+   ========================================================= */
+
+.fighter-card.active {
+    border-color: #888888;
+
+    box-shadow:
+        0 0 18px rgba(255, 255, 255, 0.15);
+}
+
+
+/* =========================================================
    DEFEATED
    ========================================================= */
 
@@ -373,25 +432,13 @@ button:disabled {
 
     transform: scale(0.95);
 
-    border-color: #444;
+    border-color: #444444;
 }
 
 
 /* =========================================================
-   ACTIVE / PROTECTING
-   ========================================================= */
-
-.fighter-card.active {
-    border-color: #888;
-
-    box-shadow:
-        0 0 18px rgba(255, 255, 255, 0.15);
-}
-
-
-/* =========================================================
-   PHASE 6
-   ATTACK ANIMATION
+   PHASE 6.1
+   ATTACK
    ========================================================= */
 
 .fighter-card.attacking {
@@ -400,7 +447,6 @@ button:disabled {
 
     z-index: 5;
 }
-
 
 @keyframes attackMove {
 
@@ -424,14 +470,13 @@ button:disabled {
 
 
 /* =========================================================
-   HIT ANIMATION
+   HIT
    ========================================================= */
 
 .fighter-card.hit {
     animation:
         hitShake 0.35s ease;
 }
-
 
 @keyframes hitShake {
 
@@ -459,16 +504,15 @@ button:disabled {
 
 
 /* =========================================================
-   SPECIAL ABILITY
+   SPECIAL
    ========================================================= */
 
 .fighter-card.special {
     animation:
         specialPulse 0.8s ease;
 
-    z-index: 10;
+    z-index: 30;
 }
-
 
 @keyframes specialPulse {
 
@@ -492,16 +536,15 @@ button:disabled {
 
 
 /* =========================================================
-   CRITICAL HIT
+   CRITICAL
    ========================================================= */
 
 .fighter-card.critical {
     animation:
         criticalFlash 0.7s ease;
 
-    z-index: 10;
+    z-index: 30;
 }
-
 
 @keyframes criticalFlash {
 
@@ -533,7 +576,6 @@ button:disabled {
         healPulse 0.8s ease;
 }
 
-
 @keyframes healPulse {
 
     0% {
@@ -563,7 +605,6 @@ button:disabled {
         0 0 20px rgba(255, 255, 255, 0.25);
 }
 
-
 @keyframes shieldPulse {
 
     0% {
@@ -589,7 +630,6 @@ button:disabled {
     animation:
         burnPulse 0.8s infinite alternate;
 }
-
 
 @keyframes burnPulse {
 
@@ -622,11 +662,10 @@ button:disabled {
         stunSpin 0.5s ease;
 }
 
-
 @keyframes stunSpin {
 
     0% {
-        transform: rotate(0deg);
+        transform: rotate(0);
     }
 
     25% {
@@ -642,7 +681,7 @@ button:disabled {
     }
 
     100% {
-        transform: rotate(0deg);
+        transform: rotate(0);
     }
 
 }
@@ -656,6 +695,7 @@ button:disabled {
     position: absolute;
 
     left: 50%;
+
     top: 20px;
 
     transform:
@@ -672,7 +712,6 @@ button:disabled {
     animation:
         damageFloat 0.9s ease forwards;
 }
-
 
 @keyframes damageFloat {
 
@@ -700,7 +739,6 @@ button:disabled {
    ========================================================= */
 
 .damage-number.critical {
-
     font-size: 32px;
 
     font-weight: 900;
@@ -708,7 +746,6 @@ button:disabled {
     animation:
         criticalDamageFloat 1s ease forwards;
 }
-
 
 @keyframes criticalDamageFloat {
 
@@ -742,13 +779,11 @@ button:disabled {
    ========================================================= */
 
 .damage-number.heal {
-
     font-size: 24px;
 
     animation:
         healFloat 0.9s ease forwards;
 }
-
 
 @keyframes healFloat {
 
@@ -766,6 +801,356 @@ button:disabled {
         transform:
             translate(-50%, -50px)
             scale(1.2);
+    }
+
+}
+
+
+/* =========================================================
+   PHASE 6.2
+   ATTACKER HIGHLIGHT
+   ========================================================= */
+
+.fighter-card.attacker-highlight {
+    transform: scale(1.06);
+
+    box-shadow:
+        0 0 25px rgba(255, 255, 255, 0.45);
+
+    z-index: 20;
+}
+
+
+/* =========================================================
+   TARGET HIGHLIGHT
+   ========================================================= */
+
+.fighter-card.target-highlight {
+    box-shadow:
+        0 0 25px rgba(255, 70, 70, 0.65);
+
+    z-index: 19;
+}
+
+
+/* =========================================================
+   PHASE 6.2 SPECIAL
+   ========================================================= */
+
+@keyframes adgSpecial {
+
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.15);
+    }
+
+    60% {
+        transform: scale(1.04);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   PHASE 6.2 CRITICAL
+   ========================================================= */
+
+@keyframes adgCritical {
+
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.15);
+    }
+
+    65% {
+        transform: scale(0.96);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   PHASE 6.2 KO
+   ========================================================= */
+
+.fighter-card.ko {
+    animation:
+        adgKO 0.8s ease forwards;
+}
+
+@keyframes adgKO {
+
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform:
+            scale(1.08)
+            rotate(-3deg);
+
+        opacity: 0.75;
+    }
+
+    100% {
+        transform:
+            scale(0.88);
+
+        opacity: 0.4;
+
+        filter: grayscale(1);
+    }
+
+}
+
+
+/* =========================================================
+   ARENA FLASH
+   ========================================================= */
+
+.adg-arena-flash {
+    position: fixed;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    z-index: 9999;
+
+    animation:
+        adgFlash 0.25s ease;
+}
+
+@keyframes adgFlash {
+
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.22;
+    }
+
+    100% {
+        opacity: 0;
+    }
+
+}
+
+
+/* =========================================================
+   BATTLE ANNOUNCEMENT
+   ========================================================= */
+
+.adg-announcement {
+    position: fixed;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.5);
+
+    padding: 18px 35px;
+
+    background:
+        rgba(10, 10, 18, 0.95);
+
+    border: 2px solid white;
+
+    border-radius: 16px;
+
+    font-size: 32px;
+
+    font-weight: 900;
+
+    text-align: center;
+
+    z-index: 10000;
+
+    pointer-events: none;
+
+    animation:
+        adgAnnouncement 1.1s ease forwards;
+}
+
+@keyframes adgAnnouncement {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.5);
+    }
+
+    25% {
+        opacity: 1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.15);
+    }
+
+    65% {
+        opacity: 1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.05);
+    }
+
+}
+
+
+/* =========================================================
+   ATTACK IMPACT
+   ========================================================= */
+
+.adg-attack-impact {
+    position: fixed;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.3);
+
+    font-size: 65px;
+
+    font-weight: 900;
+
+    pointer-events: none;
+
+    z-index: 10001;
+
+    animation:
+        adgImpact 0.55s ease forwards;
+}
+
+@keyframes adgImpact {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.3);
+    }
+
+    35% {
+        opacity: 1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.5);
+    }
+
+}
+
+
+/* =========================================================
+   SPECIAL BANNER
+   ========================================================= */
+
+.adg-special-banner {
+    position: fixed;
+
+    left: 50%;
+    bottom: 12%;
+
+    transform:
+        translateX(-50%)
+        scale(0.7);
+
+    padding: 12px 25px;
+
+    background:
+        rgba(0, 0, 0, 0.92);
+
+    border: 2px solid white;
+
+    border-radius: 12px;
+
+    font-size: 24px;
+
+    font-weight: 900;
+
+    text-align: center;
+
+    z-index: 10000;
+
+    pointer-events: none;
+
+    animation:
+        adgSpecialBanner 1.2s ease forwards;
+}
+
+@keyframes adgSpecialBanner {
+
+    0% {
+        opacity: 0;
+
+        transform:
+            translateX(-50%)
+            scale(0.7);
+    }
+
+    25% {
+        opacity: 1;
+
+        transform:
+            translateX(-50%)
+            scale(1.1);
+    }
+
+    70% {
+        opacity: 1;
+
+        transform:
+            translateX(-50%)
+            scale(1);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translateX(-50%)
+            scale(1);
     }
 
 }
@@ -790,13 +1175,12 @@ button:disabled {
 
     background: #11111a;
 
-    border: 1px solid #333;
+    border: 1px solid #333333;
 
     border-radius: 15px;
 
     text-align: left;
 }
-
 
 #battleLog p {
     padding: 6px 8px;
@@ -808,13 +1192,13 @@ button:disabled {
 
 
 /* =========================================================
-   START BATTLE BUTTON
+   START BATTLE
    ========================================================= */
 
 #startBattleBtn {
     background: #ffcc00;
 
-    color: #111;
+    color: #111111;
 
     font-size: 20px;
 
@@ -823,7 +1207,6 @@ button:disabled {
     margin: 20px auto;
 }
 
-
 #startBattleBtn:hover {
     box-shadow:
         0 0 20px rgba(255, 204, 0, 0.35);
@@ -831,25 +1214,78 @@ button:disabled {
 
 
 /* =========================================================
-   VICTORY
+   VICTORY OVERLAY
    ========================================================= */
 
-.battle-victory {
+.adg-victory-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        rgba(0, 0, 0, 0.82);
+
+    z-index: 20000;
 
     animation:
-        victoryPulse 1s infinite alternate;
-
+        adgVictoryOverlay 0.5s ease;
 }
 
+.adg-victory-box {
+    text-align: center;
 
-@keyframes victoryPulse {
+    padding: 40px 55px;
+
+    background: #15151f;
+
+    border: 2px solid white;
+
+    border-radius: 20px;
+
+    animation:
+        adgVictoryBox 0.8s ease;
+}
+
+.adg-victory-box h1 {
+    font-size: 48px;
+
+    margin-bottom: 15px;
+}
+
+.adg-victory-box p {
+    font-size: 22px;
+}
+
+@keyframes adgVictoryOverlay {
 
     from {
-        transform: scale(1);
+        opacity: 0;
     }
 
     to {
-        transform: scale(1.06);
+        opacity: 1;
+    }
+
+}
+
+@keyframes adgVictoryBox {
+
+    0% {
+        transform: scale(0.5);
+    }
+
+    60% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
     }
 
 }
@@ -860,7 +1296,7 @@ button:disabled {
    ========================================================= */
 
 .back-btn {
-    background: #333;
+    background: #333333;
 
     color: white;
 }
@@ -874,11 +1310,13 @@ button:disabled {
 
     .battle-arena {
         flex-direction: column;
+
         align-items: stretch;
     }
 
     .vs-section {
         padding: 10px 0;
+
         min-width: auto;
     }
 
@@ -891,7 +1329,7 @@ button:disabled {
 }
 
 
-@media (max-width: 550px) {
+@media (max-width: 600px) {
 
     body {
         padding: 10px;
@@ -912,6 +1350,412 @@ button:disabled {
 
     .fighter-card {
         min-height: 160px;
+    }
+
+    .adg-announcement {
+        font-size: 24px;
+
+        padding: 15px 25px;
+    }
+
+    .adg-attack-impact {
+        font-size: 50px;
+    }
+
+    .adg-special-banner {
+        font-size: 19px;
+
+        width: 90%;
+    }
+
+    .adg-victory-box {
+        width: 90%;
+
+        padding: 30px 20px;
+    }
+
+    .adg-victory-box h1 {
+        font-size: 36px;
+    }
+
+}
+```
+```css
+/* =========================================================
+   PHASE 6.3 — BATTLE RESULT SCREEN
+   Add this at the VERY BOTTOM of style.css
+   ========================================================= */
+
+.battle-result {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.88);
+
+    overflow-y: auto;
+}
+
+
+/* Hidden result screen */
+
+.battle-result.hidden {
+    display: none;
+}
+
+
+/* =========================================================
+   RESULT BOX
+   ========================================================= */
+
+.result-box {
+    width: min(1100px, 95vw);
+
+    max-height: 95vh;
+
+    overflow-y: auto;
+
+    padding: 30px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #111827,
+            #1f2937
+        );
+
+    border: 2px solid rgba(255, 215, 0, 0.5);
+
+    box-shadow:
+        0 0 40px rgba(255, 215, 0, 0.18),
+        0 20px 60px rgba(0, 0, 0, 0.7);
+
+    text-align: center;
+
+    animation: resultAppear 0.45s ease-out;
+}
+
+
+@keyframes resultAppear {
+
+    from {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.result-title {
+    font-size: clamp(28px, 5vw, 48px);
+
+    font-weight: 900;
+
+    margin-bottom: 15px;
+
+    letter-spacing: 2px;
+}
+
+
+.winner-text {
+    font-size: clamp(24px, 4vw, 38px);
+
+    font-weight: 900;
+
+    margin: 10px 0 15px;
+
+    text-shadow:
+        0 0 15px rgba(255, 215, 0, 0.45);
+}
+
+
+.result-summary {
+    margin-bottom: 25px;
+
+    font-size: 16px;
+
+    opacity: 0.85;
+}
+
+
+/* =========================================================
+   TEAM RESULTS
+   ========================================================= */
+
+.result-teams {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+
+    margin-top: 20px;
+}
+
+
+.result-team {
+    padding: 20px;
+
+    border-radius: 16px;
+
+    background: rgba(255, 255, 255, 0.05);
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+.result-team h2 {
+    margin-top: 0;
+
+    margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   CHARACTER RESULT ROW
+   ========================================================= */
+
+.result-character {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 10px 12px;
+
+    margin: 8px 0;
+
+    border-radius: 10px;
+
+    background: rgba(0, 0, 0, 0.25);
+
+    text-align: left;
+
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+}
+
+
+.result-character:hover {
+    transform: translateX(4px);
+}
+
+
+.result-character.ko {
+    opacity: 0.45;
+
+    text-decoration: line-through;
+}
+
+
+.result-character-name {
+    font-weight: 700;
+}
+
+
+.result-character-hp {
+    white-space: nowrap;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   MVP
+   ========================================================= */
+
+.mvp-section {
+    margin-top: 25px;
+
+    padding: 20px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 215, 0, 0.12),
+            rgba(255, 255, 255, 0.04)
+        );
+
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+
+.mvp-section h2 {
+    margin-top: 0;
+}
+
+
+#mvpResult {
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   BATTLE STATISTICS
+   ========================================================= */
+
+.battle-result-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-top: 25px;
+}
+
+
+.result-stat {
+    padding: 15px;
+
+    border-radius: 12px;
+
+    background: rgba(255, 255, 255, 0.06);
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+.result-stat span {
+    display: block;
+
+    font-size: 13px;
+
+    opacity: 0.7;
+
+    margin-bottom: 6px;
+}
+
+
+.result-stat strong {
+    display: block;
+
+    font-size: 24px;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   RESULT BUTTONS
+   ========================================================= */
+
+.result-actions {
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 30px;
+}
+
+
+.result-btn {
+    border: none;
+
+    border-radius: 10px;
+
+    padding: 12px 22px;
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+}
+
+
+.result-btn:hover {
+    transform: translateY(-2px);
+
+    opacity: 0.9;
+}
+
+
+.result-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .result-box {
+        padding: 20px;
+
+        width: 96vw;
+    }
+
+
+    .result-teams {
+        grid-template-columns: 1fr;
+    }
+
+
+    .battle-result-stats {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .result-character {
+        padding: 9px;
+    }
+
+}
+
+
+@media (max-width: 420px) {
+
+    .battle-result-stats {
+        grid-template-columns: 1fr;
+    }
+
+
+    .result-actions {
+        flex-direction: column;
+    }
+
+
+    .result-btn {
+        width: 100%;
     }
 
 }
