@@ -2197,14 +2197,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!target) {
                 return;
-            }
+             }
 
 
-            fighter.specialUsed =
+             fighter.specialUsed =
                 true;
 
 
-            const damage =
+             const damage =
 
                 Math.floor(
 
@@ -2215,7 +2215,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-            applyDamage(
+             applyDamage(
 
                 target,
 
@@ -2225,13 +2225,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 "Meteor Volcano"
 
-            );
+             );
 
 
-            if (
+             if (
                 target.hp > 0 &&
                 target.alive
-            ) {
+             ) {
 
                 target.burn =
                     Math.max(
@@ -2243,33 +2243,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             logBattle(
+    `🔥 ${fighter.name} used ` +
+    `Meteor Volcano! 🔥 ` +
+    `${damage} damage + Burn!`
+);
 
-                `🌋 ${fighter.name} used ` +
-                `Meteor Volcano! 🔥 ` +
-                `${damage} damage + Burn!`
+return;
+}
 
-            );
+// ============================================
+// KIZARU - YASAKANI NO MAGATAMA
+// ============================================
 
-            return;
+if (
+    name === "kizaru" &&
+    round >= 3
+) {
 
-        }
-
-
-        // =====================================================
-        // KIZARU — YASAKANI NO MAGATAMA
-        // =====================================================
-
-        if (
-            (
-                name === "kizaru" &&
-              round >= 3
-        ) {
-
-            const target =
-                chooseTarget(
-                    enemyTeam
-                );
-
+           const target =
+         chooseTarget(
+            enemyTeam
+        );
 
             if (!target) {
                 return;
