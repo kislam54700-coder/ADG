@@ -126,33 +126,41 @@ const ONE_PIECE_CHARACTERS = [
 
 
 // ============================================================
-// IMAGE NAME CONVERTER
+// LOCAL CHARACTER IMAGES
 // ============================================================
+//
+// Only Luffy, Zoro and Sanji for our first test.
+// We will add the other characters after this works.
+//
 
-function characterImageName(character) {
+const CHARACTER_IMAGES = {
 
-    return character
-        .toLowerCase()
-        .replace(/'/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-}
+    "Luffy":
+        "assets/characters/one-piece/luffy.jpg",
+
+    "Zoro":
+        "assets/characters/one-piece/zoro.jpg",
+
+    "Sanji":
+        "assets/characters/one-piece/sanji.jpg"
+
+};
 
 
 // ============================================================
-// CHARACTER IMAGE
+// GET CHARACTER IMAGE
 // ============================================================
 
 function getCharacterImage(character) {
 
-    const filename = characterImageName(character);
+    return CHARACTER_IMAGES[character] || "";
 
-    return `https://onepiece.fandom.com/wiki/Special:Redirect/file/${filename}.png`;
+
 }
 
 
 // ============================================================
-// CHARACTER DATA
+// GET CHARACTER DATA
 // ============================================================
 
 function getCharacterData(character) {
@@ -161,6 +169,7 @@ function getCharacterData(character) {
         name: character,
         image: getCharacterImage(character)
     };
+
 }
 
 
@@ -174,37 +183,3 @@ window.getCharacterImage = getCharacterImage;
 
 window.getCharacterData = getCharacterData;
 
-// ============================================================
-// ADG CHARACTER IMAGE SYSTEM - TEST
-// Luffy / Zoro / Sanji
-// ============================================================
-
-const CHARACTER_IMAGES = {
-
-    "Luffy":
-        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Monkey_D._Luffy_Anime_Post_Timeskip_Infobox.png",
-
-    "Zoro":
-        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Roronoa_Zoro_Anime_Post_Timeskip_Infobox.png",
-
-    "Sanji":
-        "https://onepiece.fandom.com/wiki/Special:Redirect/file/Sanji_Anime_Post_Timeskip_Infobox.png"
-
-};
-
-
-// ============================================================
-// GET CHARACTER IMAGE
-// ============================================================
-
-function getCharacterImage(character) {
-
-    return CHARACTER_IMAGES[character] || "";
-}
-
-
-// ============================================================
-// EXPORT
-// ============================================================
-
-window.getCharacterImage = getCharacterImage;
