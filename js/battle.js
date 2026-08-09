@@ -6,22 +6,34 @@ document.addEventListener("DOMContentLoaded", () => {
     // Anime Draft Game
     // =========================================================
     //
-    // Features:
-    // - Faster battle speed
-    // - Hidden database stats during battle
-    // - Database.js compatibility
-    // - Role abilities
-    // - Character special abilities
-    // - Status effects
-    // - AI battle
-    // - Battle history
-    // - 50 round maximum
-    // - Rematch button
-    // - Post-battle Character Details
+    // FEATURES
+    // ---------------------------------------------------------
+    // • Faster battle speed
+    // • Database.js compatibility
+    // • Original database stats preserved
+    // • Hidden stats during battle
+    // • Role bonuses
+    // • Role abilities
+    // • Character special abilities
+    // • Status effects
+    // • AI battle system
+    // • 50 round maximum
+    // • Battle history
+    // • Rematch support
+    // • Post-battle Character Details support
     //
-    // IMPORTANT:
-    // Character database stats are NOT displayed during battle.
-    // They are revealed only after battle through Character Details.
+    // IMPORTANT
+    // ---------------------------------------------------------
+    // database.js contains the ORIGINAL hidden character stats.
+    //
+    // The original stats are copied into:
+    //
+    //      fighter.baseDatabaseStats
+    //
+    // before any role bonus, buff, damage, or battle effect.
+    //
+    // Therefore Character Details can reveal the EXACT original
+    // database values after battle.
     // =========================================================
 
 
@@ -46,27 +58,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // BATTLE SETTINGS
+    // SETTINGS
     // =========================================================
 
     const MAX_ROUNDS = 50;
 
-    // Faster battle speed
+    /*
+     * Faster battle settings.
+     *
+     * Change these numbers if you want the battle even faster.
+     */
     const SPEED = {
         announcement: 350,
-        action: 180,
-        attack: 220,
-        ability: 250,
-        special: 350,
-        round: 300,
-        nextRound: 400,
-        start: 500,
-        ko: 180
+        ability: 180,
+        special: 300,
+        attack: 180,
+        knockout: 180,
+        turn: 120,
+        round: 250,
+        battleStart: 400,
+        nextRound: 300
     };
 
 
     // =========================================================
-    // DEFAULT COMBAT STATS
+    // BASE STATS
     // =========================================================
 
     const BASE_HP = 1000;
@@ -76,93 +92,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // LOAD TEAMS
+    // BATTLE STATISTICS
     // =========================================================
-
-    let player1Team = [];
-    let player2Team = [];
-
-    let player1Roles = {};
-    let player2Roles = {};
-
-
-    try {
-
-        player1Team = JSON.parse(
-            localStorage.getItem("player1Team") || "[]"
-        );
-
-        player2Team = JSON.parse(
-            localStorage.getItem("player2Team") || "[]"
-        );
-
-        player1Roles = JSON.parse(
-            localStorage.getItem("player1Roles") || "{}"
-        );
-
-        player2Roles = JSON.parse(
-            localStorage.getItem("player2Roles") || "{}"
-        );
-
-    } catch (error) {
-
-        console.error(
-            "ADG: Unable to load battle data:",
-            error
-        );
-    }
-
-
-    if (!Array.isArray(player1Team)) {
-        player1Team = [];
-    }
-
-    if (!Array.isArray(player2Team)) {
-        player2Team = [];
-    }
-
-    if (
-        !player1Roles ||
-        typeof player1Roles !== "object"
-    ) {
-        player1Roles = {};
-    }
-
-    if (
-        !player2Roles ||
-        typeof player2Roles !== "object"
-    ) {
-        player2Roles = {};
-    }
-
-
-    // =========================================================
-    // BATTLE STATE
-    // =========================================================
-
-    let player1Fighters = [];
-    let player2Fighters = [];
-
-    let round = 1;
-
-    let battleRunning = false;
-
-    let roundTimer = null;
-
-    let resultShown = false;
-
 
     const battleStatsDefault = {
-
         totalDamage: 0,
-
         totalKOs: 0,
-
         totalSpecials: 0,
-
         completedRounds: 0
     };
-
 
     let battleStats = {
         ...battleStatsDefault
@@ -170,207 +108,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // UTILITY
+    // BATTLE STATE
+    // =========================================================
+
+    let round = 1;
+
+    let battleRunning = false;
+
+    let roundTimer = null;
+
+    let battleFinished = false;
+
+
+    // =========================================================
+    // FIGHTER ARRAYS
+    // =========================================================
+
+    let player1Fighters = [];
+
+    let player2Fighters = [];
+
+
+    // =========================================================
+    // SLEEP
     // =========================================================
 
     const sleep = ms =>
         new Promise(resolve =>
             setTimeout(resolve, ms)
         );
-
-
-    function escapeHtml(value) {
-
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-
-    function normalizeName(name) {
-
-        return String(name || "")
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, " ");
-    }
-
-
-    // =========================================================
-    // DATABASE CONNECTION
-    // =========================================================
-    //
-    // database.js may expose:
-    //
-    // ONE_PIECE_CHARACTERS
-    //
-    // or:
-    //
-    // characters
-    //
-    // or:
-    //
-    // CHARACTER_DATABASE
-    //
-    // This function supports all three.
-    // =========================================================
-
-    function getDatabaseCharacters() {
-
-        if (
-            typeof ONE_PIECE_CHARACTERS !== "undefined" &&
-            Array.isArray(ONE_PIECE_CHARACTERS)
-        ) {
-
-            return ONE_PIECE_CHARACTERS;
-        }
-
-        if (
-            typeof characters !== "undefined" &&
-            Array.isArray(characters)
-        ) {
-
-            return characters;
-        }
-
-        if (
-            typeof CHARACTER_DATABASE !== "undefined" &&
-            Array.isArray(CHARACTER_DATABASE)
-        ) {
-
-            return CHARACTER_DATABASE;
-        }
-
-        return [];
-    }
-
-
-    function findDatabaseCharacter(name) {
-
-        const database =
-            getDatabaseCharacters();
-
-        const wanted =
-            normalizeName(name);
-
-        return database.find(character => {
-
-            if (
-                typeof character === "string"
-            ) {
-
-                return normalizeName(character) === wanted;
-            }
-
-            if (
-                character &&
-                typeof character === "object"
-            ) {
-
-                return normalizeName(
-                    character.name ||
-                    character.character ||
-                    character.id
-                ) === wanted;
-            }
-
-            return false;
-        }) || null;
-    }
-
-
-    // =========================================================
-    // DATABASE STAT EXTRACTION
-    // =========================================================
-
-    function getDatabaseStats(name) {
-
-        const databaseCharacter =
-            findDatabaseCharacter(name);
-
-        if (
-            !databaseCharacter ||
-            typeof databaseCharacter !== "object"
-        ) {
-
-            return null;
-        }
-
-        /*
-         * Supports different database formats.
-         */
-
-        const stats =
-            databaseCharacter.stats ||
-            databaseCharacter.baseStats ||
-            databaseCharacter.hiddenStats ||
-            databaseCharacter;
-
-
-        return {
-
-            hp:
-                Number(
-                    stats.hp ??
-                    stats.HP ??
-                    stats.health ??
-                    BASE_HP
-                ),
-
-            attack:
-                Number(
-                    stats.attack ??
-                    stats.ATK ??
-                    stats.power ??
-                    BASE_ATTACK
-                ),
-
-            defense:
-                Number(
-                    stats.defense ??
-                    stats.DEF ??
-                    stats.armor ??
-                    BASE_DEFENSE
-                ),
-
-            speed:
-                Number(
-                    stats.speed ??
-                    stats.SPD ??
-                    stats.agility ??
-                    BASE_SPEED
-                ),
-
-            power:
-                stats.power,
-
-            intelligence:
-                stats.intelligence ??
-                stats.int,
-
-            stamina:
-                stats.stamina,
-
-            haki:
-                stats.haki,
-
-            durability:
-                stats.durability,
-
-            ability:
-                databaseCharacter.ability ||
-                databaseCharacter.special ||
-                databaseCharacter.specialAbility ||
-                null,
-
-            description:
-                databaseCharacter.description ||
-                null
-        };
-    }
 
 
     // =========================================================
@@ -391,9 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             "Support": "⭐",
 
-            "Wildcard": "☠️",
+            "Wildcard": "☠️"
 
-            "Traitor": "☠️"
         };
 
         return emojis[role] || "🔥";
@@ -401,18 +166,358 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
+    // DATABASE ACCESS
+    // =========================================================
+    //
+    // database.js may expose its data using different names.
+    //
+    // This function tries the common ADG database structures.
+    // =========================================================
+
+    function getDatabaseCharacter(name) {
+
+        const targetName =
+            String(name || "")
+                .trim()
+                .toLowerCase();
+
+        if (!targetName) {
+            return null;
+        }
+
+
+        // -----------------------------------------------------
+        // ONE_PIECE_CHARACTERS
+        // -----------------------------------------------------
+
+        if (
+            typeof window.ONE_PIECE_CHARACTERS !==
+            "undefined" &&
+            Array.isArray(
+                window.ONE_PIECE_CHARACTERS
+            )
+        ) {
+
+            const found =
+                window.ONE_PIECE_CHARACTERS.find(
+                    character =>
+                        String(
+                            typeof character === "string"
+                                ? character
+                                : character.name || ""
+                        )
+                            .trim()
+                            .toLowerCase() ===
+                        targetName
+                );
+
+            if (found) {
+                return found;
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // ADG DATABASE ARRAYS
+        // -----------------------------------------------------
+
+        const possibleArrays = [
+
+            window.CHARACTERS,
+
+            window.characterDatabase,
+
+            window.characterDatabaseData,
+
+            window.ADG_DATABASE,
+
+            window.ADG_DATABASE_CHARACTERS,
+
+            window.ONE_PIECE_DATABASE
+
+        ];
+
+
+        for (
+            const database
+            of possibleArrays
+        ) {
+
+            if (
+                Array.isArray(database)
+            ) {
+
+                const found =
+                    database.find(
+                        character =>
+                            String(
+                                typeof character === "string"
+                                    ? character
+                                    : character.name || ""
+                            )
+                                .trim()
+                                .toLowerCase() ===
+                            targetName
+                    );
+
+                if (found) {
+                    return found;
+                }
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // OBJECT DATABASES
+        // -----------------------------------------------------
+
+        const possibleObjects = [
+
+            window.CHARACTER_DATABASE,
+
+            window.ADG_DATABASE,
+
+            window.database,
+
+            window.characterData
+
+        ];
+
+
+        for (
+            const database
+            of possibleObjects
+        ) {
+
+            if (
+                database &&
+                typeof database === "object" &&
+                !Array.isArray(database)
+            ) {
+
+                const direct =
+                    database[name];
+
+                if (direct) {
+                    return direct;
+                }
+
+
+                const key =
+                    Object.keys(database)
+                        .find(
+                            databaseName =>
+                                databaseName
+                                    .trim()
+                                    .toLowerCase() ===
+                                targetName
+                        );
+
+
+                if (key) {
+                    return database[key];
+                }
+
+
+                if (
+                    Array.isArray(
+                        database.characters
+                    )
+                ) {
+
+                    const found =
+                        database.characters.find(
+                            character =>
+                                String(
+                                    character.name || ""
+                                )
+                                    .trim()
+                                    .toLowerCase() ===
+                                targetName
+                        );
+
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        }
+
+
+        return null;
+    }
+
+
+    // =========================================================
+    // CLONE DATABASE STATS
+    // =========================================================
+
+    function cloneDatabaseStats(
+        character
+    ) {
+
+        if (
+            !character ||
+            typeof character !== "object"
+        ) {
+
+            return null;
+        }
+
+
+        /*
+         * Keep the original database object untouched.
+         *
+         * JSON cloning prevents battle calculations from
+         * modifying database.js values.
+         */
+
+        try {
+
+            return JSON.parse(
+                JSON.stringify(character)
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Unable to clone database stats:",
+                error
+            );
+
+            return {
+                ...character
+            };
+        }
+    }
+
+
+    // =========================================================
+    // EXTRACT ORIGINAL STATS
+    // =========================================================
+
+    function getOriginalStats(
+        databaseCharacter
+    ) {
+
+        if (
+            !databaseCharacter ||
+            typeof databaseCharacter !== "object"
+        ) {
+
+            return {
+
+                hp: BASE_HP,
+
+                attack: BASE_ATTACK,
+
+                defense: BASE_DEFENSE,
+
+                speed: BASE_SPEED
+
+            };
+        }
+
+
+        /*
+         * Support both direct stats and nested stats.
+         */
+
+        const source =
+            databaseCharacter.stats &&
+            typeof databaseCharacter.stats === "object"
+
+                ? databaseCharacter.stats
+
+                : databaseCharacter;
+
+
+        const hp =
+            Number(
+                source.hp ??
+                source.HP ??
+                source.health ??
+                source.Health ??
+                BASE_HP
+            );
+
+
+        const attack =
+            Number(
+                source.attack ??
+                source.Attack ??
+                source.atk ??
+                source.ATK ??
+                BASE_ATTACK
+            );
+
+
+        const defense =
+            Number(
+                source.defense ??
+                source.Defense ??
+                source.def ??
+                source.DEF ??
+                BASE_DEFENSE
+            );
+
+
+        const speed =
+            Number(
+                source.speed ??
+                source.Speed ??
+                source.spd ??
+                source.SPD ??
+                BASE_SPEED
+            );
+
+
+        return {
+
+            hp:
+                Number.isFinite(hp)
+                    ? hp
+                    : BASE_HP,
+
+            attack:
+                Number.isFinite(attack)
+                    ? attack
+                    : BASE_ATTACK,
+
+            defense:
+                Number.isFinite(defense)
+                    ? defense
+                    : BASE_DEFENSE,
+
+            speed:
+                Number.isFinite(speed)
+                    ? speed
+                    : BASE_SPEED
+
+        };
+    }
+
+
+    // =========================================================
     // ROLE BONUS
     // =========================================================
 
-    function applyRoleBonus(fighter) {
+    function applyRoleBonus(
+        fighter
+    ) {
 
-        switch (fighter.role) {
+        switch (
+            fighter.role
+        ) {
 
             case "Captain":
 
                 fighter.hp *= 1.20;
+
                 fighter.attack *= 1.20;
+
                 fighter.defense *= 1.20;
+
                 fighter.speed *= 1.20;
 
                 break;
@@ -421,8 +526,11 @@ document.addEventListener("DOMContentLoaded", () => {
             case "Vice Captain":
 
                 fighter.hp *= 1.10;
+
                 fighter.attack *= 1.10;
+
                 fighter.defense *= 1.10;
+
                 fighter.speed *= 1.10;
 
                 break;
@@ -431,6 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
             case "Tank":
 
                 fighter.hp *= 1.30;
+
                 fighter.defense *= 1.30;
 
                 break;
@@ -451,11 +560,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             case "Wildcard":
-            case "Traitor":
 
                 fighter.attack *= 1.25;
 
                 break;
+
         }
     }
 
@@ -469,23 +578,58 @@ document.addEventListener("DOMContentLoaded", () => {
         role
     ) {
 
-        const databaseStats =
-            getDatabaseStats(name);
+        const characterName =
+            String(
+                typeof name === "string"
+                    ? name
+                    : name?.name || "Unknown"
+            );
+
+
+        const databaseCharacter =
+            getDatabaseCharacter(
+                characterName
+            );
+
+
+        const originalStats =
+            getOriginalStats(
+                databaseCharacter
+            );
 
 
         /*
-         * Database stats are the hidden source.
+         * =====================================================
+         * CRITICAL v7.4
+         * =====================================================
          *
-         * If database stats exist,
-         * they are used internally.
+         * Save the exact ORIGINAL database values BEFORE
+         * applying role bonuses.
          *
-         * Players cannot see them during battle.
+         * Character Details uses this object.
          */
+
+        const baseDatabaseStats = {
+
+            hp:
+                originalStats.hp,
+
+            attack:
+                originalStats.attack,
+
+            defense:
+                originalStats.defense,
+
+            speed:
+                originalStats.speed
+
+        };
+
 
         const fighter = {
 
             name:
-                String(name || "Unknown"),
+                characterName,
 
             role:
                 role || "Wildcard",
@@ -497,91 +641,128 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             // -------------------------------------------------
-            // INTERNAL BASE STATS
+            // ORIGINAL HIDDEN DATABASE DATA
             // -------------------------------------------------
 
             baseDatabaseStats:
-                databaseStats,
+                baseDatabaseStats,
 
+            databaseData:
+                cloneDatabaseStats(
+                    databaseCharacter
+                ),
+
+
+            // -------------------------------------------------
+            // BATTLE STATS
+            // -------------------------------------------------
 
             hp:
-                databaseStats?.hp ||
-                BASE_HP,
+                originalStats.hp,
 
             maxHp:
-                databaseStats?.hp ||
-                BASE_HP,
+                originalStats.hp,
 
             attack:
-                databaseStats?.attack ||
-                BASE_ATTACK,
+                originalStats.attack,
 
             defense:
-                databaseStats?.defense ||
-                BASE_DEFENSE,
+                originalStats.defense,
 
             speed:
-                databaseStats?.speed ||
-                BASE_SPEED,
+                originalStats.speed,
 
 
             // -------------------------------------------------
-            // STATUS
+            // STATE
             // -------------------------------------------------
 
-            alive: true,
+            alive:
+                true,
 
-            abilityUsed: false,
+            abilityUsed:
+                false,
 
-            specialUsed: false,
+            specialUsed:
+                false,
 
-            specialCount: 0,
+            specialCount:
+                0,
 
-            koShown: false,
+            koShown:
+                false,
 
-            lastCritical: false,
+            lastCritical:
+                false,
 
-            criticalChance: 0.15,
+            criticalChance:
+                0.15,
 
-            assistReady: true,
+            assistReady:
+                true,
 
-            protecting: false,
+            protecting:
+                false,
 
-            protectedBy: null,
+            protectedBy:
+                null,
 
-            burn: 0,
 
-            bleed: 0,
+            // -------------------------------------------------
+            // STATUS EFFECTS
+            // -------------------------------------------------
 
-            stun: 0,
+            burn:
+                0,
 
-            freeze: 0,
+            bleed:
+                0,
 
-            shield: 0,
+            stun:
+                0,
 
-            regeneration: 0,
+            freeze:
+                0,
+
+            shield:
+                0,
+
+            regeneration:
+                0,
 
 
             // -------------------------------------------------
             // BUFFS
             // -------------------------------------------------
 
-            attackBuff: 1,
+            attackBuff:
+                1,
 
-            defenseBuff: 1,
+            defenseBuff:
+                1,
 
-            speedBuff: 1,
+            speedBuff:
+                1,
 
 
             // -------------------------------------------------
             // PERFORMANCE
             // -------------------------------------------------
 
-            damageDealt: 0,
+            damageDealt:
+                0,
 
-            kos: 0
+            kos:
+                0
+
         };
 
+
+        /*
+         * Apply role bonus ONLY to battle stats.
+         *
+         * baseDatabaseStats remains unchanged.
+         */
 
         applyRoleBonus(
             fighter
@@ -597,54 +778,225 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // BUILD TEAMS
+    // LOAD PLAYER DATA
     // =========================================================
 
-    function buildFighterTeams() {
+    let player1Team = [];
 
-        player1Fighters =
-            player1Team.map(
-                character =>
-                    createFighter(
-                        character,
-                        player1Roles[character]
-                    )
+    let player2Team = [];
+
+    let player1Roles = {};
+
+    let player2Roles = {};
+
+
+    try {
+
+        player1Team =
+            JSON.parse(
+                localStorage.getItem(
+                    "player1Team"
+                ) || "[]"
             );
 
 
-        player2Fighters =
-            player2Team.map(
-                character =>
-                    createFighter(
-                        character,
-                        player2Roles[character]
-                    )
+        player2Team =
+            JSON.parse(
+                localStorage.getItem(
+                    "player2Team"
+                ) || "[]"
             );
+
+
+        player1Roles =
+            JSON.parse(
+                localStorage.getItem(
+                    "player1Roles"
+                ) || "{}"
+            );
+
+
+        player2Roles =
+            JSON.parse(
+                localStorage.getItem(
+                    "player2Roles"
+                ) || "{}"
+            );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load battle data:",
+            error
+        );
+
     }
 
 
-    buildFighterTeams();
+    if (
+        !Array.isArray(
+            player1Team
+        )
+    ) {
+
+        player1Team = [];
+
+    }
+
+
+    if (
+        !Array.isArray(
+            player2Team
+        )
+    ) {
+
+        player2Team = [];
+
+    }
+
+
+    if (
+        !player1Roles ||
+        typeof player1Roles !== "object"
+    ) {
+
+        player1Roles = {};
+
+    }
+
+
+    if (
+        !player2Roles ||
+        typeof player2Roles !== "object"
+    ) {
+
+        player2Roles = {};
+
+    }
+
+
+    // =========================================================
+    // CREATE FIGHTER TEAMS
+    // =========================================================
+
+    player1Fighters =
+        player1Team.map(
+            character =>
+                createFighter(
+                    character,
+                    player1Roles[
+                        typeof character === "string"
+                            ? character
+                            : character.name
+                    ]
+                )
+        );
+
+
+    player2Fighters =
+        player2Team.map(
+            character =>
+                createFighter(
+                    character,
+                    player2Roles[
+                        typeof character === "string"
+                            ? character
+                            : character.name
+                    ]
+                )
+        );
+
+
+    // =========================================================
+    // EXPOSE FIGHTERS FOR game.html
+    // =========================================================
+
+    window.adgBattle = {
+
+        getPlayer1Fighters:
+            () =>
+                player1Fighters,
+
+        getPlayer2Fighters:
+            () =>
+                player2Fighters,
+
+        getBattleStats:
+            () =>
+                battleStats,
+
+        startBattle:
+            () =>
+                startBattle(),
+
+        rematch:
+            () =>
+                startBattle()
+
+    };
+
+
+    // =========================================================
+    // HTML SAFETY
+    // =========================================================
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
 
 
     // =========================================================
     // LOGGING
     // =========================================================
 
-    function logBattle(message) {
+    function logBattle(
+        message
+    ) {
 
         if (!battleLog) {
             return;
         }
 
+
         const line =
-            document.createElement("p");
+            document.createElement(
+                "p"
+            );
+
 
         line.innerHTML =
             message;
 
+
         battleLog.appendChild(
             line
         );
+
 
         battleLog.scrollTop =
             battleLog.scrollHeight;
@@ -655,7 +1007,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // TEAM HELPERS
     // =========================================================
 
-    function getAliveFighters(team) {
+    function getAliveFighters(
+        team
+    ) {
 
         return team.filter(
             fighter =>
@@ -666,22 +1020,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    function isTeamDefeated(team) {
+    function isTeamDefeated(
+        team
+    ) {
 
         return (
-            getAliveFighters(team).length === 0
+            getAliveFighters(
+                team
+            ).length === 0
         );
     }
 
 
-    function chooseTarget(team) {
+    function chooseTarget(
+        team
+    ) {
 
         const alive =
-            getAliveFighters(team);
+            getAliveFighters(
+                team
+            );
 
-        if (!alive.length) {
+
+        if (
+            alive.length === 0
+        ) {
+
             return null;
         }
+
 
         return alive[
             Math.floor(
@@ -692,60 +1059,73 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    function chooseLowestHP(team) {
+    function chooseLowestHP(
+        team
+    ) {
 
         const alive =
-            getAliveFighters(team);
+            getAliveFighters(
+                team
+            );
 
-        if (!alive.length) {
+
+        if (
+            alive.length === 0
+        ) {
+
             return null;
         }
 
-        return [...alive].sort(
+
+        return [
+            ...alive
+        ].sort(
             (a, b) =>
-                a.hp / a.maxHp -
-                b.hp / b.maxHp
+                (
+                    a.hp /
+                    a.maxHp
+                ) -
+                (
+                    b.hp /
+                    b.maxHp
+                )
         )[0];
     }
 
 
-    function chooseAITarget(team) {
+    function chooseAITarget(
+        team
+    ) {
 
         const alive =
-            getAliveFighters(team);
+            getAliveFighters(
+                team
+            );
 
-        if (!alive.length) {
+
+        if (
+            alive.length === 0
+        ) {
+
             return null;
         }
 
 
-        const lowHP =
+        const lowHp =
             alive.filter(
                 fighter =>
                     fighter.hp <
-                    fighter.maxHp * 0.35
+                    fighter.maxHp *
+                    0.35
             );
 
 
-        if (lowHP.length) {
+        if (
+            lowHp.length > 0
+        ) {
 
             return chooseLowestHP(
-                lowHP
-            );
-        }
-
-
-        /*
-         * Slightly smarter target selection:
-         *
-         * Prefer the fighter with the
-         * lowest HP percentage.
-         */
-
-        if (Math.random() < 0.65) {
-
-            return chooseLowestHP(
-                alive
+                lowHp
             );
         }
 
@@ -757,7 +1137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // DISPLAY TEAM
+    // UI DISPLAY
     // =========================================================
 
     function displayTeam(
@@ -769,23 +1149,32 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        container.innerHTML = "";
+
+        container.innerHTML =
+            "";
 
 
         team.forEach(
-            (fighter, index) => {
+            (
+                fighter,
+                index
+            ) => {
 
                 const hpPercent =
                     fighter.maxHp > 0
+
                         ? Math.max(
                             0,
                             Math.min(
                                 100,
-                                fighter.hp /
-                                fighter.maxHp *
+                                (
+                                    fighter.hp /
+                                    fighter.maxHp
+                                ) *
                                 100
                             )
                         )
+
                         : 0;
 
 
@@ -800,6 +1189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     cardClass +=
                         " dead";
+
 
                     if (
                         fighter.koShown
@@ -818,43 +1208,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
 
-                let effects = "";
+                let effects =
+                    "";
 
 
-                if (fighter.burn > 0) {
+                if (
+                    fighter.burn > 0
+                ) {
 
                     effects +=
-                        `<span>🔥 Burn ${fighter.burn}</span>`;
+                        `<span>
+                            🔥 Burn
+                            ${fighter.burn}
+                        </span>`;
                 }
 
 
-                if (fighter.bleed > 0) {
+                if (
+                    fighter.bleed > 0
+                ) {
 
                     effects +=
-                        `<span>🩸 Bleed ${fighter.bleed}</span>`;
+                        `<span>
+                            🩸 Bleed
+                            ${fighter.bleed}
+                        </span>`;
                 }
 
 
-                if (fighter.freeze > 0) {
+                if (
+                    fighter.freeze > 0
+                ) {
 
                     effects +=
-                        `<span>❄️ Frozen</span>`;
+                        `<span>
+                            ❄️ Frozen
+                        </span>`;
                 }
 
 
-                if (fighter.stun > 0) {
+                if (
+                    fighter.stun > 0
+                ) {
 
                     effects +=
-                        `<span>⚡ Stunned</span>`;
+                        `<span>
+                            ⚡ Stunned
+                        </span>`;
                 }
 
 
-                if (fighter.shield > 0) {
+                if (
+                    fighter.shield > 0
+                ) {
 
                     effects +=
-                        `<span>🛡️ Shield ${Math.floor(
-                            fighter.shield
-                        )}</span>`;
+                        `<span>
+                            🛡️ Shield
+                            ${Math.floor(
+                                fighter.shield
+                            )}
+                        </span>`;
                 }
 
 
@@ -863,7 +1277,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 ) {
 
                     effects +=
-                        `<span>❤️ Regen</span>`;
+                        `<span>
+                            ❤️ Regen
+                        </span>`;
                 }
 
 
@@ -892,7 +1308,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             <div
                                 class="hp-fill"
-                                style="width:${hpPercent}%"
+                                style="
+                                    width:${hpPercent}%;
+                                "
                             ></div>
 
                         </div>
@@ -910,12 +1328,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 fighter.maxHp
                             )}
                         </p>
-
-                        <!--
-                            IMPORTANT:
-                            Only CURRENT combat values are displayed.
-                            Hidden database details are NOT shown here.
-                        -->
 
                         <p>
                             ⚔️
@@ -940,7 +1352,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${
                             effects
                                 ? `
-                                    <div class="battle-effects">
+                                    <div
+                                        class="
+                                            battle-effects
+                                        "
+                                    >
                                         ${effects}
                                     </div>
                                   `
@@ -960,11 +1376,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${
                             fighter.hp <= 0 ||
                             !fighter.alive
+
                                 ? `
                                     <p>
                                         💀 DEFEATED
                                     </p>
                                   `
+
                                 : ""
                         }
 
@@ -983,6 +1401,7 @@ document.addEventListener("DOMContentLoaded", () => {
             player1Battle
         );
 
+
         displayTeam(
             player2Fighters,
             player2Battle
@@ -999,11 +1418,16 @@ document.addEventListener("DOMContentLoaded", () => {
         team
     ) {
 
-        if (captain.abilityUsed) {
+        if (
+            captain.abilityUsed
+        ) {
+
             return false;
         }
 
-        captain.abilityUsed = true;
+
+        captain.abilityUsed =
+            true;
 
 
         team.forEach(
@@ -1024,7 +1448,8 @@ document.addEventListener("DOMContentLoaded", () => {
         logBattle(
             `👑 ${escapeHtml(
                 captain.name
-            )} used Command! ⚔️ Team Attack +10%!`
+            )} used Command!
+            ⚔️ Team Attack +10%!`
         );
 
 
@@ -1037,13 +1462,16 @@ document.addEventListener("DOMContentLoaded", () => {
         enemyTeam
     ) {
 
-        if (!fighter.assistReady) {
+        if (
+            !fighter.assistReady
+        ) {
+
             return false;
         }
 
 
         if (
-            Math.random() > 0.40
+            Math.random() > 0.35
         ) {
 
             return false;
@@ -1084,7 +1512,8 @@ document.addEventListener("DOMContentLoaded", () => {
         logBattle(
             `⚔️ ${escapeHtml(
                 fighter.name
-            )} performed Assist! 💥 ${damage} bonus damage!`
+            )} performed Assist!
+            💥 ${damage} bonus damage!`
         );
 
 
@@ -1097,7 +1526,10 @@ document.addEventListener("DOMContentLoaded", () => {
         team
     ) {
 
-        if (tank.abilityUsed) {
+        if (
+            tank.abilityUsed
+        ) {
+
             return false;
         }
 
@@ -1105,13 +1537,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const allies =
             getAliveFighters(
                 team
-            ).filter(
-                fighter =>
-                    fighter !== tank
-            );
+            )
+                .filter(
+                    fighter =>
+                        fighter !== tank
+                );
 
 
-        if (!allies.length) {
+        if (
+            allies.length === 0
+        ) {
+
             return false;
         }
 
@@ -1130,8 +1566,10 @@ document.addEventListener("DOMContentLoaded", () => {
         tank.abilityUsed =
             true;
 
+
         tank.protecting =
             true;
+
 
         target.protectedBy =
             tank;
@@ -1140,9 +1578,11 @@ document.addEventListener("DOMContentLoaded", () => {
         logBattle(
             `🛡️ ${escapeHtml(
                 tank.name
-            )} is protecting ${escapeHtml(
+            )} is protecting
+            ${escapeHtml(
                 target.name
-            )}!`
+            )}!
+            Damage reduced by 50%!`
         );
 
 
@@ -1158,15 +1598,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const allies =
             getAliveFighters(
                 team
-            ).filter(
-                fighter =>
-                    fighter !== healer &&
-                    fighter.hp <
-                    fighter.maxHp * 0.70
-            );
+            )
+                .filter(
+                    fighter =>
+                        fighter !== healer &&
+                        fighter.hp <
+                        fighter.maxHp *
+                        0.70
+                );
 
 
-        if (!allies.length) {
+        if (
+            allies.length === 0
+        ) {
+
             return false;
         }
 
@@ -1192,16 +1637,19 @@ document.addEventListener("DOMContentLoaded", () => {
         target.hp =
             Math.min(
                 target.maxHp,
-                target.hp + heal
+                target.hp +
+                heal
             );
 
 
         logBattle(
             `❤️ ${escapeHtml(
                 healer.name
-            )} healed ${escapeHtml(
+            )} healed
+            ${escapeHtml(
                 target.name
-            )} +${heal} HP!`
+            )}
+            +${heal} HP!`
         );
 
 
@@ -1214,7 +1662,10 @@ document.addEventListener("DOMContentLoaded", () => {
         team
     ) {
 
-        if (support.abilityUsed) {
+        if (
+            support.abilityUsed
+        ) {
+
             return false;
         }
 
@@ -1244,7 +1695,9 @@ document.addEventListener("DOMContentLoaded", () => {
         logBattle(
             `⭐ ${escapeHtml(
                 support.name
-            )} used Team Buff! ⚔️ +5% Attack ⚡ +10% Speed!`
+            )} used Team Buff!
+            ⚔️ Attack +5%
+            ⚡ Speed +10%!`
         );
 
 
@@ -1256,7 +1709,10 @@ document.addEventListener("DOMContentLoaded", () => {
         fighter
     ) {
 
-        if (fighter.abilityUsed) {
+        if (
+            fighter.abilityUsed
+        ) {
+
             return false;
         }
 
@@ -1265,13 +1721,16 @@ document.addEventListener("DOMContentLoaded", () => {
             true;
 
 
-        const random =
+        const rand =
             Math.floor(
-                Math.random() * 3
+                Math.random() *
+                3
             );
 
 
-        if (random === 0) {
+        if (
+            rand === 0
+        ) {
 
             fighter.attackBuff *=
                 1.25;
@@ -1280,11 +1739,13 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `☠️ ${escapeHtml(
                     fighter.name
-                )} activated Berserker! ⚔️ +25% Attack!`
+                )} activated Berserker!
+                ⚔️ Attack +25%!`
             );
 
-
-        } else if (random === 1) {
+        } else if (
+            rand === 1
+        ) {
 
             fighter.defenseBuff *=
                 1.25;
@@ -1293,9 +1754,9 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `☠️ ${escapeHtml(
                     fighter.name
-                )} activated Guardian! 🛡️ +25% Defense!`
+                )} activated Guardian!
+                🛡️ Defense +25%!`
             );
-
 
         } else {
 
@@ -1306,7 +1767,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `☠️ ${escapeHtml(
                     fighter.name
-                )} activated Assassin! ⚡ +25% Speed!`
+                )} activated Assassin!
+                ⚡ Speed +25%!`
             );
         }
 
@@ -1330,7 +1792,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        switch (fighter.role) {
+        switch (
+            fighter.role
+        ) {
 
             case "Captain":
 
@@ -1373,7 +1837,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             case "Wildcard":
-            case "Traitor":
 
                 return wildcardAbility(
                     fighter
@@ -1398,8 +1861,10 @@ document.addEventListener("DOMContentLoaded", () => {
         fighter.specialUsed =
             true;
 
+
         fighter.specialCount +=
             1;
+
 
         battleStats.totalSpecials +=
             1;
@@ -1407,7 +1872,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // CHARACTER SPECIALS
+    // CHARACTER SPECIAL ABILITIES
     // =========================================================
 
     function useCharacterSpecial(
@@ -1428,20 +1893,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         const name =
-            normalizeName(
+            String(
                 fighter.name
-            );
+            )
+                .trim()
+                .toLowerCase();
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // LUFFY
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
-            (
-                name === "luffy" ||
-                name === "monkey d. luffy"
-            ) &&
+            name === "luffy" &&
             round >= 3
         ) {
 
@@ -1449,8 +1913,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 fighter
             );
 
+
             fighter.attackBuff *=
                 1.50;
+
 
             fighter.speedBuff *=
                 1.20;
@@ -1459,7 +1925,9 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🔥 ${escapeHtml(
                     fighter.name
-                )} activated Gear 5! ⚔️ +50% Attack ⚡ +20% Speed!`
+                )} activated Gear 5!
+                🌀 ⚔️ Attack +50%!
+                ⚡ Speed +20%!`
             );
 
 
@@ -1473,15 +1941,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // ZORO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
-            (
-                name === "zoro" ||
-                name === "roronoa zoro"
-            ) &&
+            name === "zoro" &&
             round >= 2
         ) {
 
@@ -1489,8 +1954,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 fighter
             );
 
+
             fighter.attackBuff *=
                 1.30;
+
 
             fighter.criticalChance =
                 0.30;
@@ -1499,7 +1966,9 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `⚔️ ${escapeHtml(
                     fighter.name
-                )} activated Three Sword Style! ⚔️ +30% Attack!`
+                )} activated
+                Three Sword Style!
+                ⚔️ Attack +30%!`
             );
 
 
@@ -1513,14 +1982,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // ACE
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
-                name === "ace" ||
-                name === "portgas d. ace"
+                name ===
+                    "portgas d. ace" ||
+                name === "ace"
             ) &&
             round >= 3
         ) {
@@ -1567,7 +2037,11 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🔥 ${escapeHtml(
                     fighter.name
-                )} used Flame Emperor! 💥 ${damage} damage!`
+                )} used Flame Emperor!
+                💥 ${damage} damage!
+                🔥 ${escapeHtml(
+                    target.name
+                )} is Burning!`
             );
 
 
@@ -1581,9 +2055,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // SHANKS
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "shanks" &&
@@ -1616,7 +2090,11 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `👑 ${escapeHtml(
                     fighter.name
-                )} unleashed Conqueror's Haki! 💫 Stun!`
+                )} unleashed
+                Conqueror's Haki!
+                💫 ${escapeHtml(
+                    target.name
+                )} is Stunned!`
             );
 
 
@@ -1630,9 +2108,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // AOKIJI / KUZAN
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
@@ -1668,7 +2146,10 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `❄️ ${escapeHtml(
                     fighter.name
-                )} used Ice Age! ❄️ Frozen!`
+                )} used Ice Age!
+                ${escapeHtml(
+                    target.name
+                )} is Frozen!`
             );
 
 
@@ -1682,9 +2163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // ENEL
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "enel" &&
@@ -1739,7 +2220,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `⚡ ${escapeHtml(
                     fighter.name
-                )} unleashed Raigo! 💥 ${damage} damage + Stun!`
+                )} unleashed Raigo!
+                💥 ${damage} damage + Stun!`
             );
 
 
@@ -1753,9 +2235,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // KAIDO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "kaido" &&
@@ -1811,7 +2293,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🐉 ${escapeHtml(
                     fighter.name
-                )} used Boro Breath! 💥 ${damage} damage!`
+                )} used Boro Breath!
+                🔥 ${damage} damage!`
             );
 
 
@@ -1825,9 +2308,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // MIHAWK
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "mihawk" &&
@@ -1846,7 +2329,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🦅 ${escapeHtml(
                     fighter.name
-                )} unleashed Black Blade! ⚔️ +40% Attack!`
+                )} unleashed Black Blade!
+                ⚔️ Attack +40%!`
             );
 
 
@@ -1860,9 +2344,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // MARCO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "marco" &&
@@ -1892,14 +2376,16 @@ document.addEventListener("DOMContentLoaded", () => {
             fighter.hp =
                 Math.min(
                     fighter.maxHp,
-                    fighter.hp + heal
+                    fighter.hp +
+                    heal
                 );
 
 
             logBattle(
                 `🔥 ${escapeHtml(
                     fighter.name
-                )} activated Phoenix Regeneration! ❤️ +${heal} HP!`
+                )} activated Phoenix Regeneration!
+                ❤️ +${heal} HP!`
             );
 
 
@@ -1913,9 +2399,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // BROOK
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "brook" &&
@@ -1948,7 +2434,10 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `💀 ${escapeHtml(
                     fighter.name
-                )} used Soul Solid! ❄️ Frozen!`
+                )} used Soul Solid!
+                ❄️ ${escapeHtml(
+                    target.name
+                )} is Frozen!`
             );
 
 
@@ -1962,9 +2451,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // KATAKURI
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "katakuri" &&
@@ -1979,6 +2468,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fighter.attackBuff *=
                 1.30;
 
+
             fighter.speedBuff *=
                 1.20;
 
@@ -1986,7 +2476,9 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🍩 ${escapeHtml(
                     fighter.name
-                )} activated Mochi Power! ⚔️ +30% Attack ⚡ +20% Speed!`
+                )} activated Mochi Power!
+                ⚔️ Attack +30%!
+                ⚡ Speed +20%!`
             );
 
 
@@ -2000,14 +2492,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // LAW
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
-                name === "trafalgar law" ||
-                name === "trafalgar d. water law"
+                name ===
+                    "trafalgar d. water law" ||
+                name ===
+                    "trafalgar law"
             ) &&
             round >= 3
         ) {
@@ -2038,7 +2532,10 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `⚕️ ${escapeHtml(
                     fighter.name
-                )} used ROOM! ⚡ Stun!`
+                )} used ROOM!
+                ${escapeHtml(
+                    target.name
+                )} is Stunned!`
             );
 
 
@@ -2052,14 +2549,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // DOFLAMINGO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
                 name === "doflamingo" ||
-                name === "donquixote doflamingo"
+                name ===
+                    "donquixote doflamingo"
             ) &&
             round >= 3
         ) {
@@ -2112,7 +2610,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🦩 ${escapeHtml(
                     fighter.name
-                )} used Bird Cage! 🩸 ${damage} damage + Bleed!`
+                )} used Bird Cage!
+                🩸 ${damage} damage + Bleed!`
             );
 
 
@@ -2126,9 +2625,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // SANJI
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             name === "sanji" &&
@@ -2143,6 +2642,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fighter.attackBuff *=
                 1.35;
 
+
             fighter.speedBuff *=
                 1.15;
 
@@ -2150,7 +2650,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🔥 ${escapeHtml(
                     fighter.name
-                )} activated Diable Jambe! ⚔️ +35% Attack!`
+                )} activated Diable Jambe!
+                ⚔️ Attack +35%!`
             );
 
 
@@ -2164,9 +2665,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // WHITEBEARD
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
@@ -2182,7 +2683,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-            if (!targets.length) {
+            if (
+                targets.length === 0
+            ) {
+
                 return false;
             }
 
@@ -2209,6 +2713,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         fighter,
                         "Gura Gura"
                     );
+
                 }
             );
 
@@ -2216,7 +2721,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🌊 ${escapeHtml(
                     fighter.name
-                )} unleashed Gura Gura no Mi! 💥 Area Damage!`
+                )} unleashed Gura Gura no Mi!
+                💥 Area damage!`
             );
 
 
@@ -2230,14 +2736,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // BIG MOM
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
                 name === "big mom" ||
-                name === "charlotte linlin"
+                name ===
+                    "charlotte linlin"
             ) &&
             round >= 3
         ) {
@@ -2277,7 +2784,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `👑 ${escapeHtml(
                     fighter.name
-                )} used Ikoku! 💥 ${damage} damage!`
+                )} used Ikoku!
+                💥 ${damage} damage!`
             );
 
 
@@ -2291,9 +2799,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // ROB LUCCI
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
@@ -2338,7 +2846,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🐆 ${escapeHtml(
                     fighter.name
-                )} used Rokuogan! 💥 ${damage} damage!`
+                )} used Rokuogan!
+                💥 ${damage} damage!`
             );
 
 
@@ -2352,9 +2861,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // AKAINU
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
@@ -2412,7 +2921,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🔥 ${escapeHtml(
                     fighter.name
-                )} used Meteor Volcano! 💥 ${damage} damage + Burn!`
+                )} used Meteor Volcano!
+                🔥 ${damage} damage + Burn!`
             );
 
 
@@ -2426,15 +2936,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // KIZARU
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
-            (
-                name === "kizaru" ||
-                name === "borsalino"
-            ) &&
+            name === "kizaru" &&
             round >= 3
         ) {
 
@@ -2473,7 +2980,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `✨ ${escapeHtml(
                     fighter.name
-                )} used Yasakani no Magatama! 💥 ${damage} damage!`
+                )} used Yasakani no Magatama!
+                💥 ${damage} damage!`
             );
 
 
@@ -2487,9 +2995,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // BARTOLOMEO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
             (
@@ -2514,7 +3022,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `🛡️ ${escapeHtml(
                     fighter.name
-                )} created a Barrier!`
+                )} created a Barrier!
+                Shield activated!`
             );
 
 
@@ -2547,8 +3056,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
 
             return {
+
                 damage: 0,
+
                 critical: false
+
             };
         }
 
@@ -2565,10 +3077,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let damage =
             attack -
-            defense * 0.50;
+            (
+                defense *
+                0.50
+            );
 
 
-        if (damage < 10) {
+        if (
+            damage < 10
+        ) {
+
             damage = 10;
         }
 
@@ -2576,7 +3094,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const criticalChance =
             typeof attacker.criticalChance ===
             "number"
+
                 ? attacker.criticalChance
+
                 : 0.15;
 
 
@@ -2595,9 +3115,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
 
             damage:
-                Math.floor(damage),
+                Math.floor(
+                    damage
+                ),
 
             critical
+
         };
     }
 
@@ -2626,11 +3149,15 @@ document.addEventListener("DOMContentLoaded", () => {
         let remainingDamage =
             Math.max(
                 0,
-                Number(damage) || 0
+                Number(
+                    damage
+                ) || 0
             );
 
 
-        // Shield
+        // -----------------------------------------------------
+        // SHIELD
+        // -----------------------------------------------------
 
         if (
             defender.shield > 0 &&
@@ -2652,22 +3179,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 absorbed;
 
 
+            logBattle(
+                `🛡️ ${escapeHtml(
+                    defender.name
+                )}'s shield absorbed
+                ${Math.floor(
+                    absorbed
+                )} damage!`
+            );
+
+
             if (
                 remainingDamage <= 0
             ) {
-
-                logBattle(
-                    `🛡️ ${escapeHtml(
-                        defender.name
-                    )}'s shield blocked the attack!`
-                );
 
                 return 0;
             }
         }
 
 
-        // Tank protection
+        // -----------------------------------------------------
+        // TANK PROTECTION
+        // -----------------------------------------------------
 
         if (
             defender.protectedBy &&
@@ -2677,6 +3210,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             remainingDamage *=
                 0.50;
+
+
+            logBattle(
+                `🛡️ ${escapeHtml(
+                    defender.name
+                )} is protected!
+                Damage reduced by 50%.`
+            );
         }
 
 
@@ -2712,15 +3253,24 @@ document.addEventListener("DOMContentLoaded", () => {
             defender.hp <= 0
         ) {
 
-            defender.hp = 0;
+            defender.hp =
+                0;
 
-            defender.alive = false;
 
-            defender.protecting = false;
+            defender.alive =
+                false;
 
-            defender.protectedBy = null;
 
-            defender.koShown = true;
+            defender.protecting =
+                false;
+
+
+            defender.protectedBy =
+                null;
+
+
+            defender.koShown =
+                true;
 
 
             battleStats.totalKOs +=
@@ -2806,11 +3356,16 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
 
             logBattle(
-                `💥 <strong>CRITICAL!</strong> ` +
-                `${escapeHtml(
+                `💥 <strong>
+                    CRITICAL HIT!
+                </strong>
+                ${escapeHtml(
                     attacker.name
-                )} dealt ${actualDamage} damage!`
-
+                )} dealt
+                ${actualDamage} damage to
+                ${escapeHtml(
+                    defender.name
+                )}!`
             );
 
         } else {
@@ -2818,9 +3373,11 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `⚔️ ${escapeHtml(
                     attacker.name
-                )} → ${escapeHtml(
+                )} attacked
+                ${escapeHtml(
                     defender.name
-                )} 💥 ${actualDamage}`
+                )}
+                for ${actualDamage} damage!`
             );
         }
 
@@ -2831,6 +3388,21 @@ document.addEventListener("DOMContentLoaded", () => {
         await sleep(
             SPEED.attack
         );
+
+
+        if (
+            !defender.alive
+        ) {
+
+            adgShowAnnouncement(
+                `💀 ${defender.name} KO!`
+            );
+
+
+            await sleep(
+                SPEED.knockout
+            );
+        }
     }
 
 
@@ -2852,13 +3424,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // Burn
+        // -----------------------------------------------------
+        // BURN
+        // -----------------------------------------------------
 
         if (
             fighter.burn > 0
         ) {
 
-            const damage =
+            const burnDamage =
                 Math.max(
                     1,
                     Math.floor(
@@ -2869,47 +3443,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             fighter.hp -=
-                damage;
+                burnDamage;
 
 
             battleStats.totalDamage +=
-                damage;
+                burnDamage;
+
+
+            logBattle(
+                `🔥 ${escapeHtml(
+                    fighter.name
+                )} takes
+                ${burnDamage}
+                Burn damage!`
+            );
 
 
             fighter.burn -=
                 1;
 
 
-            logBattle(
-                `🔥 ${escapeHtml(
-                    fighter.name
-                )} takes ${damage} Burn damage!`
-            );
-
-
             if (
                 fighter.hp <= 0
             ) {
 
-                defeatByStatus(
-                    fighter,
-                    "Burn"
+                fighter.hp =
+                    0;
+
+
+                fighter.alive =
+                    false;
+
+
+                fighter.koShown =
+                    true;
+
+
+                battleStats.totalKOs +=
+                    1;
+
+
+                logBattle(
+                    `💀 ${escapeHtml(
+                        fighter.name
+                    )} was defeated by Burn!`
                 );
+
 
                 return;
             }
         }
 
 
-        // Bleed
+        // -----------------------------------------------------
+        // BLEED
+        // -----------------------------------------------------
 
         if (
-            fighter.bleed > 0 &&
             fighter.hp > 0 &&
-            fighter.alive
+            fighter.alive &&
+            fighter.bleed > 0
         ) {
 
-            const damage =
+            const bleedDamage =
                 Math.max(
                     1,
                     Math.floor(
@@ -2920,44 +3516,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             fighter.hp -=
-                damage;
+                bleedDamage;
 
 
             battleStats.totalDamage +=
-                damage;
+                bleedDamage;
+
+
+            logBattle(
+                `🩸 ${escapeHtml(
+                    fighter.name
+                )} takes
+                ${bleedDamage}
+                Bleed damage!`
+            );
 
 
             fighter.bleed -=
                 1;
 
 
-            logBattle(
-                `🩸 ${escapeHtml(
-                    fighter.name
-                )} takes ${damage} Bleed damage!`
-            );
-
-
             if (
                 fighter.hp <= 0
             ) {
 
-                defeatByStatus(
-                    fighter,
-                    "Bleed"
+                fighter.hp =
+                    0;
+
+
+                fighter.alive =
+                    false;
+
+
+                fighter.koShown =
+                    true;
+
+
+                battleStats.totalKOs +=
+                    1;
+
+
+                logBattle(
+                    `💀 ${escapeHtml(
+                        fighter.name
+                    )} was defeated by Bleed!`
                 );
+
 
                 return;
             }
         }
 
 
-        // Regeneration
+        // -----------------------------------------------------
+        // REGENERATION
+        // -----------------------------------------------------
 
         if (
-            fighter.regeneration > 0 &&
             fighter.hp > 0 &&
-            fighter.alive
+            fighter.alive &&
+            fighter.regeneration > 0
         ) {
 
             const heal =
@@ -2970,48 +3588,39 @@ document.addEventListener("DOMContentLoaded", () => {
             fighter.hp =
                 Math.min(
                     fighter.maxHp,
-                    fighter.hp + heal
+                    fighter.hp +
+                    heal
                 );
-
-
-            fighter.regeneration -=
-                1;
 
 
             logBattle(
                 `❤️ ${escapeHtml(
                     fighter.name
-                )} regenerates ${heal} HP!`
+                )} regenerates
+                ${heal} HP!`
             );
+
+
+            fighter.regeneration -=
+                1;
         }
-    }
 
 
-    function defeatByStatus(
-        fighter,
-        source
-    ) {
+        if (
+            fighter.hp <= 0
+        ) {
 
-        fighter.hp = 0;
-
-        fighter.alive = false;
-
-        fighter.koShown = true;
-
-        fighter.protecting = false;
-
-        fighter.protectedBy = null;
+            fighter.hp =
+                0;
 
 
-        battleStats.totalKOs +=
-            1;
+            fighter.alive =
+                false;
 
 
-        logBattle(
-            `💀 ${escapeHtml(
-                fighter.name
-            )} was defeated by ${source}!`
-        );
+            fighter.koShown =
+                true;
+        }
     }
 
 
@@ -3033,6 +3642,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // -----------------------------------------------------
+        // STUN
+        // -----------------------------------------------------
+
         if (
             fighter.stun > 0
         ) {
@@ -3044,13 +3657,18 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `⚡ ${escapeHtml(
                     fighter.name
-                )} is Stunned!`
+                )} loses this turn
+                due to Stun!`
             );
 
 
             return false;
         }
 
+
+        // -----------------------------------------------------
+        // FREEZE
+        // -----------------------------------------------------
 
         if (
             fighter.freeze > 0
@@ -3063,7 +3681,8 @@ document.addEventListener("DOMContentLoaded", () => {
             logBattle(
                 `❄️ ${escapeHtml(
                     fighter.name
-                )} is Frozen!`
+                )} loses this turn
+                due to Freeze!`
             );
 
 
@@ -3081,20 +3700,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getAttackOrder() {
 
-        const all =
-            [
-                ...getAliveFighters(
-                    player1Fighters
-                ),
+        const allFighters = [
 
-                ...getAliveFighters(
-                    player2Fighters
-                )
-            ];
+            ...getAliveFighters(
+                player1Fighters
+            ),
+
+            ...getAliveFighters(
+                player2Fighters
+            )
+
+        ];
 
 
-        return all.sort(
-            (a, b) => {
+        return allFighters.sort(
+            (
+                a,
+                b
+            ) => {
 
                 const speedA =
                     a.speed *
@@ -3107,7 +3730,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                 if (
-                    speedA !== speedB
+                    speedA !==
+                    speedB
                 ) {
 
                     return (
@@ -3123,6 +3747,415 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
             }
         );
+    }
+
+
+    // =========================================================
+    // VISUAL PRESENTATION
+    // =========================================================
+
+    function adgFindCard(
+        fighter
+    ) {
+
+        const cards =
+            document.querySelectorAll(
+                ".fighter-card"
+            );
+
+
+        for (
+            const card
+            of cards
+        ) {
+
+            const title =
+                card.querySelector(
+                    "h3"
+                );
+
+
+            if (!title) {
+                continue;
+            }
+
+
+            if (
+                title.textContent
+                    .trim()
+                    .toLowerCase()
+                    .includes(
+                        fighter.name
+                            .trim()
+                            .toLowerCase()
+                    )
+            ) {
+
+                return card;
+            }
+        }
+
+
+        return null;
+    }
+
+
+    function adgShowAnnouncement(
+        text
+    ) {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "adg-announcement";
+
+
+        element.textContent =
+            text;
+
+
+        document.body.appendChild(
+            element
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    element.parentNode
+                ) {
+
+                    element.remove();
+                }
+
+            },
+            SPEED.announcement
+        );
+    }
+
+
+    function adgAttackImpact(
+        emoji = "💥"
+    ) {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "adg-attack-impact";
+
+
+        element.textContent =
+            emoji;
+
+
+        document.body.appendChild(
+            element
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    element.parentNode
+                ) {
+
+                    element.remove();
+                }
+
+            },
+            400
+        );
+    }
+
+
+    function adgFlash() {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "adg-arena-flash";
+
+
+        document.body.appendChild(
+            element
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    element.parentNode
+                ) {
+
+                    element.remove();
+                }
+
+            },
+            220
+        );
+    }
+
+
+    function adgSpecialBanner(
+        fighter,
+        abilityName =
+            "SPECIAL ABILITY"
+    ) {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "adg-special-banner";
+
+
+        element.textContent =
+            `🔥 ${fighter.name}
+            — ${abilityName}!`;
+
+
+        document.body.appendChild(
+            element
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    element.parentNode
+                ) {
+
+                    element.remove();
+                }
+
+            },
+            750
+        );
+    }
+
+
+    function adgPlayAttackEffects(
+        attacker,
+        defender,
+        critical = false
+    ) {
+
+        const attackerCard =
+            adgFindCard(
+                attacker
+            );
+
+
+        const defenderCard =
+            adgFindCard(
+                defender
+            );
+
+
+        if (
+            attackerCard
+        ) {
+
+            attackerCard.classList.add(
+                "attacker-highlight",
+                "attacking"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    attackerCard.classList.remove(
+                        "attacker-highlight",
+                        "attacking"
+                    );
+
+                },
+                300
+            );
+        }
+
+
+        if (
+            defenderCard
+        ) {
+
+            defenderCard.classList.add(
+                "target-highlight",
+                "hit"
+            );
+
+
+            if (
+                critical
+            ) {
+
+                defenderCard.classList.add(
+                    "critical"
+                );
+            }
+
+
+            setTimeout(
+                () => {
+
+                    defenderCard.classList.remove(
+                        "target-highlight",
+                        "hit",
+                        "critical"
+                    );
+
+                },
+                350
+            );
+        }
+
+
+        adgAttackImpact(
+            critical
+                ? "💥"
+                : "⚔️"
+        );
+
+
+        if (
+            critical
+        ) {
+
+            adgFlash();
+        }
+    }
+
+
+    function adgPlaySpecialEffects(
+        fighter,
+        abilityName =
+            "SPECIAL ABILITY"
+    ) {
+
+        const card =
+            adgFindCard(
+                fighter
+            );
+
+
+        if (
+            card
+        ) {
+
+            card.classList.add(
+                "special"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    card.classList.remove(
+                        "special"
+                    );
+
+                },
+                650
+            );
+        }
+
+
+        adgSpecialBanner(
+            fighter,
+            abilityName
+        );
+
+
+        adgFlash();
+    }
+
+
+    // =========================================================
+    // VICTORY
+    // =========================================================
+
+    function adgShowVictory(
+        playerNumber
+    ) {
+
+        if (
+            document.querySelector(
+                ".adg-victory-overlay"
+            )
+        ) {
+
+            return;
+        }
+
+
+        const overlay =
+            document.createElement(
+                "div"
+            );
+
+
+        overlay.className =
+            "adg-victory-overlay";
+
+
+        overlay.innerHTML =
+            `
+            <div class="adg-victory-box">
+
+                <h1>
+                    🏆 PLAYER
+                    ${playerNumber}
+                    WINS!
+                </h1>
+
+                <p>
+                    ⚔️ Battle Complete!
+                </p>
+
+            </div>
+            `;
+
+
+        document.body.appendChild(
+            overlay
+        );
+    }
+
+
+    function adgRemoveVictory() {
+
+        const overlay =
+            document.querySelector(
+                ".adg-victory-overlay"
+            );
+
+
+        if (
+            overlay
+        ) {
+
+            overlay.remove();
+        }
     }
 
 
@@ -3146,7 +4179,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // Role ability
+        // -----------------------------------------------------
+        // ROLE ABILITY
+        // -----------------------------------------------------
 
         const roleUsed =
             useRoleAbility(
@@ -3156,7 +4191,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (roleUsed) {
+        if (
+            roleUsed
+        ) {
 
             updateBattleUI();
 
@@ -3176,9 +4213,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // Character special
+        // -----------------------------------------------------
+        // CHARACTER SPECIAL
+        // -----------------------------------------------------
 
-        const specialUsed =
+        const specialUsedThisTurn =
             useCharacterSpecial(
                 fighter,
                 ownTeam,
@@ -3186,7 +4225,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (specialUsed) {
+        if (
+            specialUsedThisTurn
+        ) {
 
             updateBattleUI();
 
@@ -3206,10 +4247,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // Healer emergency heal
+        // -----------------------------------------------------
+        // HEALER SECOND CHECK
+        // -----------------------------------------------------
 
         if (
-            fighter.role === "Healer" &&
+            fighter.role ===
+                "Healer" &&
             fighter.hp > 0 &&
             fighter.alive
         ) {
@@ -3221,7 +4265,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-            if (healed) {
+            if (
+                healed
+            ) {
 
                 updateBattleUI();
 
@@ -3229,12 +4275,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     SPEED.ability
                 );
 
+
                 return;
             }
         }
 
 
-        // Normal attack
+        // -----------------------------------------------------
+        // NORMAL ATTACK
+        // -----------------------------------------------------
 
         const target =
             chooseAITarget(
@@ -3355,758 +4404,92 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // VISUAL EFFECTS
-    // =========================================================
-
-    function adgFindCard(
-        fighter
-    ) {
-
-        const cards =
-            document.querySelectorAll(
-                ".fighter-card"
-            );
-
-
-        const wanted =
-            normalizeName(
-                fighter.name
-            );
-
-
-        for (
-            const card
-            of cards
-        ) {
-
-            const title =
-                card.querySelector(
-                    "h3"
-                );
-
-
-            if (!title) {
-                continue;
-            }
-
-
-            if (
-                normalizeName(
-                    title.textContent
-                ).includes(
-                    wanted
-                )
-            ) {
-
-                return card;
-            }
-        }
-
-
-        return null;
-    }
-
-
-    function adgShowAnnouncement(
-        text
-    ) {
-
-        const element =
-            document.createElement(
-                "div"
-            );
-
-
-        element.className =
-            "adg-announcement";
-
-
-        element.textContent =
-            text;
-
-
-        document.body.appendChild(
-            element
-        );
-
-
-        setTimeout(
-            () => {
-
-                element.remove();
-
-            },
-            SPEED.announcement
-        );
-    }
-
-
-    function adgAttackImpact(
-        emoji = "💥"
-    ) {
-
-        const element =
-            document.createElement(
-                "div"
-            );
-
-
-        element.className =
-            "adg-attack-impact";
-
-
-        element.textContent =
-            emoji;
-
-
-        document.body.appendChild(
-            element
-        );
-
-
-        setTimeout(
-            () => {
-
-                element.remove();
-
-            },
-            400
-        );
-    }
-
-
-    function adgFlash() {
-
-        const element =
-            document.createElement(
-                "div"
-            );
-
-
-        element.className =
-            "adg-arena-flash";
-
-
-        document.body.appendChild(
-            element
-        );
-
-
-        setTimeout(
-            () => {
-
-                element.remove();
-
-            },
-            200
-        );
-    }
-
-
-    function adgSpecialBanner(
-        fighter,
-        abilityName
-    ) {
-
-        const element =
-            document.createElement(
-                "div"
-            );
-
-
-        element.className =
-            "adg-special-banner";
-
-
-        element.textContent =
-            `🔥 ${fighter.name} — ${abilityName}!`;
-
-
-        document.body.appendChild(
-            element
-        );
-
-
-        setTimeout(
-            () => {
-
-                element.remove();
-
-            },
-            800
-        );
-    }
-
-
-    function adgPlayAttackEffects(
-        attacker,
-        defender,
-        critical
-    ) {
-
-        const attackerCard =
-            adgFindCard(
-                attacker
-            );
-
-
-        const defenderCard =
-            adgFindCard(
-                defender
-            );
-
-
-        if (attackerCard) {
-
-            attackerCard.classList.add(
-                "attacker-highlight",
-                "attacking"
-            );
-
-
-            setTimeout(
-                () => {
-
-                    attackerCard.classList.remove(
-                        "attacker-highlight",
-                        "attacking"
-                    );
-
-                },
-                300
-            );
-        }
-
-
-        if (defenderCard) {
-
-            defenderCard.classList.add(
-                "target-highlight",
-                "hit"
-            );
-
-
-            if (critical) {
-
-                defenderCard.classList.add(
-                    "critical"
-                );
-            }
-
-
-            setTimeout(
-                () => {
-
-                    defenderCard.classList.remove(
-                        "target-highlight",
-                        "hit",
-                        "critical"
-                    );
-
-                },
-                350
-            );
-        }
-
-
-        adgAttackImpact(
-            critical
-                ? "💥"
-                : "⚔️"
-        );
-
-
-        if (critical) {
-            adgFlash();
-        }
-    }
-
-
-    function adgPlaySpecialEffects(
-        fighter,
-        abilityName
-    ) {
-
-        const card =
-            adgFindCard(
-                fighter
-            );
-
-
-        if (card) {
-
-            card.classList.add(
-                "special"
-            );
-
-
-            setTimeout(
-                () => {
-
-                    card.classList.remove(
-                        "special"
-                    );
-
-                },
-                600
-            );
-        }
-
-
-        adgSpecialBanner(
-            fighter,
-            abilityName
-        );
-
-
-        adgFlash();
-    }
-
-
-    // =========================================================
-    // ROUND DISPLAY
-    // =========================================================
-
-    function updateRoundDisplay() {
-
-        document
-            .querySelectorAll(
-                ".round-number"
-            )
-            .forEach(
-                element => {
-
-                    element.textContent =
-                        String(round);
-                }
-            );
-
-
-        const currentRound =
-            document.getElementById(
-                "currentRound"
-            );
-
-
-        if (currentRound) {
-
-            currentRound.textContent =
-                `Round ${round}`;
-        }
-    }
-
-
-    // =========================================================
-    // CHARACTER DETAILS
+    // CHARACTER DETAILS DATA
     // =========================================================
     //
-    // IMPORTANT:
-    // This is the ONLY place where hidden database stats
-    // are revealed.
+    // This is the important v7.4 section.
+    //
+    // The details screen gets:
+    //
+    // fighter.baseDatabaseStats
+    //
+    // rather than:
+    //
+    // fighter.attack
+    // fighter.defense
+    // fighter.speed
+    //
+    // because those battle values contain role bonuses/buffs.
     // =========================================================
 
-    function buildCharacterDetails(
+    function getCharacterDetailsData(
         fighter
     ) {
 
-        const databaseStats =
-            fighter.baseDatabaseStats;
+        if (
+            !fighter
+        ) {
 
-
-        const currentHP =
-            Math.floor(
-                Math.max(
-                    0,
-                    fighter.hp
-                )
-            );
-
-
-        const baseHP =
-            databaseStats?.hp ??
-            fighter.hp;
-
-
-        const baseAttack =
-            databaseStats?.attack ??
-            fighter.attack;
-
-
-        const baseDefense =
-            databaseStats?.defense ??
-            fighter.defense;
-
-
-        const baseSpeed =
-            databaseStats?.speed ??
-            fighter.speed;
-
-
-        return `
-            <div class="adg-character-detail-card">
-
-                <div class="detail-header">
-
-                    <h3>
-                        ${fighter.emoji}
-                        ${escapeHtml(
-                            fighter.name
-                        )}
-                    </h3>
-
-                    <span>
-                        ${escapeHtml(
-                            fighter.role
-                        )}
-                    </span>
-
-                </div>
-
-
-                <div class="detail-stats">
-
-                    <div>
-                        ❤️
-                        <strong>
-                            HP
-                        </strong>
-
-                        <span>
-                            ${Math.floor(baseHP)}
-                        </span>
-                    </div>
-
-
-                    <div>
-                        ⚔️
-                        <strong>
-                            Attack
-                        </strong>
-
-                        <span>
-                            ${Math.floor(baseAttack)}
-                        </span>
-                    </div>
-
-
-                    <div>
-                        🛡️
-                        <strong>
-                            Defense
-                        </strong>
-
-                        <span>
-                            ${Math.floor(baseDefense)}
-                        </span>
-                    </div>
-
-
-                    <div>
-                        ⚡
-                        <strong>
-                            Speed
-                        </strong>
-
-                        <span>
-                            ${Math.floor(baseSpeed)}
-                        </span>
-                    </div>
-
-                </div>
-
-
-                ${
-                    databaseStats?.power !== undefined
-                        ? `
-                            <p>
-                                💥 Power:
-                                <strong>
-                                    ${escapeHtml(
-                                        databaseStats.power
-                                    )}
-                                </strong>
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.intelligence !== undefined
-                        ? `
-                            <p>
-                                🧠 Intelligence:
-                                <strong>
-                                    ${escapeHtml(
-                                        databaseStats.intelligence
-                                    )}
-                                </strong>
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.stamina !== undefined
-                        ? `
-                            <p>
-                                🔋 Stamina:
-                                <strong>
-                                    ${escapeHtml(
-                                        databaseStats.stamina
-                                    )}
-                                </strong>
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.haki !== undefined
-                        ? `
-                            <p>
-                                👁️ Haki:
-                                <strong>
-                                    ${escapeHtml(
-                                        databaseStats.haki
-                                    )}
-                                </strong>
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.durability !== undefined
-                        ? `
-                            <p>
-                                🧱 Durability:
-                                <strong>
-                                    ${escapeHtml(
-                                        databaseStats.durability
-                                    )}
-                                </strong>
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.ability
-                        ? `
-                            <div class="detail-ability">
-
-                                <strong>
-                                    ✨ Ability
-                                </strong>
-
-                                <p>
-                                    ${escapeHtml(
-                                        databaseStats.ability
-                                    )}
-                                </p>
-
-                            </div>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    databaseStats?.description
-                        ? `
-                            <p class="detail-description">
-                                ${escapeHtml(
-                                    databaseStats.description
-                                )}
-                            </p>
-                          `
-                        : ""
-                }
-
-
-                <div class="battle-performance">
-
-                    <h4>
-                        📊 Battle Performance
-                    </h4>
-
-                    <p>
-                        ❤️ Remaining HP:
-                        <strong>
-                            ${currentHP}
-                        </strong>
-                    </p>
-
-                    <p>
-                        💥 Damage Dealt:
-                        <strong>
-                            ${Math.floor(
-                                fighter.damageDealt ||
-                                0
-                            )}
-                        </strong>
-                    </p>
-
-                    <p>
-                        💀 KOs:
-                        <strong>
-                            ${fighter.kos || 0}
-                        </strong>
-                    </p>
-
-                    <p>
-                        🔥 Specials Used:
-                        <strong>
-                            ${fighter.specialCount || 0}
-                        </strong>
-                    </p>
-
-                </div>
-
-            </div>
-        `;
-    }
-
-
-    function showCharacterDetails() {
-
-        const existing =
-            document.querySelector(
-                ".adg-details-overlay"
-            );
-
-
-        if (existing) {
-
-            existing.remove();
-
-            return;
+            return null;
         }
 
 
-        const overlay =
-            document.createElement(
-                "div"
+        const original =
+            fighter.baseDatabaseStats ||
+            getOriginalStats(
+                fighter.databaseData
             );
 
 
-        overlay.className =
-            "adg-details-overlay";
+        return {
 
+            name:
+                fighter.name,
 
-        overlay.innerHTML = `
+            role:
+                fighter.role,
 
-            <div class="adg-details-box">
+            hp:
+                original.hp,
 
-                <div class="adg-details-header">
+            attack:
+                original.attack,
 
-                    <h2>
-                        📊 CHARACTER DETAILS
-                    </h2>
+            defense:
+                original.defense,
 
-                    <button
-                        type="button"
-                        class="adg-details-close"
-                        id="adgDetailsClose"
-                    >
-                        ✕
-                    </button>
+            speed:
+                original.speed,
 
-                </div>
+            databaseData:
+                fighter.databaseData || null,
 
+            remainingHP:
+                Math.floor(
+                    Math.max(
+                        0,
+                        fighter.hp
+                    )
+                ),
 
-                <p class="adg-hidden-reveal-note">
-                    🔓 Hidden character stats revealed
-                    after battle.
-                </p>
+            damageDealt:
+                Math.floor(
+                    fighter.damageDealt ||
+                    0
+                ),
 
+            KOs:
+                fighter.kos || 0,
 
-                <section>
+            specialsUsed:
+                fighter.specialCount || 0
 
-                    <h3>
-                        🏴 PLAYER 1
-                    </h3>
-
-                    <div class="adg-details-grid">
-
-                        ${player1Fighters
-                            .map(
-                                buildCharacterDetails
-                            )
-                            .join("")
-                        }
-
-                    </div>
-
-                </section>
-
-
-                <section>
-
-                    <h3>
-                        🏴 PLAYER 2
-                    </h3>
-
-                    <div class="adg-details-grid">
-
-                        ${player2Fighters
-                            .map(
-                                buildCharacterDetails
-                            )
-                            .join("")
-                        }
-
-                    </div>
-
-                </section>
-
-            </div>
-        `;
-
-
-        document.body.appendChild(
-            overlay
-        );
-
-
-        const close =
-            document.getElementById(
-                "adgDetailsClose"
-            );
-
-
-        if (close) {
-
-            close.addEventListener(
-                "click",
-                () => overlay.remove()
-            );
-        }
-
-
-        overlay.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    overlay
-                ) {
-
-                    overlay.remove();
-                }
-            }
-        );
+        };
     }
 
 
     // =========================================================
-    // RESULT TEAM
+    // BUILD TEAM RESULT
     // =========================================================
 
     function buildTeamResult(
@@ -4175,184 +4558,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =========================================================
-    // RESULT BUTTONS
-    // =========================================================
-
-    function addPostBattleButtons(
-        resultBox
-    ) {
-
-        if (!resultBox) {
-            return;
-        }
-
-
-        const old =
-            resultBox.querySelector(
-                ".adg-post-battle-actions"
-            );
-
-
-        if (old) {
-            old.remove();
-        }
-
-
-        const actions =
-            document.createElement(
-                "div"
-            );
-
-
-        actions.className =
-            "adg-post-battle-actions";
-
-
-        actions.innerHTML = `
-
-            <button
-                type="button"
-                id="adgRematchBtn"
-                class="adg-rematch-btn"
-            >
-                🔄 REMATCH
-            </button>
-
-
-            <button
-                type="button"
-                id="adgCharacterDetailsBtn"
-                class="adg-details-btn"
-            >
-                📊 CHARACTER DETAILS
-            </button>
-
-        `;
-
-
-        resultBox.appendChild(
-            actions
-        );
-
-
-        const rematch =
-            document.getElementById(
-                "adgRematchBtn"
-            );
-
-
-        const details =
-            document.getElementById(
-                "adgCharacterDetailsBtn"
-            );
-
-
-        if (rematch) {
-
-            rematch.addEventListener(
-                "click",
-                startRematch
-            );
-        }
-
-
-        if (details) {
-
-            details.addEventListener(
-                "click",
-                showCharacterDetails
-            );
-        }
-    }
-
-
-    // =========================================================
-    // VICTORY
-    // =========================================================
-
-    function adgShowVictory(
-        playerNumber
-    ) {
-
-        const old =
-            document.querySelector(
-                ".adg-victory-overlay"
-            );
-
-
-        if (old) {
-            old.remove();
-        }
-
-
-        const overlay =
-            document.createElement(
-                "div"
-            );
-
-
-        overlay.className =
-            "adg-victory-overlay";
-
-
-        overlay.innerHTML = `
-
-            <div class="adg-victory-box">
-
-                <h1>
-                    🏆 PLAYER ${playerNumber} WINS!
-                </h1>
-
-                <p>
-                    ⚔️ Battle Complete!
-                </p>
-
-            </div>
-
-        `;
-
-
-        document.body.appendChild(
-            overlay
-        );
-
-
-        setTimeout(
-            () => {
-
-                if (overlay.parentNode) {
-                    overlay.remove();
-                }
-
-            },
-            1800
-        );
-    }
-
-
-    function adgRemoveVictory() {
-
-        document
-            .querySelectorAll(
-                ".adg-victory-overlay"
-            )
-            .forEach(
-                element =>
-                    element.remove()
-            );
-    }
-
-
-    // =========================================================
-    // SHOW RESULT
+    // SHOW BATTLE RESULT
     // =========================================================
 
     function showBattleResult(
         winner
     ) {
-
-        resultShown = true;
-
 
         const resultBox =
             document.querySelector(
@@ -4360,7 +4571,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (resultBox) {
+        if (
+            resultBox
+        ) {
 
             resultBox.classList.remove(
                 "hidden"
@@ -4374,9 +4587,13 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (winnerText) {
+        if (
+            winnerText
+        ) {
 
-            if (winner === 1) {
+            if (
+                winner === 1
+            ) {
 
                 winnerText.textContent =
                     "🏆 PLAYER 1 WINS!";
@@ -4402,12 +4619,14 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (resultSummary) {
+        if (
+            resultSummary
+        ) {
 
             resultSummary.textContent =
-                `Battle completed in ${
-                    battleStats.completedRounds
-                } rounds.`;
+                `Battle completed in
+                ${battleStats.completedRounds}
+                rounds.`;
         }
 
 
@@ -4417,7 +4636,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (player1Result) {
+        if (
+            player1Result
+        ) {
 
             player1Result.innerHTML =
                 buildTeamResult(
@@ -4432,7 +4653,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (player2Result) {
+        if (
+            player2Result
+        ) {
 
             player2Result.innerHTML =
                 buildTeamResult(
@@ -4447,11 +4670,15 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (battleStatistics) {
+        if (
+            battleStatistics
+        ) {
 
-            battleStatistics.innerHTML = `
-
-                <div class="battle-statistics">
+            battleStatistics.innerHTML =
+                `
+                <div
+                    class="battle-statistics"
+                >
 
                     <h3>
                         📊 Battle Statistics
@@ -4488,8 +4715,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </p>
 
                 </div>
-
-            `;
+                `;
         }
 
 
@@ -4504,9 +4730,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (battleStatus) {
+        if (
+            battleStatus
+        ) {
 
-            if (winner === 1) {
+            if (
+                winner === 1
+            ) {
 
                 battleStatus.textContent =
                     "🏆 PLAYER 1 IS VICTORIOUS!";
@@ -4526,9 +4756,64 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        addPostBattleButtons(
-            resultBox
-        );
+        /*
+         * Make the fighter data available to
+         * game.html's Character Details screen.
+         */
+
+        window.adgBattleResult = {
+
+            winner:
+
+                winner,
+
+            rounds:
+
+                battleStats.completedRounds,
+
+            player1:
+
+                player1Fighters.map(
+                    getCharacterDetailsData
+                ),
+
+            player2:
+
+                player2Fighters.map(
+                    getCharacterDetailsData
+                ),
+
+            statistics:
+
+                {
+                    ...battleStats
+                }
+
+        };
+
+
+        /*
+         * Save a safe copy for the result screen.
+         *
+         * The exact original database stats are included.
+         */
+
+        try {
+
+            localStorage.setItem(
+                "adgBattleResult",
+                JSON.stringify(
+                    window.adgBattleResult
+                )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Unable to save battle result:",
+                error
+            );
+        }
 
 
         localStorage.setItem(
@@ -4541,7 +4826,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         localStorage.setItem(
             "battleWinner",
-            String(winner)
+            String(
+                winner
+            )
         );
     }
 
@@ -4560,9 +4847,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 Date.now(),
 
             date:
-                new Date().toISOString(),
+                new Date()
+                    .toISOString(),
 
-            winner,
+            winner:
+                winner,
 
             rounds:
                 battleStats.completedRounds,
@@ -4580,6 +4869,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             role:
                                 fighter.role,
 
+                            originalStats:
+                                {
+                                    ...(
+                                        fighter
+                                            .baseDatabaseStats ||
+                                        {}
+                                    )
+                                },
+
                             remainingHP:
                                 Math.floor(
                                     Math.max(
@@ -4601,8 +4899,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             specialsUsed:
                                 fighter.specialCount ||
                                 0
+
                         })
                     )
+
             },
 
 
@@ -4618,6 +4918,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             role:
                                 fighter.role,
 
+                            originalStats:
+                                {
+                                    ...(
+                                        fighter
+                                            .baseDatabaseStats ||
+                                        {}
+                                    )
+                                },
+
                             remainingHP:
                                 Math.floor(
                                     Math.max(
@@ -4639,8 +4948,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             specialsUsed:
                                 fighter.specialCount ||
                                 0
+
                         })
                     )
+
             },
 
 
@@ -4656,7 +4967,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 totalSpecials:
                     battleStats.totalSpecials
+
             }
+
         };
 
 
@@ -4674,11 +4987,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (error) {
 
+            console.error(
+                "Unable to load battle history:",
+                error
+            );
+
             history = [];
         }
 
 
-        if (!Array.isArray(history)) {
+        if (
+            !Array.isArray(
+                history
+            )
+        ) {
+
             history = [];
         }
 
@@ -4694,6 +5017,49 @@ document.addEventListener("DOMContentLoaded", () => {
                 history
             )
         );
+
+
+        console.log(
+            "✅ Battle history saved:",
+            historyEntry
+        );
+    }
+
+
+    // =========================================================
+    // ROUND DISPLAY
+    // =========================================================
+
+    function updateRoundDisplay() {
+
+        document
+            .querySelectorAll(
+                ".round-number"
+            )
+            .forEach(
+                element => {
+
+                    element.textContent =
+                        String(
+                            round
+                        );
+                }
+            );
+
+
+        const currentRound =
+            document.getElementById(
+                "currentRound"
+            );
+
+
+        if (
+            currentRound
+        ) {
+
+            currentRound.textContent =
+                `Round ${round}`;
+        }
     }
 
 
@@ -4705,7 +5071,10 @@ document.addEventListener("DOMContentLoaded", () => {
         forcedWinner = null
     ) {
 
-        if (!battleRunning) {
+        if (
+            battleFinished
+        ) {
+
             return;
         }
 
@@ -4714,19 +5083,29 @@ document.addEventListener("DOMContentLoaded", () => {
             false;
 
 
-        if (roundTimer) {
+        battleFinished =
+            true;
+
+
+        if (
+            roundTimer
+        ) {
 
             clearTimeout(
                 roundTimer
             );
 
-            roundTimer = null;
+
+            roundTimer =
+                null;
         }
 
 
         let winner =
             forcedWinner !== null
+
                 ? forcedWinner
+
                 : getBattleWinner();
 
 
@@ -4747,24 +5126,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             logBattle(
-                `❤️ Player 1 HP: <strong>${
-                    Math.floor(
+                `❤️ Player 1 remaining HP:
+                <strong>
+                    ${Math.floor(
                         getRemainingHP(
                             player1Fighters
                         )
-                    )
-                }</strong>`
+                    )}
+                </strong>`
             );
 
 
             logBattle(
-                `❤️ Player 2 HP: <strong>${
-                    Math.floor(
+                `❤️ Player 2 remaining HP:
+                <strong>
+                    ${Math.floor(
                         getRemainingHP(
                             player2Fighters
                         )
-                    )
-                }</strong>`
+                    )}
+                </strong>`
             );
         }
 
@@ -4785,19 +5166,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         showBattleResult(
-            winner ?? 0
+            winner || 0
         );
 
 
         saveBattleHistory(
-            winner ?? 0
+            winner || 0
         );
 
 
         updateBattleUI();
 
 
-        if (startBattleBtn) {
+        if (
+            startBattleBtn
+        ) {
 
             startBattleBtn.disabled =
                 false;
@@ -4811,7 +5194,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function startRound() {
 
-        if (!battleRunning) {
+        if (
+            !battleRunning
+        ) {
+
             return;
         }
 
@@ -4854,7 +5240,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         logBattle(
             `<strong>
-                ━━━ ROUND ${round} ━━━
+                ━━━━━━━━
+                ROUND ${round}
+                ━━━━━━━━
             </strong>`
         );
 
@@ -4863,16 +5251,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // STATUS PHASE
         // -----------------------------------------------------
 
-        const activeFighters =
-            [
-                ...getAliveFighters(
-                    player1Fighters
-                ),
+        const activeFighters = [
 
-                ...getAliveFighters(
-                    player2Fighters
-                )
-            ];
+            ...getAliveFighters(
+                player1Fighters
+            ),
+
+            ...getAliveFighters(
+                player2Fighters
+            )
+
+        ];
 
 
         activeFighters.forEach(
@@ -4920,7 +5309,10 @@ document.addEventListener("DOMContentLoaded", () => {
             of attackOrder
         ) {
 
-            if (!battleRunning) {
+            if (
+                !battleRunning
+            ) {
+
                 return;
             }
 
@@ -4949,9 +5341,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 updateBattleUI();
 
+
                 await sleep(
-                    SPEED.action
+                    SPEED.turn
                 );
+
 
                 continue;
             }
@@ -4961,7 +5355,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 player1Fighters.includes(
                     fighter
                 )
+
                     ? player1Fighters
+
                     : player2Fighters;
 
 
@@ -4969,7 +5365,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 player1Fighters.includes(
                     fighter
                 )
+
                     ? player2Fighters
+
                     : player1Fighters;
 
 
@@ -5000,7 +5398,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             await sleep(
-                SPEED.action
+                SPEED.turn
             );
         }
 
@@ -5032,6 +5430,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // -----------------------------------------------------
+        // MAX ROUND
+        // -----------------------------------------------------
+
         if (
             round >= MAX_ROUNDS
         ) {
@@ -5044,7 +5446,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        round += 1;
+        // -----------------------------------------------------
+        // NEXT ROUND
+        // -----------------------------------------------------
+
+        round +=
+            1;
 
 
         updateRoundDisplay();
@@ -5054,7 +5461,9 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(
                 () => {
 
-                    roundTimer = null;
+                    roundTimer =
+                        null;
+
 
                     startRound();
 
@@ -5073,39 +5482,40 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
 
         /*
-         * Rebuild from database so a rematch
-         * starts completely clean.
+         * IMPORTANT:
+         *
+         * Reset battle values from the ORIGINAL database stats,
+         * not from the already role-modified values.
          */
 
-        const databaseStats =
-            getDatabaseStats(
-                fighter.name
+        const original =
+            fighter.baseDatabaseStats ||
+            getOriginalStats(
+                fighter.databaseData
             );
 
 
         fighter.hp =
-            databaseStats?.hp ||
-            BASE_HP;
+            original.hp;
 
 
         fighter.maxHp =
-            fighter.hp;
+            original.hp;
 
 
         fighter.attack =
-            databaseStats?.attack ||
-            BASE_ATTACK;
+            original.attack;
 
 
         fighter.defense =
-            databaseStats?.defense ||
-            BASE_DEFENSE;
+            original.defense;
 
 
         fighter.speed =
-            databaseStats?.speed ||
-            BASE_SPEED;
+            original.speed;
 
+
+        // Apply role bonuses again.
 
         applyRoleBonus(
             fighter
@@ -5119,62 +5529,82 @@ document.addEventListener("DOMContentLoaded", () => {
         fighter.alive =
             true;
 
+
         fighter.abilityUsed =
             false;
+
 
         fighter.specialUsed =
             false;
 
+
         fighter.specialCount =
             0;
+
 
         fighter.koShown =
             false;
 
+
         fighter.lastCritical =
             false;
+
 
         fighter.criticalChance =
             0.15;
 
+
         fighter.assistReady =
             true;
+
 
         fighter.protecting =
             false;
 
+
         fighter.protectedBy =
             null;
+
 
         fighter.burn =
             0;
 
+
         fighter.bleed =
             0;
+
 
         fighter.stun =
             0;
 
+
         fighter.freeze =
             0;
+
 
         fighter.shield =
             0;
 
+
         fighter.regeneration =
             0;
+
 
         fighter.attackBuff =
             1;
 
+
         fighter.defenseBuff =
             1;
+
 
         fighter.speedBuff =
             1;
 
+
         fighter.damageDealt =
             0;
+
 
         fighter.kos =
             0;
@@ -5187,7 +5617,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function startBattle() {
 
-        if (battleRunning) {
+        if (
+            battleRunning
+        ) {
+
             return;
         }
 
@@ -5197,7 +5630,9 @@ document.addEventListener("DOMContentLoaded", () => {
             player2Fighters.length === 0
         ) {
 
-            if (battleStatus) {
+            if (
+                battleStatus
+            ) {
 
                 battleStatus.textContent =
                     "⚠️ Both players need fighters.";
@@ -5213,13 +5648,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (roundTimer) {
+        if (
+            roundTimer
+        ) {
 
             clearTimeout(
                 roundTimer
             );
 
-            roundTimer = null;
+
+            roundTimer =
+                null;
         }
 
 
@@ -5231,16 +5670,34 @@ document.addEventListener("DOMContentLoaded", () => {
             true;
 
 
-        resultShown =
+        battleFinished =
             false;
 
 
         battleStats = {
+
             ...battleStatsDefault
+
         };
 
 
-        // Hide result
+        /*
+         * Rebuild the result object so Character Details
+         * never displays old battle data.
+         */
+
+        window.adgBattleResult =
+            null;
+
+
+        localStorage.removeItem(
+            "adgBattleResult"
+        );
+
+
+        // -----------------------------------------------------
+        // HIDE OLD RESULT
+        // -----------------------------------------------------
 
         const resultBox =
             document.querySelector(
@@ -5248,7 +5705,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (resultBox) {
+        if (
+            resultBox
+        ) {
 
             resultBox.classList.add(
                 "hidden"
@@ -5256,51 +5715,61 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        // Remove old overlays
-
         adgRemoveVictory();
 
 
-        document
-            .querySelectorAll(
-                ".adg-details-overlay"
-            )
-            .forEach(
-                element =>
-                    element.remove()
-            );
-
-
-        // Reset fighters
+        // -----------------------------------------------------
+        // RESET FIGHTERS
+        // -----------------------------------------------------
 
         [
             ...player1Fighters,
             ...player2Fighters
+
         ].forEach(
             resetFighter
         );
 
 
-        if (battleLog) {
+        // -----------------------------------------------------
+        // CLEAR LOG
+        // -----------------------------------------------------
+
+        if (
+            battleLog
+        ) {
 
             battleLog.innerHTML =
                 "";
         }
 
 
-        if (startBattleBtn) {
+        // -----------------------------------------------------
+        // BUTTON
+        // -----------------------------------------------------
+
+        if (
+            startBattleBtn
+        ) {
 
             startBattleBtn.disabled =
                 true;
         }
 
 
+        // -----------------------------------------------------
+        // UI
+        // -----------------------------------------------------
+
         updateBattleUI();
+
 
         updateRoundDisplay();
 
 
-        if (battleStatus) {
+        if (
+            battleStatus
+        ) {
 
             battleStatus.textContent =
                 "⚔️ BATTLE STARTED!";
@@ -5316,19 +5785,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         logBattle(
             `🏴 Player 1:
-             ${player1Fighters.length} fighters`
+            ${player1Fighters.length}
+            fighters`
         );
 
 
         logBattle(
             `🏴 Player 2:
-             ${player2Fighters.length} fighters`
+            ${player2Fighters.length}
+            fighters`
         );
 
 
         logBattle(
-            `⚡ Maximum:
-             ${MAX_ROUNDS} rounds`
+            `⚡ Maximum battle length:
+            ${MAX_ROUNDS} rounds.`
+        );
+
+
+        logBattle(
+            `🚀 Fast Battle Mode enabled.`
         );
 
 
@@ -5338,11 +5814,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         await sleep(
-            SPEED.start
+            SPEED.battleStart
         );
 
 
-        if (battleRunning) {
+        if (
+            battleRunning
+        ) {
 
             startRound();
         }
@@ -5353,39 +5831,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // REMATCH
     // =========================================================
 
-    async function startRematch() {
+    function rematchBattle() {
 
-        if (battleRunning) {
+        if (
+            battleRunning
+        ) {
+
             return;
         }
 
 
-        /*
-         * Remove old details window.
-         */
-
-        document
-            .querySelectorAll(
-                ".adg-details-overlay"
-            )
-            .forEach(
-                element =>
-                    element.remove()
-            );
-
-
-        /*
-         * Rebuild fighters from the original
-         * draft teams and current database.
-         *
-         * This guarantees a clean rematch.
-         */
-
-        buildFighterTeams();
-
-
-        resultShown =
-            false;
+        adgRemoveVictory();
 
 
         const resultBox =
@@ -5394,7 +5850,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-        if (resultBox) {
+        if (
+            resultBox
+        ) {
 
             resultBox.classList.add(
                 "hidden"
@@ -5402,10 +5860,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        adgRemoveVictory();
-
-
-        await startBattle();
+        startBattle();
     }
 
 
@@ -5415,27 +5870,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateBattleUI();
 
+
     updateRoundDisplay();
 
 
-    if (battleStatus) {
+    if (
+        battleStatus
+    ) {
 
         battleStatus.textContent =
+
             (
                 player1Fighters.length === 0 ||
                 player2Fighters.length === 0
             )
+
                 ? "⚠️ Both players need fighters."
+
                 : "⚔️ READY FOR BATTLE";
     }
 
 
-    if (battleLog) {
+    if (
+        battleLog
+    ) {
 
-        battleLog.innerHTML = `
-
+        battleLog.innerHTML =
+            `
             <p>
-                🏴 Player 1 and Player 2 teams loaded.
+                🏴 Player 1 and Player 2
+                teams loaded.
             </p>
 
             <p>
@@ -5443,28 +5907,153 @@ document.addEventListener("DOMContentLoaded", () => {
             </p>
 
             <p>
-                🔥 Character special abilities ready.
+                🔥 Character special
+                abilities ready.
             </p>
 
             <p>
-                🔒 Character stats hidden until
-                battle completion.
+                🔓 Original database stats
+                saved for post-battle reveal.
             </p>
 
             <p>
-                ⚡ Fast Battle Mode ready.
+                ⚡ Maximum
+                ${MAX_ROUNDS}
+                battle rounds.
             </p>
 
-        `;
+            <p>
+                🚀 Fast Battle Mode ready.
+            </p>
+            `;
     }
 
 
-    if (startBattleBtn) {
+    // =========================================================
+    // START BUTTON
+    // =========================================================
+
+    if (
+        startBattleBtn
+    ) {
 
         startBattleBtn.addEventListener(
             "click",
             startBattle
         );
     }
+
+
+    // =========================================================
+    // REMATCH BUTTON SUPPORT
+    // =========================================================
+
+    const rematchBtn =
+        document.getElementById(
+            "rematchBtn"
+        );
+
+
+    if (
+        rematchBtn
+    ) {
+
+        rematchBtn.addEventListener(
+            "click",
+            rematchBattle
+        );
+    }
+
+
+    // =========================================================
+    // CHARACTER DETAILS BUTTON SUPPORT
+    // =========================================================
+
+    const characterDetailsBtn =
+        document.getElementById(
+            "characterDetailsBtn"
+        );
+
+
+    if (
+        characterDetailsBtn
+    ) {
+
+        characterDetailsBtn.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    typeof window.showCharacterDetails ===
+                    "function"
+                ) {
+
+                    window.showCharacterDetails();
+
+                } else {
+
+                    console.warn(
+                        "ADG: showCharacterDetails() is not available."
+                    );
+                }
+            }
+        );
+    }
+
+
+    // =========================================================
+    // DEBUG / DEVELOPMENT ACCESS
+    // =========================================================
+
+    window.ADG_BATTLE_V74 = {
+
+        get player1Fighters() {
+
+            return player1Fighters;
+        },
+
+
+        get player2Fighters() {
+
+            return player2Fighters;
+        },
+
+
+        get battleStats() {
+
+            return battleStats;
+        },
+
+
+        get round() {
+
+            return round;
+        },
+
+
+        startBattle,
+
+        rematchBattle,
+
+        getBattleWinner,
+
+        getCharacterDetailsData
+
+    };
+
+
+    console.log(
+        "✅ ADG Battle v7.4 loaded."
+    );
+
+
+    console.log(
+        "✅ Original database stats preserved."
+    );
+
+
+    console.log(
+        "🚀 Fast Battle Mode enabled."
+    );
 
 });

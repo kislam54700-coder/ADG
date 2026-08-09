@@ -5,17 +5,13 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>⚔️ ADG Battle</title>
 
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
+    <link rel="stylesheet"
+          href="css/style.css">
 
     <style>
 
@@ -30,37 +26,23 @@
         body {
             margin: 0;
             min-height: 100vh;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
+            font-family: Arial, Helvetica, sans-serif;
             background:
                 radial-gradient(
                     circle at top,
-                    #17213b,
-                    #070b16 65%
+                    #202838 0%,
+                    #0b0f17 55%,
+                    #05070b 100%
                 );
-
             color: #ffffff;
         }
-
-
-        /* =====================================================
-           MAIN CONTAINER
-           ===================================================== */
 
         .battle-page {
             width: 100%;
             max-width: 1500px;
-
             margin: auto;
-
-            padding:
-                20px;
+            padding: 20px;
         }
-
 
         /* =====================================================
            HEADER
@@ -68,1100 +50,637 @@
 
         .battle-header {
             text-align: center;
-
             margin-bottom: 20px;
         }
 
         .battle-header h1 {
             margin: 0;
-
-            font-size:
-                clamp(
-                    28px,
-                    5vw,
-                    48px
-                );
-
-            text-shadow:
-                0 0 15px
-                rgba(255,255,255,.25);
+            font-size: 34px;
         }
-
-        .battle-header p {
-            margin:
-                8px 0 0;
-
-            opacity: .75;
-        }
-
-
-        /* =====================================================
-           STATUS
-           ===================================================== */
 
         #battleStatus {
-
-            text-align: center;
-
-            font-size: 20px;
-
+            margin-top: 10px;
+            font-size: 18px;
             font-weight: bold;
-
-            margin:
-                12px 0;
         }
 
-
-        /* =====================================================
-           ROUND
-           ===================================================== */
-
-        .round-display {
-
-            text-align: center;
-
-            margin:
-                10px 0 20px;
-        }
-
-        .round-number,
         #currentRound {
-
-            display: inline-block;
-
-            padding:
-                8px 18px;
-
-            border-radius:
-                20px;
-
-            background:
-                rgba(255,255,255,.08);
-
-            border:
-                1px solid
-                rgba(255,255,255,.15);
-
-            font-weight:
-                bold;
+            margin-top: 6px;
+            font-size: 15px;
+            opacity: 0.8;
         }
 
-
         /* =====================================================
-           BATTLE ARENA
+           ARENA
            ===================================================== */
 
         .battle-arena {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                1fr
-                minmax(100px, 180px)
-                1fr;
-
-            gap:
-                15px;
-
-            align-items:
-                center;
+            display: grid;
+            grid-template-columns: 1fr 90px 1fr;
+            gap: 15px;
+            align-items: start;
         }
 
-
-        /* =====================================================
-           PLAYER SIDE
-           ===================================================== */
-
         .player-side {
-
-            background:
-                rgba(255,255,255,.045);
-
-            border:
-                1px solid
-                rgba(255,255,255,.10);
-
-            border-radius:
-                18px;
-
-            padding:
-                15px;
-
-            min-width:
-                0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            padding: 15px;
         }
 
         .player-title {
-
-            text-align:
-                center;
-
-            margin:
-                0 0 15px;
-
-            font-size:
-                22px;
+            text-align: center;
+            margin-bottom: 15px;
         }
 
-
-        /* =====================================================
-           FIGHTER GRID
-           ===================================================== */
-
-        .fighter-container {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(
-                        150px,
-                        1fr
-                    )
-                );
-
-            gap:
-                12px;
+        .player-title h2 {
+            margin: 0;
         }
 
-
-        /* =====================================================
-           FIGHTER CARD
-           ===================================================== */
-
-        .fighter-card {
-
-            position:
-                relative;
-
-            overflow:
-                hidden;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,.10),
-                    rgba(255,255,255,.035)
-                );
-
-            border:
-                1px solid
-                rgba(255,255,255,.12);
-
-            border-radius:
-                14px;
-
-            padding:
-                12px;
-
-            transition:
-                transform .2s ease,
-                box-shadow .2s ease,
-                opacity .2s ease;
+        .player-title p {
+            margin: 5px 0 0;
+            opacity: 0.7;
         }
-
-        .fighter-card h3 {
-
-            margin:
-                0 0 5px;
-
-            font-size:
-                16px;
-
-            white-space:
-                nowrap;
-
-            overflow:
-                hidden;
-
-            text-overflow:
-                ellipsis;
-        }
-
-        .fighter-card p {
-
-            margin:
-                5px 0;
-
-            font-size:
-                13px;
-
-            opacity:
-                .85;
-        }
-
-
-        /* =====================================================
-           HP BAR
-           ===================================================== */
-
-        .hp-bar {
-
-            width:
-                100%;
-
-            height:
-                9px;
-
-            margin:
-                8px 0;
-
-            background:
-                rgba(0,0,0,.45);
-
-            border-radius:
-                10px;
-
-            overflow:
-                hidden;
-        }
-
-        .hp-fill {
-
-            height:
-                100%;
-
-            width:
-                100%;
-
-            transition:
-                width .18s linear;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #ff3b3b,
-                    #ffcf33
-                );
-        }
-
-
-        /* =====================================================
-           EFFECTS
-           ===================================================== */
-
-        .battle-effects {
-
-            display:
-                flex;
-
-            flex-wrap:
-                wrap;
-
-            gap:
-                4px;
-
-            margin-top:
-                7px;
-        }
-
-        .battle-effects span {
-
-            padding:
-                3px 6px;
-
-            border-radius:
-                8px;
-
-            background:
-                rgba(0,0,0,.3);
-
-            font-size:
-                10px;
-        }
-
-
-        /* =====================================================
-           DEAD
-           ===================================================== */
-
-        .fighter-card.dead {
-
-            opacity:
-                .38;
-
-            filter:
-                grayscale(.8);
-        }
-
-        .fighter-card.ko {
-
-            border-color:
-                rgba(255,0,0,.5);
-
-            box-shadow:
-                0 0 15px
-                rgba(255,0,0,.2);
-        }
-
-
-        /* =====================================================
-           ACTIVE
-           ===================================================== */
-
-        .fighter-card.active {
-
-            box-shadow:
-                0 0 18px
-                rgba(255,215,0,.25);
-        }
-
 
         /* =====================================================
            VS
            ===================================================== */
 
         .battle-vs {
-
-            display:
-                flex;
-
-            justify-content:
-                center;
-
-            align-items:
-                center;
-
-            flex-direction:
-                column;
-
-            gap:
-                8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100%;
+            font-size: 28px;
+            font-weight: 900;
         }
-
-        .battle-vs span {
-
-            font-size:
-                clamp(
-                    30px,
-                    5vw,
-                    55px
-                );
-
-            font-weight:
-                900;
-
-            font-style:
-                italic;
-
-            text-shadow:
-                0 0 20px
-                rgba(255,60,60,.4);
-        }
-
 
         /* =====================================================
-           START BUTTON
+           FIGHTER GRID
            ===================================================== */
 
-        #startBattleBtn {
+        #player1Battle,
+        #player2Battle {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
 
-            display:
-                block;
-
-            margin:
-                25px auto;
-
-            padding:
-                13px 30px;
-
-            border:
-                none;
-
-            border-radius:
-                12px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ff4d4d,
-                    #ff8a00
-                );
-
-            color:
-                white;
-
-            font-size:
-                17px;
-
-            font-weight:
-                bold;
-
-            cursor:
-                pointer;
-
+        .fighter-card {
+            position: relative;
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.12);
+            overflow: hidden;
             transition:
-                transform .15s ease,
-                opacity .15s ease;
+                transform 0.2s ease,
+                opacity 0.2s ease,
+                box-shadow 0.2s ease;
         }
 
-        #startBattleBtn:hover {
-
-            transform:
-                scale(1.04);
+        .fighter-card h3 {
+            margin: 0 0 5px;
+            font-size: 17px;
         }
 
-        #startBattleBtn:disabled {
-
-            opacity:
-                .45;
-
-            cursor:
-                not-allowed;
-
-            transform:
-                none;
+        .fighter-card p {
+            margin: 5px 0;
+            font-size: 13px;
         }
 
+        .fighter-card.dead {
+            opacity: 0.42;
+            filter: grayscale(0.7);
+        }
+
+        .fighter-card.active {
+            box-shadow:
+                0 0 15px rgba(255,255,255,0.25);
+        }
+
+        .fighter-card.attacking {
+            transform: translateX(8px) scale(1.03);
+        }
+
+        .fighter-card.hit {
+            transform: translateX(-5px) scale(1.02);
+        }
+
+        .fighter-card.critical {
+            box-shadow:
+                0 0 25px rgba(255,80,40,0.8);
+        }
+
+        .fighter-card.special {
+            transform: scale(1.04);
+            box-shadow:
+                0 0 30px rgba(255,190,60,0.8);
+        }
+
+        /* =====================================================
+           HP BAR
+           ===================================================== */
+
+        .hp-bar {
+            width: 100%;
+            height: 10px;
+            margin: 8px 0;
+            border-radius: 10px;
+            background: #20242d;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            background: #37d67a;
+            transition: width 0.25s ease;
+        }
+
+        /* =====================================================
+           EFFECTS
+           ===================================================== */
+
+        .battle-effects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .battle-effects span {
+            padding: 3px 6px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            font-size: 11px;
+        }
 
         /* =====================================================
            BATTLE LOG
            ===================================================== */
 
-        .battle-log-wrapper {
-
-            margin-top:
-                20px;
-
-            background:
-                rgba(0,0,0,.25);
-
-            border:
-                1px solid
-                rgba(255,255,255,.08);
-
-            border-radius:
-                15px;
-
-            overflow:
-                hidden;
+        .battle-log-section {
+            margin-top: 20px;
         }
 
-        .battle-log-title {
-
-            padding:
-                12px 15px;
-
-            font-weight:
-                bold;
-
-            border-bottom:
-                1px solid
-                rgba(255,255,255,.08);
+        .battle-log-section h2 {
+            margin-bottom: 10px;
         }
 
         #battleLog {
-
-            height:
-                230px;
-
-            overflow-y:
-                auto;
-
-            padding:
-                12px 15px;
-
-            font-size:
-                13px;
-
-            line-height:
-                1.5;
+            height: 210px;
+            overflow-y: auto;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         #battleLog p {
-
-            margin:
-                0 0 7px;
-
-            opacity:
-                .9;
+            margin: 5px 0;
+            font-size: 13px;
+            line-height: 1.45;
         }
 
+        /* =====================================================
+           CONTROLS
+           ===================================================== */
+
+        .battle-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s ease,
+                        opacity 0.15s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+            transform: none;
+        }
+
+        #startBattleBtn {
+            background: #e63946;
+            color: white;
+        }
+
+        #rematchBtn {
+            background: #277da1;
+            color: white;
+        }
+
+        #characterDetailsBtn {
+            background: #6a4c93;
+            color: white;
+        }
 
         /* =====================================================
            RESULT BOX
            ===================================================== */
 
         .result-box {
-
-            margin-top:
-                25px;
-
-            padding:
-                25px;
-
-            border-radius:
-                20px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,.10),
-                    rgba(255,255,255,.035)
-                );
-
-            border:
-                1px solid
-                rgba(255,255,255,.12);
-
-            text-align:
-                center;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
         }
 
         .result-box.hidden {
-
-            display:
-                none;
+            display: none;
         }
 
         #winnerText {
-
-            margin:
-                0 0 10px;
-
-            font-size:
-                clamp(
-                    26px,
-                    5vw,
-                    42px
-                );
+            text-align: center;
+            margin-top: 0;
+            font-size: 30px;
         }
 
         #resultSummary {
-
-            opacity:
-                .75;
+            text-align: center;
+            opacity: 0.8;
         }
 
-
-        /* =====================================================
-           RESULT TEAMS
-           ===================================================== */
-
         .result-teams {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                1fr 1fr;
-
-            gap:
-                15px;
-
-            margin-top:
-                20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .result-team {
-
-            padding:
-                15px;
-
-            border-radius:
-                14px;
-
-            background:
-                rgba(255,255,255,.05);
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.3);
         }
 
         .result-team h3 {
-
-            margin-top:
-                0;
+            margin-top: 0;
         }
 
         .result-team-stat p {
-
-            margin:
-                8px 0;
+            margin: 7px 0;
         }
-
-
-        /* =====================================================
-           BATTLE STATISTICS
-           ===================================================== */
 
         .battle-statistics {
-
-            margin-top:
-                20px;
-
-            padding:
-                15px;
-
-            border-radius:
-                14px;
-
-            background:
-                rgba(0,0,0,.2);
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.3);
         }
-
-        .battle-statistics h3 {
-
-            margin-top:
-                0;
-        }
-
 
         /* =====================================================
            RESULT BUTTONS
            ===================================================== */
 
-        .result-actions {
-
-            display:
-                flex;
-
-            justify-content:
-                center;
-
-            gap:
-                12px;
-
-            flex-wrap:
-                wrap;
-
-            margin-top:
-                25px;
+        .result-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
         }
-
-        .result-btn {
-
-            min-width:
-                180px;
-
-            padding:
-                13px 20px;
-
-            border:
-                none;
-
-            border-radius:
-                12px;
-
-            color:
-                white;
-
-            font-size:
-                15px;
-
-            font-weight:
-                bold;
-
-            cursor:
-                pointer;
-
-            transition:
-                transform .15s ease,
-                opacity .15s ease;
-        }
-
-        .result-btn:hover {
-
-            transform:
-                translateY(-2px);
-        }
-
-        #rematchBtn {
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #16a085,
-                    #27ae60
-                );
-        }
-
-        #characterDetailsBtn {
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #6c5ce7,
-                    #0984e3
-                );
-        }
-
 
         /* =====================================================
            CHARACTER DETAILS MODAL
            ===================================================== */
 
         .character-details-overlay {
-
-            position:
-                fixed;
-
-            inset:
-                0;
-
-            z-index:
-                9999;
-
-            display:
-                flex;
-
-            justify-content:
-                center;
-
-            align-items:
-                center;
-
-            padding:
-                15px;
-
-            background:
-                rgba(0,0,0,.82);
-
-            backdrop-filter:
-                blur(8px);
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.82);
         }
 
-        .character-details-overlay.hidden {
-
-            display:
-                none;
+        .character-details-overlay.show {
+            display: flex;
         }
 
-
-        .character-details-modal {
-
-            width:
-                min(
-                    100%,
-                    1100px
-                );
-
-            max-height:
-                90vh;
-
-            overflow-y:
-                auto;
-
-            padding:
-                22px;
-
-            border-radius:
-                20px;
-
+        .character-details-box {
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 22px;
+            border-radius: 18px;
             background:
                 linear-gradient(
                     145deg,
-                    #161d32,
-                    #0b1020
+                    #151b27,
+                    #090c12
                 );
-
-            border:
-                1px solid
-                rgba(255,255,255,.15);
-
-            box-shadow:
-                0 25px 80px
-                rgba(0,0,0,.6);
+            border: 1px solid rgba(255,255,255,0.15);
         }
 
-        .details-header {
-
-            display:
-                flex;
-
-            justify-content:
-                space-between;
-
-            align-items:
-                center;
-
-            gap:
-                10px;
-
-            margin-bottom:
-                18px;
+        .character-details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
-        .details-header h2 {
-
-            margin:
-                0;
-
-            font-size:
-                25px;
+        .character-details-header h2 {
+            margin: 0;
         }
 
         #closeCharacterDetails {
-
-            width:
-                40px;
-
-            height:
-                40px;
-
-            border:
-                none;
-
-            border-radius:
-                50%;
-
-            background:
-                rgba(255,255,255,.10);
-
-            color:
-                white;
-
-            font-size:
-                20px;
-
-            cursor:
-                pointer;
+            padding: 8px 13px;
+            background: #d62828;
+            color: white;
         }
 
-
-        /* =====================================================
-           DETAILS WARNING
-           ===================================================== */
-
-        .details-note {
-
-            padding:
-                12px 15px;
-
-            margin-bottom:
-                20px;
-
-            border-radius:
-                12px;
-
-            background:
-                rgba(255,193,7,.10);
-
-            border:
-                1px solid
-                rgba(255,193,7,.20);
-
-            font-size:
-                13px;
-
-            opacity:
-                .9;
+        .details-player-section {
+            margin-top: 20px;
         }
 
-
-        /* =====================================================
-           DETAILS TEAM
-           ===================================================== */
-
-        .details-team {
-
-            margin-bottom:
-                25px;
+        .details-player-section h3 {
+            margin-bottom: 10px;
         }
 
-        .details-team h3 {
-
-            margin:
-                0 0 12px;
-
-            font-size:
-                20px;
-        }
-
-
-        /* =====================================================
-           DETAILS GRID
-           ===================================================== */
-
-        .character-details-grid {
-
-            display:
-                grid;
-
+        .details-grid {
+            display: grid;
             grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(
-                        220px,
-                        1fr
-                    )
-                );
-
-            gap:
-                12px;
+                repeat(2, minmax(0, 1fr));
+            gap: 12px;
         }
 
+        .detail-card {
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .detail-card h4 {
+            margin: 0 0 8px;
+            font-size: 17px;
+        }
+
+        .detail-role {
+            opacity: 0.75;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .detail-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .detail-stat:last-child {
+            border-bottom: none;
+        }
+
+        .detail-description {
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.65;
+        }
 
         /* =====================================================
-           CHARACTER DETAIL CARD
+           ANNOUNCEMENTS / EFFECTS
            ===================================================== */
 
-        .character-detail-card {
-
-            padding:
-                15px;
-
-            border-radius:
-                15px;
-
-            background:
-                rgba(255,255,255,.055);
-
-            border:
-                1px solid
-                rgba(255,255,255,.10);
+        .adg-announcement {
+            position: fixed;
+            left: 50%;
+            top: 25%;
+            z-index: 10000;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.88);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 25px;
+            font-weight: 900;
+            pointer-events: none;
+            animation: adgAnnouncement 1.1s ease forwards;
         }
 
-        .character-detail-card h4 {
-
-            margin:
-                0 0 5px;
-
-            font-size:
-                17px;
+        .adg-special-banner {
+            position: fixed;
+            left: 50%;
+            top: 40%;
+            z-index: 10001;
+            transform: translateX(-50%);
+            padding: 18px 28px;
+            border-radius: 14px;
+            background: rgba(0,0,0,0.92);
+            border: 2px solid rgba(255,210,70,0.6);
+            font-size: 22px;
+            font-weight: 900;
+            pointer-events: none;
+            animation: adgSpecial 1.2s ease forwards;
         }
 
-        .character-role {
-
-            opacity:
-                .65;
-
-            font-size:
-                12px;
-
-            margin-bottom:
-                12px;
+        .adg-attack-impact {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 10002;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            pointer-events: none;
+            animation: adgImpact 0.6s ease forwards;
         }
 
+        .adg-arena-flash {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            pointer-events: none;
+            background: rgba(255,255,255,0.15);
+            animation: adgFlash 0.3s ease forwards;
+        }
+
+        .adg-victory-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10003;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+
+        .adg-victory-box {
+            padding: 35px 50px;
+            border-radius: 20px;
+            text-align: center;
+            background: #101722;
+            border: 2px solid rgba(255,255,255,0.2);
+            animation: victoryPop 0.5s ease;
+        }
+
+        .adg-victory-box h1 {
+            margin: 0;
+            font-size: 36px;
+        }
 
         /* =====================================================
-           HIDDEN STATS
+           ANIMATIONS
            ===================================================== */
 
-        .hidden-stats {
+        @keyframes adgAnnouncement {
 
-            display:
-                grid;
+            0% {
+                opacity: 0;
+                transform:
+                    translateX(-50%)
+                    scale(0.7);
+            }
 
-            grid-template-columns:
-                1fr 1fr;
+            20% {
+                opacity: 1;
+                transform:
+                    translateX(-50%)
+                    scale(1);
+            }
 
-            gap:
-                7px;
+            80% {
+                opacity: 1;
+            }
 
-            font-size:
-                13px;
+            100% {
+                opacity: 0;
+                transform:
+                    translateX(-50%)
+                    scale(1.05);
+            }
         }
 
-        .stat-row {
+        @keyframes adgSpecial {
 
-            display:
-                flex;
+            0% {
+                opacity: 0;
+                transform:
+                    translateX(-50%)
+                    scale(0.65);
+            }
 
-            justify-content:
-                space-between;
+            20% {
+                opacity: 1;
+                transform:
+                    translateX(-50%)
+                    scale(1);
+            }
 
-            gap:
-                8px;
+            80% {
+                opacity: 1;
+            }
 
-            padding:
-                6px 8px;
-
-            border-radius:
-                7px;
-
-            background:
-                rgba(0,0,0,.20);
+            100% {
+                opacity: 0;
+                transform:
+                    translateX(-50%)
+                    scale(1.08);
+            }
         }
 
-        .stat-row span:first-child {
+        @keyframes adgImpact {
 
-            opacity:
-                .7;
+            0% {
+                opacity: 0;
+                transform:
+                    translate(-50%, -50%)
+                    scale(0.4);
+            }
+
+            25% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform:
+                    translate(-50%, -50%)
+                    scale(1.4);
+            }
         }
 
-        .stat-row span:last-child {
+        @keyframes adgFlash {
 
-            font-weight:
-                bold;
+            0% {
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
         }
 
+        @keyframes victoryPop {
+
+            from {
+                transform: scale(0.6);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
 
         /* =====================================================
            MOBILE
            ===================================================== */
 
-        @media (
-            max-width: 850px
-        ) {
+        @media (max-width: 850px) {
 
             .battle-arena {
-
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
             .battle-vs {
-
-                order:
-                    2;
-
-                flex-direction:
-                    row;
+                min-height: auto;
+                padding: 5px;
             }
 
-            .player-side {
-
-                width:
-                    100%;
+            #player1Battle,
+            #player2Battle {
+                grid-template-columns: 1fr;
             }
 
             .result-teams {
-
-                grid-template-columns:
-                    1fr;
-            }
-        }
-
-
-        @media (
-            max-width: 500px
-        ) {
-
-            .battle-page {
-
-                padding:
-                    10px;
+                grid-template-columns: 1fr;
             }
 
-            .fighter-container {
-
-                grid-template-columns:
-                    1fr 1fr;
+            .details-grid {
+                grid-template-columns: 1fr;
             }
 
-            .fighter-card {
-
-                padding:
-                    9px;
-            }
-
-            .fighter-card h3 {
-
-                font-size:
-                    13px;
-            }
-
-            .hidden-stats {
-
-                grid-template-columns:
-                    1fr;
-            }
-
-            .result-btn {
-
-                width:
-                    100%;
+            .battle-header h1 {
+                font-size: 27px;
             }
         }
 
@@ -1172,13 +691,7 @@
 
 <body>
 
-
-<!-- =========================================================
-     MAIN BATTLE PAGE
-     ========================================================= -->
-
-<main class="battle-page">
-
+<div class="battle-page">
 
     <!-- =====================================================
          HEADER
@@ -1186,129 +699,105 @@
 
     <header class="battle-header">
 
-        <h1>
-            ⚔️ ADG BATTLE
-        </h1>
+        <h1>⚔️ ADG BATTLE</h1>
 
-        <p>
-            Anime Draft Game
-        </p>
+        <div id="battleStatus">
+            ⚔️ READY FOR BATTLE
+        </div>
+
+        <div id="currentRound">
+            Round 1
+        </div>
 
     </header>
-
-
-    <!-- =====================================================
-         STATUS
-         ===================================================== -->
-
-    <div id="battleStatus">
-        ⚔️ READY FOR BATTLE
-    </div>
-
-
-    <!-- =====================================================
-         ROUND
-         ===================================================== -->
-
-    <div class="round-display">
-
-        <span
-            id="currentRound"
-            class="round-number"
-        >
-            Round 1
-        </span>
-
-    </div>
 
 
     <!-- =====================================================
          BATTLE ARENA
          ===================================================== -->
 
-    <section class="battle-arena">
+    <main class="battle-arena">
 
+        <!-- PLAYER 1 -->
 
-        <!-- =================================================
-             PLAYER 1
-             ================================================= -->
+        <section class="player-side">
 
-        <div class="player-side">
+            <div class="player-title">
 
-            <h2 class="player-title">
-                🏴 PLAYER 1
-            </h2>
+                <h2>🏴 PLAYER 1</h2>
 
-            <div
-                id="player1Battle"
-                class="fighter-container"
-            >
+                <p>
+                    Battle Team
+                </p>
+
             </div>
 
-        </div>
+            <div id="player1Battle"></div>
+
+        </section>
 
 
-        <!-- =================================================
-             VS
-             ================================================= -->
+        <!-- VS -->
 
         <div class="battle-vs">
-
-            <span>
-                VS
-            </span>
-
+            VS
         </div>
 
 
-        <!-- =================================================
-             PLAYER 2
-             ================================================= -->
+        <!-- PLAYER 2 -->
 
-        <div class="player-side">
+        <section class="player-side">
 
-            <h2 class="player-title">
-                🏴 PLAYER 2
-            </h2>
+            <div class="player-title">
 
-            <div
-                id="player2Battle"
-                class="fighter-container"
-            >
+                <h2>🏴 PLAYER 2</h2>
+
+                <p>
+                    Battle Team
+                </p>
+
             </div>
 
-        </div>
+            <div id="player2Battle"></div>
 
+        </section>
 
-    </section>
+    </main>
 
 
     <!-- =====================================================
-         START BATTLE
+         CONTROLS
          ===================================================== -->
 
-    <button
-        id="startBattleBtn"
-        type="button"
-    >
-        ⚔️ START BATTLE
-    </button>
+    <div class="battle-controls">
+
+        <button id="startBattleBtn">
+            ⚔️ Start Battle
+        </button>
+
+    </div>
 
 
     <!-- =====================================================
          BATTLE LOG
          ===================================================== -->
 
-    <section class="battle-log-wrapper">
+    <section class="battle-log-section">
 
-        <div class="battle-log-title">
-            📜 Battle Log
-        </div>
+        <h2>📜 Battle Log</h2>
 
         <div id="battleLog">
 
             <p>
                 🏴 Player 1 and Player 2 teams loaded.
+            </p>
+
+            <p>
+                🎭 Role abilities ready.
+            </p>
+
+            <p>
+                🔥 Character special abilities ready.
             </p>
 
         </div>
@@ -1317,31 +806,25 @@
 
 
     <!-- =====================================================
-         BATTLE RESULT
+         RESULT
          ===================================================== -->
 
     <section
         class="result-box hidden"
-        id="battleResult"
     >
 
-
         <h2 id="winnerText">
-            🏆 PLAYER 1 WINS!
+            🏆 BATTLE RESULT
         </h2>
-
 
         <p id="resultSummary">
             Battle completed.
         </p>
 
 
-        <!-- ================================================
-             RESULT TEAMS
-             ================================================ -->
-
         <div class="result-teams">
 
+            <!-- PLAYER 1 RESULT -->
 
             <div class="result-team">
 
@@ -1349,11 +832,12 @@
                     🏴 PLAYER 1
                 </h3>
 
-                <div id="player1Result">
-                </div>
+                <div id="player1Result"></div>
 
             </div>
 
+
+            <!-- PLAYER 2 RESULT -->
 
             <div class="result-team">
 
@@ -1361,56 +845,43 @@
                     🏴 PLAYER 2
                 </h3>
 
-                <div id="player2Result">
-                </div>
+                <div id="player2Result"></div>
 
             </div>
 
-
         </div>
 
 
-        <!-- ================================================
-             BATTLE STATISTICS
-             ================================================ -->
+        <!-- BATTLE STATISTICS -->
 
-        <div id="battleStatistics">
-        </div>
+        <div id="battleStatistics"></div>
 
 
-        <!-- ================================================
-             RESULT ACTIONS
-             ================================================ -->
+        <!-- =================================================
+             RESULT BUTTONS
+             ================================================= -->
 
-        <div class="result-actions">
-
+        <div class="result-buttons">
 
             <button
                 id="rematchBtn"
-                class="result-btn"
                 type="button"
             >
-                🔄 REMATCH
+                🔄 Rematch
             </button>
-
 
             <button
                 id="characterDetailsBtn"
-                class="result-btn"
                 type="button"
             >
-                📊 CHARACTER DETAILS
+                📊 Character Details
             </button>
-
 
         </div>
 
-
     </section>
 
-
-</main>
-
+</div>
 
 
 <!-- =========================================================
@@ -1419,22 +890,12 @@
 
 <div
     id="characterDetailsOverlay"
-    class="character-details-overlay hidden"
+    class="character-details-overlay"
 >
 
+    <div class="character-details-box">
 
-    <div
-        class="character-details-modal"
-        role="dialog"
-        aria-modal="true"
-    >
-
-
-        <!-- =================================================
-             HEADER
-             ================================================= -->
-
-        <div class="details-header">
+        <div class="character-details-header">
 
             <h2>
                 📊 Character Details
@@ -1443,867 +904,809 @@
             <button
                 id="closeCharacterDetails"
                 type="button"
-                aria-label="Close"
             >
-                ✕
+                ✕ Close
             </button>
 
         </div>
 
 
-        <!-- =================================================
-             NOTE
-             ================================================= -->
-
-        <div class="details-note">
-
-            🔓 These are the hidden character stats used by
-            the ADG battle system. They are revealed only
-            after the battle ends.
-
-        </div>
+        <p>
+            🔒 These are the character's original database
+            stats used by ADG. Battle effects, role bonuses,
+            buffs and damage modifications are not shown here.
+        </p>
 
 
-        <!-- =================================================
-             PLAYER 1 DETAILS
-             ================================================= -->
+        <!-- PLAYER 1 DETAILS -->
 
-        <section class="details-team">
+        <section class="details-player-section">
 
             <h3>
-                🏴 PLAYER 1
+                🏴 PLAYER 1 CHARACTERS
             </h3>
 
             <div
                 id="player1CharacterDetails"
-                class="character-details-grid"
-            >
-            </div>
+                class="details-grid"
+            ></div>
 
         </section>
 
 
-        <!-- =================================================
-             PLAYER 2 DETAILS
-             ================================================= -->
+        <!-- PLAYER 2 DETAILS -->
 
-        <section class="details-team">
+        <section class="details-player-section">
 
             <h3>
-                🏴 PLAYER 2
+                🏴 PLAYER 2 CHARACTERS
             </h3>
 
             <div
                 id="player2CharacterDetails"
-                class="character-details-grid"
-            >
-            </div>
+                class="details-grid"
+            ></div>
 
         </section>
-
 
     </div>
 
 </div>
 
 
-
 <!-- =========================================================
      SCRIPTS
+     
+     IMPORTANT:
+     database.js MUST load before battle.js
      ========================================================= -->
-
-<!--
-    IMPORTANT:
-    database.js MUST load before battle.js
--->
 
 <script src="js/database.js"></script>
 
 <script src="js/battle.js"></script>
 
 
+<!-- =========================================================
+     GAME RESULT / CHARACTER DETAILS CONNECTION
+     ========================================================= -->
 
 <script>
 
-"use strict";
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        "use strict";
 
 
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
+        // =====================================================
+        // ELEMENTS
+        // =====================================================
 
-const rematchBtn =
-    document.getElementById(
-        "rematchBtn"
-    );
+        const rematchBtn =
+            document.getElementById(
+                "rematchBtn"
+            );
 
-const characterDetailsBtn =
-    document.getElementById(
-        "characterDetailsBtn"
-    );
+        const detailsBtn =
+            document.getElementById(
+                "characterDetailsBtn"
+            );
 
-const characterDetailsOverlay =
-    document.getElementById(
-        "characterDetailsOverlay"
-    );
+        const detailsOverlay =
+            document.getElementById(
+                "characterDetailsOverlay"
+            );
 
-const closeCharacterDetails =
-    document.getElementById(
-        "closeCharacterDetails"
-    );
+        const closeDetailsBtn =
+            document.getElementById(
+                "closeCharacterDetails"
+            );
 
-const player1CharacterDetails =
-    document.getElementById(
-        "player1CharacterDetails"
-    );
+        const player1Details =
+            document.getElementById(
+                "player1CharacterDetails"
+            );
 
-const player2CharacterDetails =
-    document.getElementById(
-        "player2CharacterDetails"
-    );
-
-
-/* =========================================================
-   DATABASE LOOKUP
-   ========================================================= */
-
-function findDatabaseCharacter(
-    characterName
-) {
-
-    const name =
-        String(
-            characterName || ""
-        )
-        .trim()
-        .toLowerCase();
+        const player2Details =
+            document.getElementById(
+                "player2CharacterDetails"
+            );
 
 
-    /*
-       ADG database.js normally contains
-       ONE_PIECE_CHARACTERS.
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
 
-       This lookup supports several
-       possible database structures.
-    */
+        function escapeDetailsHtml(value) {
+
+            return String(value ?? "")
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+        }
 
 
-    if (
-        typeof ONE_PIECE_CHARACTERS !==
-        "undefined"
-    ) {
+        // =====================================================
+        // NUMBER FORMAT
+        // =====================================================
 
-        const found =
-            ONE_PIECE_CHARACTERS.find(
-                character => {
+        function numberValue(value) {
+
+            const number =
+                Number(value);
+
+            if (
+                !Number.isFinite(number)
+            ) {
+
+                return "—";
+            }
+
+            return Number.isInteger(number)
+                ? String(number)
+                : number.toFixed(2);
+
+        }
+
+
+        // =====================================================
+        // FIND DATABASE CHARACTER
+        // =====================================================
+
+        function findDatabaseCharacter(
+            characterName
+        ) {
+
+            const name =
+                String(
+                    characterName || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            /*
+             * database.js v7.4 normally exposes
+             * ONE_PIECE_CHARACTERS.
+             */
+
+            if (
+                Array.isArray(
+                    window.ONE_PIECE_CHARACTERS
+                )
+            ) {
+
+                const found =
+                    window.ONE_PIECE_CHARACTERS
+                        .find(
+                            character => {
+
+                                const dbName =
+                                    String(
+                                        character.name ||
+                                        ""
+                                    )
+                                        .trim()
+                                        .toLowerCase();
+
+                                return (
+                                    dbName === name
+                                );
+                            }
+                        );
+
+                if (found) {
+                    return found;
+                }
+
+            }
+
+
+            /*
+             * Also support a global character database
+             * if database.js exposes one.
+             */
+
+            const possibleDatabases = [
+
+                window.ADGDATABASE,
+
+                window.ADG_DATABASE,
+
+                window.CHARACTER_DATABASE,
+
+                window.characterDatabase
+
+            ];
+
+
+            for (
+                const database
+                of possibleDatabases
+            ) {
+
+                if (
+                    !Array.isArray(database)
+                ) {
+
+                    continue;
+                }
+
+                const found =
+                    database.find(
+                        character => {
+
+                            const dbName =
+                                String(
+                                    character.name ||
+                                    ""
+                                )
+                                    .trim()
+                                    .toLowerCase();
+
+                            return (
+                                dbName === name
+                            );
+
+                        }
+                    );
+
+                if (found) {
+                    return found;
+                }
+
+            }
+
+
+            return null;
+        }
+
+
+        // =====================================================
+        // GET ORIGINAL STATS
+        // =====================================================
+
+        function getOriginalStats(
+            fighter
+        ) {
+
+            if (!fighter) {
+                return null;
+            }
+
+
+            /*
+             * v7.4 battle.js saves an exact snapshot
+             * of the original database stats.
+             */
+
+            if (
+                fighter.originalStats &&
+                typeof fighter.originalStats ===
+                    "object"
+            ) {
+
+                return fighter.originalStats;
+            }
+
+
+            /*
+             * Fallback to database.js.
+             */
+
+            const databaseCharacter =
+                findDatabaseCharacter(
+                    fighter.name
+                );
+
+            if (
+                databaseCharacter
+            ) {
+
+                return {
+
+                    hp:
+                        databaseCharacter.hp ??
+                        databaseCharacter.HP ??
+                        databaseCharacter.health,
+
+                    attack:
+                        databaseCharacter.attack ??
+                        databaseCharacter.ATK ??
+                        databaseCharacter.damage,
+
+                    defense:
+                        databaseCharacter.defense ??
+                        databaseCharacter.DEF,
+
+                    speed:
+                        databaseCharacter.speed ??
+                        databaseCharacter.SPD
+
+                };
+
+            }
+
+
+            return null;
+        }
+
+
+        // =====================================================
+        // BUILD CHARACTER DETAIL CARD
+        // =====================================================
+
+        function buildCharacterDetailCard(
+            fighter
+        ) {
+
+            const stats =
+                getOriginalStats(
+                    fighter
+                );
+
+
+            if (!stats) {
+
+                return `
+                    <div class="detail-card">
+
+                        <h4>
+                            ${escapeDetailsHtml(
+                                fighter?.name ||
+                                "Unknown"
+                            )}
+                        </h4>
+
+                        <div class="detail-role">
+                            ${escapeDetailsHtml(
+                                fighter?.role ||
+                                "Unknown"
+                            )}
+                        </div>
+
+                        <p>
+                            ⚠️ Original database
+                            stats unavailable.
+                        </p>
+
+                    </div>
+                `;
+            }
+
+
+            const characterName =
+                stats.name ||
+                fighter.name ||
+                "Unknown";
+
+
+            const role =
+                fighter.role ||
+                "Unknown";
+
+
+            return `
+                <div class="detail-card">
+
+                    <h4>
+                        ${escapeDetailsHtml(
+                            characterName
+                        )}
+                    </h4>
+
+                    <div class="detail-role">
+
+                        ${escapeDetailsHtml(
+                            getRoleEmojiSafe(
+                                role
+                            )
+                        )}
+
+                        ${escapeDetailsHtml(
+                            role
+                        )}
+
+                    </div>
+
+
+                    <div class="detail-stat">
+
+                        <span>
+                            ❤️ HP
+                        </span>
+
+                        <strong>
+                            ${numberValue(
+                                stats.hp ??
+                                stats.HP ??
+                                stats.health
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-stat">
+
+                        <span>
+                            ⚔️ Attack
+                        </span>
+
+                        <strong>
+                            ${numberValue(
+                                stats.attack ??
+                                stats.ATK ??
+                                stats.damage
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-stat">
+
+                        <span>
+                            🛡️ Defense
+                        </span>
+
+                        <strong>
+                            ${numberValue(
+                                stats.defense ??
+                                stats.DEF
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-stat">
+
+                        <span>
+                            ⚡ Speed
+                        </span>
+
+                        <strong>
+                            ${numberValue(
+                                stats.speed ??
+                                stats.SPD
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-description">
+
+                        🔒 Original database stats.
+                        Role bonuses and battle buffs
+                        are excluded.
+
+                    </div>
+
+                </div>
+            `;
+        }
+
+
+        // =====================================================
+        // ROLE EMOJI
+        // =====================================================
+
+        function getRoleEmojiSafe(
+            role
+        ) {
+
+            const emojis = {
+
+                "Captain": "👑",
+
+                "Vice Captain": "⚔️",
+
+                "Tank": "🛡️",
+
+                "Healer": "❤️",
+
+                "Support": "⭐",
+
+                "Wildcard": "☠️"
+
+            };
+
+            return (
+                emojis[role] ||
+                "🔥"
+            );
+        }
+
+
+        // =====================================================
+        // GET CURRENT FIGHTERS
+        // =====================================================
+
+        function getFighters(
+            playerNumber
+        ) {
+
+            /*
+             * v7.4 battle.js exposes these arrays.
+             */
+
+            if (
+                playerNumber === 1 &&
+                Array.isArray(
+                    window.player1Fighters
+                )
+            ) {
+
+                return window.player1Fighters;
+            }
+
+
+            if (
+                playerNumber === 2 &&
+                Array.isArray(
+                    window.player2Fighters
+                )
+            ) {
+
+                return window.player2Fighters;
+            }
+
+
+            /*
+             * Fallback:
+             * read saved final battle data.
+             */
+
+            try {
+
+                const saved =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "battleFighterData"
+                        ) || "{}"
+                    );
+
+
+                const key =
+                    playerNumber === 1
+                        ? "player1"
+                        : "player2";
+
+
+                if (
+                    Array.isArray(
+                        saved[key]
+                    )
+                ) {
+
+                    return saved[key];
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Unable to read saved fighter data:",
+                    error
+                );
+
+            }
+
+
+            return [];
+        }
+
+
+        // =====================================================
+        // SHOW CHARACTER DETAILS
+        // =====================================================
+
+        function showCharacterDetails() {
+
+            const p1 =
+                getFighters(1);
+
+            const p2 =
+                getFighters(2);
+
+
+            if (player1Details) {
+
+                player1Details.innerHTML =
+                    p1.length
+                        ? p1
+                            .map(
+                                buildCharacterDetailCard
+                            )
+                            .join("")
+                        : `
+                            <div class="detail-card">
+                                No Player 1 fighter data.
+                            </div>
+                        `;
+            }
+
+
+            if (player2Details) {
+
+                player2Details.innerHTML =
+                    p2.length
+                        ? p2
+                            .map(
+                                buildCharacterDetailCard
+                            )
+                            .join("")
+                        : `
+                            <div class="detail-card">
+                                No Player 2 fighter data.
+                            </div>
+                        `;
+            }
+
+
+            if (detailsOverlay) {
+
+                detailsOverlay.classList.add(
+                    "show"
+                );
+            }
+
+        }
+
+
+        // =====================================================
+        // CLOSE DETAILS
+        // =====================================================
+
+        function closeCharacterDetails() {
+
+            if (detailsOverlay) {
+
+                detailsOverlay.classList.remove(
+                    "show"
+                );
+            }
+
+        }
+
+
+        // =====================================================
+        // REMATCH
+        // =====================================================
+
+        if (rematchBtn) {
+
+            rematchBtn.addEventListener(
+                "click",
+                () => {
+
+                    closeCharacterDetails();
+
+
+                    /*
+                     * battle.js exposes startBattle()
+                     * globally.
+                     */
 
                     if (
-                        typeof character ===
-                        "string"
+                        typeof window.startBattle ===
+                        "function"
                     ) {
 
-                        return character
-                            .toLowerCase() ===
-                            name;
+                        window.startBattle();
+
+                        return;
                     }
 
-                    if (
-                        character &&
-                        character.name
-                    ) {
 
-                        return String(
-                            character.name
-                        )
-                        .trim()
-                        .toLowerCase() ===
-                        name;
-                    }
+                    console.error(
+                        "ADG: startBattle() unavailable."
+                    );
 
-                    return false;
                 }
             );
 
-        if (found) {
-            return found;
         }
-    }
 
 
-    /*
-       Optional generic CHARACTER_DATABASE
-       support.
-    */
+        // =====================================================
+        // DETAILS BUTTON
+        // =====================================================
 
-    if (
-        typeof CHARACTER_DATABASE !==
-        "undefined"
-    ) {
+        if (detailsBtn) {
 
-        const found =
-            CHARACTER_DATABASE.find(
-                character =>
-                    character &&
-                    String(
-                        character.name
-                    )
-                    .trim()
-                    .toLowerCase() ===
-                    name
+            detailsBtn.addEventListener(
+                "click",
+                () => {
+
+                    showCharacterDetails();
+
+                }
             );
 
-        if (found) {
-            return found;
         }
-    }
 
 
-    return null;
-}
+        // =====================================================
+        // CLOSE BUTTON
+        // =====================================================
 
+        if (closeDetailsBtn) {
 
-/* =========================================================
-   GET DATABASE STAT
-   ========================================================= */
+            closeDetailsBtn.addEventListener(
+                "click",
+                closeCharacterDetails
+            );
 
-function getDatabaseStat(
-    character,
-    possibleNames,
-    fallback
-) {
-
-    if (
-        !character ||
-        typeof character !==
-        "object"
-    ) {
-
-        return fallback;
-    }
-
-
-    for (
-        const property
-        of possibleNames
-    ) {
-
-        if (
-            character[property] !==
-            undefined
-        ) {
-
-            return character[property];
         }
-    }
 
 
-    return fallback;
-}
+        // =====================================================
+        // CLICK OUTSIDE MODAL
+        // =====================================================
 
+        if (detailsOverlay) {
 
-/* =========================================================
-   CREATE CHARACTER DETAILS
-   ========================================================= */
+            detailsOverlay.addEventListener(
+                "click",
+                event => {
 
-function createCharacterDetailCard(
-    fighter
-) {
+                    if (
+                        event.target ===
+                        detailsOverlay
+                    ) {
 
-    const databaseCharacter =
-        findDatabaseCharacter(
-            fighter.name
-        );
+                        closeCharacterDetails();
 
+                    }
 
-    /*
-       IMPORTANT:
+                }
+            );
 
-       These stats are NOT displayed
-       during battle.
-
-       They are only read here,
-       after the result screen.
-    */
-
-
-    const hp =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "hp",
-                "HP",
-                "health",
-                "baseHP"
-            ],
-            fighter.maxHp
-        );
-
-
-    const attack =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "attack",
-                "Attack",
-                "atk",
-                "baseAttack"
-            ],
-            fighter.attack
-        );
-
-
-    const defense =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "defense",
-                "Defense",
-                "def",
-                "baseDefense"
-            ],
-            fighter.defense
-        );
-
-
-    const speed =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "speed",
-                "Speed",
-                "spd",
-                "baseSpeed"
-            ],
-            fighter.speed
-        );
-
-
-    const critical =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "criticalChance",
-                "critChance"
-            ],
-            fighter.criticalChance
-        );
-
-
-    const rarity =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "rarity",
-                "tier"
-            ],
-            "—"
-        );
-
-
-    const power =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "power",
-                "powerScore",
-                "strength"
-            ],
-            "—"
-        );
-
-
-    const special =
-        getDatabaseStat(
-            databaseCharacter,
-            [
-                "special",
-                "specialAbility",
-                "ability"
-            ],
-            "—"
-        );
-
-
-    const remainingHP =
-        Math.floor(
-            Math.max(
-                0,
-                fighter.hp
-            )
-        );
-
-
-    const damage =
-        Math.floor(
-            fighter.damageDealt ||
-            0
-        );
-
-
-    const kos =
-        fighter.kos ||
-        0;
-
-
-    const specialsUsed =
-        fighter.specialCount ||
-        0;
-
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-    card.className =
-        "character-detail-card";
-
-
-    card.innerHTML = `
-
-        <h4>
-            ${escapeDetailsHTML(
-                fighter.emoji || "🔥"
-            )}
-
-            ${escapeDetailsHTML(
-                fighter.name
-            )}
-        </h4>
-
-        <div class="character-role">
-            ${escapeDetailsHTML(
-                fighter.role ||
-                "Wildcard"
-            )}
-        </div>
-
-
-        <div class="hidden-stats">
-
-            <div class="stat-row">
-                <span>❤️ Base HP</span>
-                <span>
-                    ${escapeDetailsHTML(hp)}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>⚔️ Attack</span>
-                <span>
-                    ${escapeDetailsHTML(attack)}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>🛡️ Defense</span>
-                <span>
-                    ${escapeDetailsHTML(defense)}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>⚡ Speed</span>
-                <span>
-                    ${escapeDetailsHTML(speed)}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>💥 Critical</span>
-                <span>
-                    ${formatPercent(
-                        critical
-                    )}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>⭐ Rarity</span>
-                <span>
-                    ${escapeDetailsHTML(
-                        rarity
-                    )}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>🔥 Power</span>
-                <span>
-                    ${escapeDetailsHTML(
-                        power
-                    )}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>✨ Special</span>
-                <span>
-                    ${escapeDetailsHTML(
-                        special
-                    )}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>❤️ Remaining</span>
-                <span>
-                    ${remainingHP}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>💥 Damage</span>
-                <span>
-                    ${damage}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>💀 KOs</span>
-                <span>
-                    ${kos}
-                </span>
-            </div>
-
-
-            <div class="stat-row">
-                <span>🔥 Specials</span>
-                <span>
-                    ${specialsUsed}
-                </span>
-            </div>
-
-        </div>
-    `;
-
-
-    return card;
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeDetailsHTML(
-    value
-) {
-
-    return String(
-        value ?? "—"
-    )
-    .replace(
-        /&/g,
-        "&amp;"
-    )
-    .replace(
-        /</g,
-        "&lt;"
-    )
-    .replace(
-        />/g,
-        "&gt;"
-    )
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-    .replace(
-        /'/g,
-        "&#039;"
-    );
-}
-
-
-/* =========================================================
-   FORMAT PERCENT
-   ========================================================= */
-
-function formatPercent(
-    value
-) {
-
-    const number =
-        Number(value);
-
-
-    if (
-        Number.isNaN(number)
-    ) {
-
-        return escapeDetailsHTML(
-            value
-        );
-    }
-
-
-    /*
-       Supports:
-       0.15  -> 15%
-       15    -> 15%
-    */
-
-    if (
-        number >= 0 &&
-        number <= 1
-    ) {
-
-        return `${Math.round(
-            number * 100
-        )}%`;
-    }
-
-
-    return `${Math.round(
-        number
-    )}%`;
-}
-
-
-/* =========================================================
-   SHOW CHARACTER DETAILS
-   ========================================================= */
-
-function showCharacterDetails() {
-
-    /*
-       Only allow details after
-       battle has finished.
-    */
-
-    const winner =
-        localStorage.getItem(
-            "battleWinner"
-        );
-
-
-    if (
-        winner === null
-    ) {
-
-        return;
-    }
-
-
-    /*
-       battle.js creates the live
-       fighter arrays.
-
-       We access them here.
-    */
-
-    if (
-        typeof player1Fighters ===
-        "undefined" ||
-        typeof player2Fighters ===
-        "undefined"
-    ) {
-
-        console.error(
-            "ADG: Fighter data unavailable."
-        );
-
-        return;
-    }
-
-
-    player1CharacterDetails
-        .innerHTML = "";
-
-    player2CharacterDetails
-        .innerHTML = "";
-
-
-    player1Fighters.forEach(
-        fighter => {
-
-            player1CharacterDetails
-                .appendChild(
-                    createCharacterDetailCard(
-                        fighter
-                    )
-                );
         }
-    );
 
 
-    player2Fighters.forEach(
-        fighter => {
+        // =====================================================
+        // ESC KEY
+        // =====================================================
 
-            player2CharacterDetails
-                .appendChild(
-                    createCharacterDetailCard(
-                        fighter
-                    )
-                );
-        }
-    );
-
-
-    characterDetailsOverlay
-        .classList
-        .remove(
-            "hidden"
-        );
-}
-
-
-/* =========================================================
-   CLOSE DETAILS
-   ========================================================= */
-
-function hideCharacterDetails() {
-
-    characterDetailsOverlay
-        .classList
-        .add(
-            "hidden"
-        );
-}
-
-
-/* =========================================================
-   REMATCH
-   ========================================================= */
-
-function rematchBattle() {
-
-    hideCharacterDetails();
-
-
-    /*
-       Remove previous battle result.
-    */
-
-    localStorage.removeItem(
-        "battleWinner"
-    );
-
-
-    localStorage.removeItem(
-        "battleStats"
-    );
-
-
-    /*
-       battle.js exposes startBattle()
-       in the same page scope.
-    */
-
-    if (
-        typeof startBattle ===
-        "function"
-    ) {
-
-        startBattle();
-
-        return;
-    }
-
-
-    /*
-       Fallback:
-       reload the battle page.
-    */
-
-    window.location.reload();
-}
-
-
-/* =========================================================
-   BUTTON EVENTS
-   ========================================================= */
-
-if (
-    characterDetailsBtn
-) {
-
-    characterDetailsBtn
-        .addEventListener(
-            "click",
-            showCharacterDetails
-        );
-}
-
-
-if (
-    closeCharacterDetails
-) {
-
-    closeCharacterDetails
-        .addEventListener(
-            "click",
-            hideCharacterDetails
-        );
-}
-
-
-if (
-    rematchBtn
-) {
-
-    rematchBtn
-        .addEventListener(
-            "click",
-            rematchBattle
-        );
-}
-
-
-/* =========================================================
-   CLICK OUTSIDE MODAL
-   ========================================================= */
-
-if (
-    characterDetailsOverlay
-) {
-
-    characterDetailsOverlay
-        .addEventListener(
-            "click",
+        document.addEventListener(
+            "keydown",
             event => {
 
                 if (
-                    event.target ===
-                    characterDetailsOverlay
+                    event.key === "Escape"
                 ) {
 
-                    hideCharacterDetails();
+                    closeCharacterDetails();
+
                 }
 
             }
         );
-}
-
-
-/* =========================================================
-   ESC KEY
-   ========================================================= */
-
-document.addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            event.key ===
-            "Escape"
-        ) {
-
-            hideCharacterDetails();
-        }
 
     }
+
 );
 
 </script>
