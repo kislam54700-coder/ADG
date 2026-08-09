@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,7 +8,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>⚔️ ADG Battle</title>
+    <title>⚔️ ADG — Battle</title>
 
     <link rel="stylesheet"
           href="css/style.css">
@@ -20,37 +19,106 @@
 <body>
 
     <!-- =====================================================
-         ADG BATTLE
+         ADG BATTLE PAGE
          ===================================================== -->
 
-    <div class="container">
+    <main class="battle-page">
 
-        <h1>⚔️ ADG BATTLE</h1>
 
-        <h2 id="battleStatus">
-            ⚔️ Teams Ready!
-        </h2>
+        <!-- =================================================
+             HEADER
+             ================================================= -->
+
+        <header class="battle-header">
+
+            <div class="adg-logo">
+                ⚔️ ADG
+            </div>
+
+            <h1>
+                BATTLE ARENA
+            </h1>
+
+            <p>
+                Anime Draft Game
+            </p>
+
+        </header>
+
+
+        <!-- =================================================
+             BATTLE STATUS
+             ================================================= -->
+
+        <section class="battle-top">
+
+            <div class="round-display">
+
+                <span>
+                    ROUND
+                </span>
+
+                <strong
+                    id="currentRound">
+                    Round 1
+                </strong>
+
+            </div>
+
+
+            <div class="battle-status"
+                 id="battleStatus">
+
+                ⚔️ READY FOR BATTLE
+
+            </div>
+
+        </section>
 
 
         <!-- =================================================
              BATTLE ARENA
              ================================================= -->
 
-        <div class="battle-arena">
+        <section class="battle-arena">
 
 
             <!-- =============================================
                  PLAYER 1
                  ============================================= -->
 
-            <div class="battle-side player1-side">
+            <div class="battle-side player-one-side">
 
-                <h2>🏴 PLAYER 1</h2>
+                <div class="battle-player-header">
 
-                <div id="player1Battle"
-                     class="battle-team">
+                    <div>
 
-                    <!-- battle.js creates fighters here -->
+                        <span class="player-label">
+                            PLAYER 1
+                        </span>
+
+                        <h2>
+                            YOUR TEAM
+                        </h2>
+
+                    </div>
+
+                    <div class="round-number">
+                        1
+                    </div>
+
+                </div>
+
+
+                <!-- PLAYER 1 FIGHTERS -->
+
+                <div class="battle-team"
+                     id="player1Battle">
+
+                    <!--
+                        Fighters are generated
+                        automatically by battle.js
+                    -->
 
                 </div>
 
@@ -63,9 +131,13 @@
 
             <div class="battle-vs">
 
+                <div class="vs-line"></div>
+
                 <div class="vs-text">
-                    ⚔️ VS ⚔️
+                    VS
                 </div>
+
+                <div class="vs-line"></div>
 
             </div>
 
@@ -74,47 +146,63 @@
                  PLAYER 2
                  ============================================= -->
 
-            <div class="battle-side player2-side">
+            <div class="battle-side player-two-side">
 
-                <h2>🏴 PLAYER 2</h2>
+                <div class="battle-player-header">
 
-                <div id="player2Battle"
-                     class="battle-team">
+                    <div>
 
-                    <!-- battle.js creates fighters here -->
+                        <span class="player-label">
+                            PLAYER 2
+                        </span>
+
+                        <h2>
+                            OPPONENT TEAM
+                        </h2>
+
+                    </div>
+
+                    <div class="round-number">
+                        1
+                    </div>
+
+                </div>
+
+
+                <!-- PLAYER 2 FIGHTERS -->
+
+                <div class="battle-team"
+                     id="player2Battle">
+
+                    <!--
+                        Fighters are generated
+                        automatically by battle.js
+                    -->
 
                 </div>
 
             </div>
 
-        </div>
+
+        </section>
 
 
         <!-- =================================================
              BATTLE CONTROLS
              ================================================= -->
 
-        <div class="battle-controls">
+        <section class="battle-controls">
 
             <button
                 id="startBattleBtn"
-                class="battle-btn">
+                class="start-battle-btn"
+                type="button">
 
-                ⚔️ Start Battle
-
-            </button>
-
-
-            <button
-                id="backBtn"
-                class="battle-btn"
-                onclick="history.back()">
-
-                ⬅️ Back
+                ⚔️ START BATTLE
 
             </button>
 
-        </div>
+        </section>
 
 
         <!-- =================================================
@@ -123,12 +211,22 @@
 
         <section class="battle-log-section">
 
-            <h2>
-                ⚡ Battle Log
-            </h2>
+            <div class="section-title">
 
-            <div id="battleLog"
-                 class="battle-log">
+                <span>
+                    📜
+                </span>
+
+                <h2>
+                    BATTLE LOG
+                </h2>
+
+            </div>
+
+
+            <div
+                id="battleLog"
+                class="battle-log">
 
                 <p>
                     🏴 Player 1 and Player 2 teams loaded.
@@ -143,7 +241,7 @@
                 </p>
 
                 <p>
-                    💫 Advanced battle effects ready.
+                    ⚡ Maximum 50 battle rounds.
                 </p>
 
             </div>
@@ -152,197 +250,120 @@
 
 
         <!-- =================================================
-             PHASE 6.3 — BATTLE RESULT
+             BATTLE RESULT
              ================================================= -->
 
-        <div id="battleResult"
-             class="battle-result hidden">
-
-            <div class="result-box">
+        <section class="result-box hidden">
 
 
-                <div class="result-title">
-                    🏆 BATTLE RESULT
-                </div>
+            <div class="result-header">
 
+                <span class="result-trophy">
+                    🏆
+                </span>
 
-                <div id="winnerText"
-                     class="winner-text">
+                <h2 id="winnerText">
+                    BATTLE RESULT
+                </h2>
 
-                    🏆 PLAYER 1 WINS!
-
-                </div>
-
-
-                <div id="resultSummary"
-                     class="result-summary">
-
+                <p id="resultSummary">
                     Battle completed.
-
-                </div>
-
-
-                <!-- =========================================
-                     TEAM RESULTS
-                     ========================================= -->
-
-                <div class="result-teams">
-
-
-                    <!-- PLAYER 1 -->
-
-                    <div class="result-team player1-result">
-
-                        <h2>
-                            🏴 PLAYER 1
-                        </h2>
-
-                        <div id="player1ResultStats">
-
-                            <!-- JavaScript fills this -->
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- PLAYER 2 -->
-
-                    <div class="result-team player2-result">
-
-                        <h2>
-                            🏴 PLAYER 2
-                        </h2>
-
-                        <div id="player2ResultStats">
-
-                            <!-- JavaScript fills this -->
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =========================================
-                     MVP
-                     ========================================= -->
-
-                <div class="mvp-section">
-
-                    <h2>
-                        ⭐ MVP
-                    </h2>
-
-                    <div id="mvpResult">
-
-                        <!-- JavaScript fills this -->
-
-                    </div>
-
-                </div>
-
-
-                <!-- =========================================
-                     BATTLE STATISTICS
-                     ========================================= -->
-
-                <div class="battle-result-stats">
-
-
-                    <div class="result-stat">
-
-                        <span>
-                            ⚡ Rounds
-                        </span>
-
-                        <strong id="resultRounds">
-                            0
-                        </strong>
-
-                    </div>
-
-
-                    <div class="result-stat">
-
-                        <span>
-                            💥 Total Damage
-                        </span>
-
-                        <strong id="resultDamage">
-                            0
-                        </strong>
-
-                    </div>
-
-
-                    <div class="result-stat">
-
-                        <span>
-                            💀 Total KOs
-                        </span>
-
-                        <strong id="resultKOs">
-                            0
-                        </strong>
-
-                    </div>
-
-
-                    <div class="result-stat">
-
-                        <span>
-                            🔥 Specials Used
-                        </span>
-
-                        <strong id="resultSpecials">
-                            0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =========================================
-                     RESULT ACTIONS
-                     ========================================= -->
-
-                <div class="result-actions">
-
-
-                    <button
-                        id="restartBattleBtn"
-                        class="result-btn">
-
-                        🔄 Restart Battle
-
-                    </button>
-
-
-                    <button
-                        id="backToDraftBtn"
-                        class="result-btn">
-
-                        ⬅️ Back to Draft
-
-                    </button>
-
-
-                </div>
+                </p>
 
             </div>
 
-        </div>
+
+            <!-- =============================================
+                 RESULT TEAMS
+                 ============================================= -->
+
+            <div class="result-teams">
 
 
-    </div>
+                <!-- PLAYER 1 RESULT -->
+
+                <div class="result-player player-one-result">
+
+                    <span class="player-label">
+                        PLAYER 1
+                    </span>
+
+                    <h3>
+                        YOUR TEAM
+                    </h3>
+
+                    <div id="player1Result">
+
+                    </div>
+
+                </div>
+
+
+                <!-- PLAYER 2 RESULT -->
+
+                <div class="result-player player-two-result">
+
+                    <span class="player-label">
+                        PLAYER 2
+                    </span>
+
+                    <h3>
+                        OPPONENT TEAM
+                    </h3>
+
+                    <div id="player2Result">
+
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+
+            <!-- =============================================
+                 BATTLE STATISTICS
+                 ============================================= -->
+
+            <div id="battleStatistics">
+
+                <!--
+                    Statistics are generated
+                    automatically by battle.js
+                -->
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+
+        <footer class="battle-footer">
+
+            <p>
+                ⚔️ ADG — Anime Draft Game
+            </p>
+
+            <p>
+                AI Battle Simulation
+            </p>
+
+        </footer>
+
+
+    </main>
 
 
     <!-- =====================================================
-         JAVASCRIPT
+         SCRIPTS
          ===================================================== -->
+
+    <script src="js/database.js"></script>
 
     <script src="js/battle.js"></script>
 
@@ -350,4 +371,4 @@
 </body>
 
 </html>
-```
+

@@ -126,60 +126,78 @@ const ONE_PIECE_CHARACTERS = [
 
 
 // ============================================================
-// LOCAL CHARACTER IMAGES
+// CHARACTER IMAGE SYSTEM
 // ============================================================
 //
-// Only Luffy, Zoro and Sanji for our first test.
-// We will add the other characters after this works.
+// File location:
+//
+// assets/
+// └── characters/
+//     └── one-piece/
+//         ├── luffy.jpg
+//         ├── zoro.jpg
+//         ├── sanji.jpg
+//         └── ...
+//
+// You can add the images slowly.
+// The game automatically knows the correct path.
 //
 
-const CHARACTER_IMAGES = {
+function characterImageName(character) {
 
-    "Luffy":
-        "assets/characters/one-piece/luffy.jpg",
-
-    "Zoro":
-        "assets/characters/one-piece/zoro.jpg",
-
-    "Sanji":
-        "assets/characters/one-piece/sanji.jpg"
-
-};
-
-
-// ============================================================
-// GET CHARACTER IMAGE
-// ============================================================
-
-function getCharacterImage(character) {
-
-    return CHARACTER_IMAGES[character] || "";
-
+    return character
+        .toLowerCase()
+        .replace(/'/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 
 }
 
 
 // ============================================================
-// GET CHARACTER DATA
+// GET IMAGE PATH
+// ============================================================
+
+function getCharacterImage(character) {
+
+    const filename =
+        characterImageName(character);
+
+    return (
+        "assets/characters/one-piece/" +
+        filename +
+        ".jpg"
+    );
+
+}
+
+
+// ============================================================
+// CHARACTER DATA
 // ============================================================
 
 function getCharacterData(character) {
 
     return {
+
         name: character,
+
         image: getCharacterImage(character)
+
     };
 
 }
 
 
 // ============================================================
-// GLOBAL
+// GLOBAL EXPORT
 // ============================================================
 
-window.ONE_PIECE_CHARACTERS = ONE_PIECE_CHARACTERS;
+window.ONE_PIECE_CHARACTERS =
+    ONE_PIECE_CHARACTERS;
 
-window.getCharacterImage = getCharacterImage;
+window.getCharacterImage =
+    getCharacterImage;
 
-window.getCharacterData = getCharacterData;
-
+window.getCharacterData =
+    getCharacterData;
