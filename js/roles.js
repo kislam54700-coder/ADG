@@ -140,28 +140,109 @@ document.addEventListener("DOMContentLoaded", function () {
             playerNumber;
 
 
-        /* Character image */
+        /* =================================================
+           CHARACTER IMAGE
+           ================================================= */
 
         const image =
-            document.createElement("div");
+            document.createElement("img");
 
         image.className =
             "character-image";
 
-        image.innerHTML =
-            '<span style="' +
-            'display:flex;' +
-            'width:100%;' +
-            'height:100%;' +
-            'align-items:center;' +
-            'justify-content:center;' +
-            'font-size:42px;' +
-            '">' +
-            '🎴' +
-            '</span>';
+        image.alt =
+            character;
+
+        const imageURL =
+            getCharacterImage(character);
 
 
-        /* Character name */
+        if (imageURL) {
+
+            image.src =
+                imageURL;
+
+        } else {
+
+            image.src =
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="300"
+                         height="380"
+                         viewBox="0 0 300 380">
+
+                        <rect
+                            width="300"
+                            height="380"
+                            fill="#171717"
+                        />
+
+                        <text
+                            x="150"
+                            y="190"
+                            text-anchor="middle"
+                            dominant-baseline="middle"
+                            font-size="60">
+                            🎴
+                        </text>
+
+                    </svg>
+                `);
+
+        }
+
+
+        /* =================================================
+           IMAGE ERROR FALLBACK
+           ================================================= */
+
+        image.onerror =
+            function () {
+
+                this.onerror = null;
+
+                this.src =
+                    "data:image/svg+xml;charset=UTF-8," +
+                    encodeURIComponent(`
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="300"
+                             height="380"
+                             viewBox="0 0 300 380">
+
+                            <rect
+                                width="300"
+                                height="380"
+                                fill="#171717"
+                            />
+
+                            <text
+                                x="150"
+                                y="170"
+                                text-anchor="middle"
+                                dominant-baseline="middle"
+                                font-size="55">
+                                🎴
+                            </text>
+
+                            <text
+                                x="150"
+                                y="240"
+                                text-anchor="middle"
+                                fill="white"
+                                font-size="22">
+                                ${character}
+                            </text>
+
+                        </svg>
+                    `);
+
+            };
+
+
+        /* =================================================
+           CHARACTER NAME
+           ================================================= */
 
         const name =
             document.createElement("div");
@@ -173,7 +254,9 @@ document.addEventListener("DOMContentLoaded", function () {
             character;
 
 
-        /* Role selector */
+        /* =================================================
+           ROLE SELECTOR
+           ================================================= */
 
         const selector =
             document.createElement("div");
@@ -199,7 +282,9 @@ document.addEventListener("DOMContentLoaded", function () {
             "role-options";
 
 
-        /* Create role buttons */
+        /* =================================================
+           CREATE ROLE BUTTONS
+           ================================================= */
 
         ROLES.forEach(function (role) {
 
@@ -258,6 +343,10 @@ document.addEventListener("DOMContentLoaded", function () {
             roleOptions
         );
 
+
+        /* =================================================
+           BUILD CARD
+           ================================================= */
 
         card.appendChild(
             image
@@ -660,14 +749,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 return;
             }
-
-
-            /* Save */
+            
 
             saveRoles();
 
 
-            /* Go to existing battle system */
+
 
             window.location.href =
                 "battle.html";
