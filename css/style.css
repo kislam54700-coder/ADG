@@ -2571,3 +2571,207 @@ body {
     font-size: 50px;
     background: rgba(255,255,255,0.08);
 }
+
+/* =====================================================
+   MOBILE ROLE ASSIGNMENT FIX
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .role-page {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .player-section {
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .character-grid {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .character-grid > * {
+        min-width: 0;
+    }
+
+    .player-one,
+    .player-two {
+        height: auto;
+        overflow: visible;
+    }
+
+}
+/* =====================================================
+   ADG DRAFT CHARACTER IMAGE
+   ===================================================== */
+
+.draft-character-content {
+    text-align: center;
+}
+
+.character-image {
+    display: block;
+    width: 180px;
+    height: 220px;
+    object-fit: cover;
+    margin: 0 auto 15px;
+    border-radius: 14px;
+}
+
+.character-image-placeholder {
+    width: 180px;
+    height: 220px;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    border-radius: 14px;
+}
+/* =========================================================
+   ADG BATTLE HISTORY
+   ========================================================= */
+
+.history-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.history-card {
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.history-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.history-card-header h2 {
+    margin: 0 0 6px;
+}
+
+.history-card-header p {
+    margin: 4px 0;
+}
+
+.history-teams {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.history-team {
+    padding: 15px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.history-team h3 {
+    margin-top: 0;
+}
+
+.history-fighter {
+    display: grid;
+    grid-template-columns:
+        minmax(120px, 1.5fr)
+        minmax(100px, 1fr)
+        repeat(4, auto);
+
+    gap: 10px;
+    align-items: center;
+
+    padding: 10px 0;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.08);
+}
+
+.history-fighter:last-child {
+    border-bottom: none;
+}
+
+.history-statistics {
+    margin-top: 18px;
+    padding: 15px;
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.history-statistics h3 {
+    width: 100%;
+    margin: 0;
+}
+
+.history-statistics p {
+    margin: 0;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.history-empty h2 {
+    margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .history-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .history-teams {
+        grid-template-columns: 1fr;
+    }
+
+    .history-fighter {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .history-statistics {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+}

@@ -1,23 +1,55 @@
 document.addEventListener("DOMContentLoaded", () => {
+    "use strict";
 
-    const animeTitle = document.getElementById("animeTitle");
-    const drawBtn = document.getElementById("drawBtn");
-    const characterCard = document.getElementById("characterCard");
+    // =========================================================
+    // ELEMENTS
+    // =========================================================
 
-    const currentPlayerText = document.getElementById("currentPlayer");
-    const roundCounter = document.getElementById("roundCounter");
+    const animeTitle =
+        document.getElementById("animeTitle");
 
-    const player1List = document.getElementById("player1Team");
-    const player2List = document.getElementById("player2Team");
+    const drawBtn =
+        document.getElementById("drawBtn");
 
-    const p1Count = document.getElementById("p1Count");
-    const p2Count = document.getElementById("p2Count");
+    const characterCard =
+        document.getElementById("characterCard");
 
-    const nextPhaseBtn = document.getElementById("nextPhaseBtn");
+    const currentPlayerText =
+        document.getElementById("currentPlayer");
 
-    const selectedAnime = localStorage.getItem("selectedAnime");
+    const roundCounter =
+        document.getElementById("roundCounter");
 
-    animeTitle.textContent = selectedAnime || "No Anime Selected";
+    const player1List =
+        document.getElementById("player1Team");
+
+    const player2List =
+        document.getElementById("player2Team");
+
+    const p1Count =
+        document.getElementById("p1Count");
+
+    const p2Count =
+        document.getElementById("p2Count");
+
+    const nextPhaseBtn =
+        document.getElementById("nextPhaseBtn");
+
+
+    // =========================================================
+    // SELECTED ANIME
+    // =========================================================
+
+    const selectedAnime =
+        localStorage.getItem("selectedAnime");
+
+    animeTitle.textContent =
+        selectedAnime || "No Anime Selected";
+
+
+    // =========================================================
+    // DRAFT DATA
+    // =========================================================
 
     let currentPlayer = 1;
 
@@ -26,141 +58,350 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const draftedCharacters = [];
 
-    // Continue button
-    nextPhaseBtn.addEventListener("click", () => {
-        window.location.href = "roles.html";
-    });
 
-    // Draw button
-    drawBtn.addEventListener("click", () => {
+    // =========================================================
+    // CONTINUE TO ROLE ASSIGNMENT
+    // =========================================================
 
-        if (selectedAnime !== "One Piece") return;
+    if (nextPhaseBtn) {
 
-        let character;
+        nextPhaseBtn.addEventListener(
+            "click",
+            () => {
 
-        // Prevent duplicate characters
-        do {
+                // Save again for safety
+                localStorage.setItem(
+                    "player1Team",
+                    JSON.stringify(player1Team)
+                );
 
-            const randomIndex = Math.floor(
-                Math.random() * ONE_PIECE_CHARACTERS.length
-            );
+                localStorage.setItem(
+                    "player2Team",
+                    JSON.stringify(player2Team)
+                );
 
-            character = ONE_PIECE_CHARACTERS[randomIndex];
+                window.location.href =
+                    "roles.html";
+            }
+        );
+    }
 
-        } while (draftedCharacters.includes(character));
 
-        draftedCharacters.push(character);
+    // =========================================================
+    // DRAW CHARACTER
+    // =========================================================
 
-        // Show drawn character
-        const image = getCharacterImage(character);
+    if (drawBtn) {
 
-characterCard.innerHTML = `
-    <div class="drawn-character">
+        drawBtn.addEventListener(
+            "click",
+            () => {
 
-        ${
-            image
-            ? `
-                <img
-                    src="${image}"
-                    alt="${character}"
-                    class="character-image"
-                >
-              `
-            : `
-                <div class="character-image-placeholder">
-                    🎭
-                </div>
-              `
-        }
+                // -------------------------------------------------
+                // ONLY ONE PIECE FOR NOW
+                // -------------------------------------------------
 
-        <h2>${character}</h2>
+                if (
+                    selectedAnime !==
+                    "One Piece"
+                ) {
 
-        <p>Drafted!</p>
+                    return;
+                }
 
-    </div>
-`;
 
-        // Player 1
-        if (currentPlayer === 1) {
+                // -------------------------------------------------
+                // MAX TEAM CHECK
+                // -------------------------------------------------
 
-            player1Team.push(character);
+                if (
+                    player1Team.length >= 6 &&
+                    player2Team.length >= 6
+                ) {
 
-            const li = document.createElement("li");
-            li.textContent = character;
-            player1List.appendChild(li);
+                    return;
+                }
 
-            p1Count.textContent = player1Team.length;
 
-            currentPlayer = 2;
+                // -------------------------------------------------
+                // RANDOM CHARACTER
+                // -------------------------------------------------
 
-        }
+                let character;
 
-        // Player 2
-        else {
+                do {
 
-            player2Team.push(character);
+                    const randomIndex =
+                        Math.floor(
+                            Math.random() *
+                            ONE_PIECE_CHARACTERS.length
+                        );
 
-            const li = document.createElement("li");
-            li.textContent = character;
-            player2List.appendChild(li);
+                    character =
+                        ONE_PIECE_CHARACTERS[
+                            randomIndex
+                        ];
 
-            p2Count.textContent = player2Team.length;
+                } while (
+                    draftedCharacters.includes(
+                        character
+                    )
+                );
 
-            currentPlayer = 1;
 
-        }
+                // Save to drafted list
+                draftedCharacters.push(
+                    character
+                );
 
-        // Update round after both players draw
-        if (
-            player1Team.length === player2Team.length &&
-            player1Team.length < 6
-        ) {
 
-            roundCounter.textContent =
-                `Round ${player1Team.length + 1} / 6`;
+                // =================================================
+                // CHARACTER IMAGE
+                // =================================================
 
-        }
+                const image =
+                    getCharacterImage(
+                        character
+                    );
 
-        // Update turn text
-        if (currentPlayer === 1) {
 
-            currentPlayerText.innerHTML =
-                "<h3>Player 1 Turn</h3>";
+                // =================================================
+                // SHOW DRAWN CHARACTER
+                // =================================================
 
-        } else {
+                if (characterCard) {
 
-            currentPlayerText.innerHTML =
-                "<h3>Player 2 Turn</h3>";
+                    characterCard.innerHTML = `
 
-        }
+                        <div class="draft-character-content">
 
-        // Draft finished
-        if (
-            player1Team.length === 6 &&
-            player2Team.length === 6
-        ) {
+                            ${
+                                image
+                                    ? `
+                                        <img
+                                            src="${image}"
+                                            alt="${character}"
+                                            class="character-image"
+                                            onerror="this.style.display='none';"
+                                        >
+                                      `
+                                    : `
+                                        <div
+                                            class="character-image-placeholder"
+                                        >
+                                            🎭
+                                        </div>
+                                      `
+                            }
 
-            // Save teams
-            localStorage.setItem(
-                "player1Team",
-                JSON.stringify(player1Team)
-            );
+                            <h2>
+                                ${character}
+                            </h2>
 
-            localStorage.setItem(
-                "player2Team",
-                JSON.stringify(player2Team)
-            );
+                            <p>
+                                🎴 Drafted!
+                            </p>
 
-            drawBtn.disabled = true;
-            drawBtn.classList.add("hidden");
+                        </div>
 
-            currentPlayerText.innerHTML =
-                "<h3>✅ Draft Complete!</h3>";
+                    `;
+                }
 
-            nextPhaseBtn.classList.remove("hidden");
 
-        }
+                // =================================================
+                // PLAYER 1
+                // =================================================
 
-    });
+                if (
+                    currentPlayer === 1
+                ) {
+
+                    player1Team.push(
+                        character
+                    );
+
+
+                    const li =
+                        document.createElement(
+                            "li"
+                        );
+
+                    li.textContent =
+                        character;
+
+                    if (player1List) {
+
+                        player1List.appendChild(
+                            li
+                        );
+                    }
+
+
+                    if (p1Count) {
+
+                        p1Count.textContent =
+                            player1Team.length;
+                    }
+
+
+                    currentPlayer = 2;
+                }
+
+
+                // =================================================
+                // PLAYER 2
+                // =================================================
+
+                else {
+
+                    player2Team.push(
+                        character
+                    );
+
+
+                    const li =
+                        document.createElement(
+                            "li"
+                        );
+
+                    li.textContent =
+                        character;
+
+                    if (player2List) {
+
+                        player2List.appendChild(
+                            li
+                        );
+                    }
+
+
+                    if (p2Count) {
+
+                        p2Count.textContent =
+                            player2Team.length;
+                    }
+
+
+                    currentPlayer = 1;
+                }
+
+
+                // =================================================
+                // ROUND DISPLAY
+                // =================================================
+
+                if (
+                    player1Team.length ===
+                        player2Team.length &&
+                    player1Team.length < 6
+                ) {
+
+                    if (roundCounter) {
+
+                        roundCounter.textContent =
+                            `Round ${
+                                player1Team.length + 1
+                            } / 6`;
+                    }
+                }
+
+
+                // =================================================
+                // TURN DISPLAY
+                // =================================================
+
+                if (
+                    currentPlayer === 1
+                ) {
+
+                    if (currentPlayerText) {
+
+                        currentPlayerText.innerHTML =
+                            "<h3>Player 1 Turn</h3>";
+                    }
+
+                } else {
+
+                    if (currentPlayerText) {
+
+                        currentPlayerText.innerHTML =
+                            "<h3>Player 2 Turn</h3>";
+                    }
+                }
+
+
+                // =================================================
+                // DRAFT COMPLETE
+                // =================================================
+
+                if (
+                    player1Team.length === 6 &&
+                    player2Team.length === 6
+                ) {
+
+                    // ------------------------------------------------
+                    // SAVE PLAYER TEAMS
+                    // ------------------------------------------------
+
+                    localStorage.setItem(
+                        "player1Team",
+                        JSON.stringify(
+                            player1Team
+                        )
+                    );
+
+                    localStorage.setItem(
+                        "player2Team",
+                        JSON.stringify(
+                            player2Team
+                        )
+                    );
+
+
+                    // ------------------------------------------------
+                    // DISABLE DRAW
+                    // ------------------------------------------------
+
+                    drawBtn.disabled =
+                        true;
+
+                    drawBtn.classList.add(
+                        "hidden"
+                    );
+
+
+                    // ------------------------------------------------
+                    // UPDATE STATUS
+                    // ------------------------------------------------
+
+                    if (currentPlayerText) {
+
+                        currentPlayerText.innerHTML =
+                            "<h3>✅ Draft Complete!</h3>";
+                    }
+
+
+                    if (roundCounter) {
+
+                        roundCounter.textContent =
+                            "Draft Complete — 6 / 6";
+                    }
+
+
+                    // ------------------------------------------------
+                    // SHOW NEXT BUTTON
+                    // ------------------------------------------------
+
+                    if (nextPhaseBtn) {
+
+                        nextPhaseBtn.classList.remove(
+                            "hidden"
+                        );
+                    }
+                }
+
+            }
+        );
+    }
 
 });
