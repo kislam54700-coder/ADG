@@ -2,39 +2,23 @@
 
 /*
 =============================================================
- ADG — ANIME DATABASE
- Anime Draft Game
- database.js
+ ADG DATABASE
 =============================================================
 
- PURPOSE
- ------------------------------------------------------------
- This file contains the character database used by ADG.
+ PURPOSE:
+ Character database used by ADG.
 
  IMPORTANT:
- - Character names are used by draft.js / game.js / battle.js.
- - Battle stats are hidden from players.
- - Players only see character names during drafting.
- - Roles are assigned separately by the ADG role system.
- - Battle.js can use these stats for AI calculations.
+ - Character names are used by draft.js / roles.js / battle.js.
+ - Battle stats remain hidden from players.
+ - Players only see character name, image and role selection.
+ - Battle.js can use the hidden stats.
+ - Character images are stored in:
 
- CURRENT ANIME
- ------------------------------------------------------------
- One Piece
-
- FUTURE
- ------------------------------------------------------------
- Naruto
- Dragon Ball
- etc. can be added later.
+   assets/characters/one-piece/
 
 =============================================================
 */
-
-
-// ============================================================
-// DATABASE VERSION
-// ============================================================
 
 const ADG_DATABASE_VERSION = "7.4";
 
@@ -52,7 +36,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Monkey D. Luffy",
         aliases: ["Luffy", "Monkey D Luffy"],
-
         stats: {
             hp: 100,
             attack: 100,
@@ -64,7 +47,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Roronoa Zoro",
         aliases: ["Zoro", "Roronoa Zolo"],
-
         stats: {
             hp: 96,
             attack: 98,
@@ -76,7 +58,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Sanji",
         aliases: [],
-
         stats: {
             hp: 88,
             attack: 94,
@@ -88,7 +69,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Nami",
         aliases: [],
-
         stats: {
             hp: 62,
             attack: 72,
@@ -100,7 +80,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Usopp",
         aliases: ["Sogeking"],
-
         stats: {
             hp: 65,
             attack: 68,
@@ -112,7 +91,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Tony Tony Chopper",
         aliases: ["Chopper"],
-
         stats: {
             hp: 78,
             attack: 70,
@@ -124,7 +102,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Nico Robin",
         aliases: ["Robin"],
-
         stats: {
             hp: 74,
             attack: 82,
@@ -136,7 +113,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Franky",
         aliases: [],
-
         stats: {
             hp: 92,
             attack: 84,
@@ -148,7 +124,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Brook",
         aliases: [],
-
         stats: {
             hp: 76,
             attack: 84,
@@ -160,7 +135,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Jinbe",
         aliases: ["Jimbei"],
-
         stats: {
             hp: 98,
             attack: 92,
@@ -180,7 +154,6 @@ const ONE_PIECE_DATABASE = [
             "Law",
             "Trafalgar D. Water Law"
         ],
-
         stats: {
             hp: 88,
             attack: 94,
@@ -192,7 +165,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Eustass Kid",
         aliases: ["Kid"],
-
         stats: {
             hp: 92,
             attack: 93,
@@ -204,7 +176,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Killer",
         aliases: [],
-
         stats: {
             hp: 80,
             attack: 84,
@@ -216,7 +187,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Jewelry Bonney",
         aliases: ["Bonney"],
-
         stats: {
             hp: 72,
             attack: 70,
@@ -228,7 +198,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Capone Bege",
         aliases: ["Bege"],
-
         stats: {
             hp: 82,
             attack: 76,
@@ -240,7 +209,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Basil Hawkins",
         aliases: ["Hawkins"],
-
         stats: {
             hp: 80,
             attack: 78,
@@ -252,7 +220,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Scratchmen Apoo",
         aliases: ["Apoo"],
-
         stats: {
             hp: 74,
             attack: 80,
@@ -264,7 +231,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "X Drake",
         aliases: ["Drake"],
-
         stats: {
             hp: 84,
             attack: 82,
@@ -276,7 +242,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Urouge",
         aliases: [],
-
         stats: {
             hp: 91,
             attack: 86,
@@ -293,7 +258,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Shanks",
         aliases: [],
-
         stats: {
             hp: 100,
             attack: 100,
@@ -305,7 +269,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Benn Beckman",
         aliases: ["Benn Beckmann"],
-
         stats: {
             hp: 91,
             attack: 94,
@@ -317,7 +280,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Yasopp",
         aliases: [],
-
         stats: {
             hp: 78,
             attack: 91,
@@ -329,7 +291,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Lucky Roux",
         aliases: [],
-
         stats: {
             hp: 89,
             attack: 87,
@@ -345,8 +306,10 @@ const ONE_PIECE_DATABASE = [
 
     {
         name: "Gol D. Roger",
-        aliases: ["Gol D Roger", "Roger"],
-
+        aliases: [
+            "Gol D Roger",
+            "Roger"
+        ],
         stats: {
             hp: 100,
             attack: 100,
@@ -358,7 +321,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Silvers Rayleigh",
         aliases: ["Rayleigh"],
-
         stats: {
             hp: 96,
             attack: 96,
@@ -370,7 +332,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Scopper Gaban",
         aliases: ["Gaban"],
-
         stats: {
             hp: 91,
             attack: 91,
@@ -390,7 +351,6 @@ const ONE_PIECE_DATABASE = [
             "Whitebeard",
             "Edward Newgate"
         ],
-
         stats: {
             hp: 100,
             attack: 100,
@@ -402,7 +362,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Portgas D. Ace",
         aliases: ["Ace"],
-
         stats: {
             hp: 91,
             attack: 93,
@@ -414,7 +373,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Marco",
         aliases: [],
-
         stats: {
             hp: 94,
             attack: 86,
@@ -426,7 +384,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Jozu",
         aliases: [],
-
         stats: {
             hp: 95,
             attack: 87,
@@ -438,7 +395,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Vista",
         aliases: [],
-
         stats: {
             hp: 84,
             attack: 88,
@@ -455,7 +411,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kaido",
         aliases: [],
-
         stats: {
             hp: 100,
             attack: 100,
@@ -467,7 +422,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "King",
         aliases: [],
-
         stats: {
             hp: 94,
             attack: 95,
@@ -479,7 +433,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Queen",
         aliases: [],
-
         stats: {
             hp: 94,
             attack: 87,
@@ -491,7 +444,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Jack",
         aliases: [],
-
         stats: {
             hp: 96,
             attack: 83,
@@ -503,7 +455,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Ulti",
         aliases: [],
-
         stats: {
             hp: 82,
             attack: 82,
@@ -515,7 +466,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Who's-Who",
         aliases: ["Whos Who"],
-
         stats: {
             hp: 81,
             attack: 83,
@@ -532,7 +482,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Charlotte Linlin",
         aliases: ["Big Mom"],
-
         stats: {
             hp: 100,
             attack: 99,
@@ -544,7 +493,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Charlotte Katakuri",
         aliases: ["Katakuri"],
-
         stats: {
             hp: 95,
             attack: 96,
@@ -556,7 +504,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Charlotte Smoothie",
         aliases: ["Smoothie"],
-
         stats: {
             hp: 87,
             attack: 87,
@@ -568,7 +515,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Charlotte Cracker",
         aliases: ["Cracker"],
-
         stats: {
             hp: 85,
             attack: 88,
@@ -585,7 +531,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Monkey D. Garp",
         aliases: ["Garp"],
-
         stats: {
             hp: 98,
             attack: 99,
@@ -597,7 +542,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Sengoku",
         aliases: [],
-
         stats: {
             hp: 96,
             attack: 94,
@@ -609,7 +553,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Sakazuki",
         aliases: ["Akainu"],
-
         stats: {
             hp: 96,
             attack: 98,
@@ -621,7 +564,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kuzan",
         aliases: ["Aokiji"],
-
         stats: {
             hp: 94,
             attack: 94,
@@ -633,7 +575,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Borsalino",
         aliases: ["Kizaru"],
-
         stats: {
             hp: 91,
             attack: 95,
@@ -645,7 +586,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Fujitora",
         aliases: ["Issho"],
-
         stats: {
             hp: 92,
             attack: 92,
@@ -656,8 +596,10 @@ const ONE_PIECE_DATABASE = [
 
     {
         name: "Ryokugyu",
-        aliases: ["Green Bull", "Aramaki"],
-
+        aliases: [
+            "Green Bull",
+            "Aramaki"
+        ],
         stats: {
             hp: 94,
             attack: 91,
@@ -669,7 +611,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Smoker",
         aliases: [],
-
         stats: {
             hp: 79,
             attack: 77,
@@ -681,7 +622,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Rob Lucci",
         aliases: ["Lucci"],
-
         stats: {
             hp: 87,
             attack: 92,
@@ -693,7 +633,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Koby",
         aliases: ["Coby"],
-
         stats: {
             hp: 68,
             attack: 73,
@@ -710,7 +649,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Dracule Mihawk",
         aliases: ["Mihawk"],
-
         stats: {
             hp: 97,
             attack: 100,
@@ -722,7 +660,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Crocodile",
         aliases: [],
-
         stats: {
             hp: 87,
             attack: 89,
@@ -734,7 +671,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Buggy",
         aliases: [],
-
         stats: {
             hp: 55,
             attack: 45,
@@ -751,7 +687,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Monkey D. Dragon",
         aliases: ["Dragon"],
-
         stats: {
             hp: 98,
             attack: 98,
@@ -763,7 +698,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Sabo",
         aliases: [],
-
         stats: {
             hp: 88,
             attack: 93,
@@ -775,7 +709,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Emporio Ivankov",
         aliases: ["Ivankov"],
-
         stats: {
             hp: 76,
             attack: 75,
@@ -792,7 +725,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Donquixote Doflamingo",
         aliases: ["Doflamingo"],
-
         stats: {
             hp: 91,
             attack: 93,
@@ -804,7 +736,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Boa Hancock",
         aliases: ["Hancock"],
-
         stats: {
             hp: 82,
             attack: 91,
@@ -816,7 +747,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Bartholomew Kuma",
         aliases: ["Kuma"],
-
         stats: {
             hp: 97,
             attack: 90,
@@ -828,7 +758,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Gecko Moria",
         aliases: ["Moria"],
-
         stats: {
             hp: 82,
             attack: 76,
@@ -839,8 +768,10 @@ const ONE_PIECE_DATABASE = [
 
     {
         name: "Marshall D. Teach",
-        aliases: ["Blackbeard", "Teach"],
-
+        aliases: [
+            "Blackbeard",
+            "Teach"
+        ],
         stats: {
             hp: 98,
             attack: 99,
@@ -857,7 +788,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Enel",
         aliases: ["Eneru"],
-
         stats: {
             hp: 84,
             attack: 96,
@@ -869,7 +799,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Magellan",
         aliases: [],
-
         stats: {
             hp: 92,
             attack: 94,
@@ -881,7 +810,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Bartolomeo",
         aliases: ["Bartolomew"],
-
         stats: {
             hp: 79,
             attack: 74,
@@ -893,7 +821,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Cavendish",
         aliases: ["Hakuba"],
-
         stats: {
             hp: 76,
             attack: 83,
@@ -905,7 +832,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Don Chinjao",
         aliases: ["Chinjao"],
-
         stats: {
             hp: 86,
             attack: 88,
@@ -917,7 +843,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kyros",
         aliases: [],
-
         stats: {
             hp: 82,
             attack: 84,
@@ -934,7 +859,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Yamato",
         aliases: [],
-
         stats: {
             hp: 94,
             attack: 94,
@@ -946,7 +870,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Denjiro",
         aliases: [],
-
         stats: {
             hp: 82,
             attack: 86,
@@ -958,7 +881,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kikunojo",
         aliases: ["Kiku"],
-
         stats: {
             hp: 74,
             attack: 77,
@@ -970,7 +892,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kin'emon",
         aliases: ["Kinemon"],
-
         stats: {
             hp: 78,
             attack: 80,
@@ -982,7 +903,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Ashura Doji",
         aliases: ["Ashura"],
-
         stats: {
             hp: 87,
             attack: 90,
@@ -999,7 +919,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Perona",
         aliases: [],
-
         stats: {
             hp: 61,
             attack: 70,
@@ -1011,7 +930,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Hody Jones",
         aliases: ["Hody"],
-
         stats: {
             hp: 79,
             attack: 78,
@@ -1023,7 +941,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Arlong",
         aliases: [],
-
         stats: {
             hp: 78,
             attack: 79,
@@ -1035,7 +952,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Don Krieg",
         aliases: ["Krieg"],
-
         stats: {
             hp: 70,
             attack: 65,
@@ -1047,7 +963,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Kuro",
         aliases: ["Captain Kuro"],
-
         stats: {
             hp: 67,
             attack: 75,
@@ -1059,7 +974,6 @@ const ONE_PIECE_DATABASE = [
     {
         name: "Bellamy",
         aliases: [],
-
         stats: {
             hp: 69,
             attack: 72,
@@ -1067,20 +981,11 @@ const ONE_PIECE_DATABASE = [
             speed: 79
         }
     }
-
 ];
 
 
 // ============================================================
 // SIMPLE CHARACTER LIST
-// ============================================================
-//
-// draft.js can use this array when it only needs names.
-//
-// Example:
-//
-// let characters = [...ONE_PIECE_CHARACTERS];
-//
 // ============================================================
 
 const ONE_PIECE_CHARACTERS =
@@ -1090,20 +995,7 @@ const ONE_PIECE_CHARACTERS =
 
 
 // ============================================================
-// BACKWARD COMPATIBILITY
-// ============================================================
-//
-// Your older ADG files may expect:
-//
-// ONE_PIECE_CHARACTERS
-//
-// So it is intentionally kept above.
-//
-// ============================================================
-
-
-// ============================================================
-// CHARACTER LOOKUP
+// NORMALIZE CHARACTER NAME
 // ============================================================
 
 function normalizeCharacterName(name) {
@@ -1116,6 +1008,10 @@ function normalizeCharacterName(name) {
         .replace(/\s+/g, " ");
 }
 
+
+// ============================================================
+// GET CHARACTER DATA
+// ============================================================
 
 function getCharacterData(name) {
 
@@ -1154,13 +1050,6 @@ function getCharacterData(name) {
 // ============================================================
 // GET HIDDEN BATTLE STATS
 // ============================================================
-//
-// IMPORTANT:
-// Do not display these values in draft UI.
-//
-// Battle.js can use this function to retrieve them.
-//
-// ============================================================
 
 function getCharacterStats(name) {
 
@@ -1190,7 +1079,7 @@ function getCharacterStats(name) {
 
 
 // ============================================================
-// GET CHARACTER NAME
+// GET CANONICAL CHARACTER NAME
 // ============================================================
 
 function getCanonicalCharacterName(name) {
@@ -1203,6 +1092,154 @@ function getCanonicalCharacterName(name) {
     }
 
     return String(name || "Unknown");
+}
+
+
+// ============================================================
+// CHARACTER IMAGE FILE MAP
+// ============================================================
+//
+// IMPORTANT:
+// Actual folder:
+//
+// assets/characters/one-piece/
+//
+// This map connects database names to your image filenames.
+//
+// ============================================================
+
+const ONE_PIECE_IMAGE_NAMES = {
+
+    "Monkey D. Luffy": "Luffy.jpg",
+    "Roronoa Zoro": "Zoro.jpg",
+    "Sanji": "Sanji.jpg",
+    "Nami": "Nami.jpg",
+    "Usopp": "Usopp.jpg",
+    "Tony Tony Chopper": "Chopper.jpg",
+    "Nico Robin": "Robin.jpg",
+    "Franky": "Franky.jpg",
+    "Brook": "Brook.jpg",
+    "Jinbe": "Jinbe.jpg",
+
+    "Trafalgar Law": "Trafalgar Law.jpg",
+    "Eustass Kid": "Eustass Kid.jpg",
+    "Killer": "Killer.jpg",
+    "Jewelry Bonney": "Jewelry Bonney.jpg",
+    "Capone Bege": "Capone Bege.jpg",
+    "Basil Hawkins": "Basil Hawkins.jpg",
+    "Scratchmen Apoo": "Scratchmen Apoo.jpg",
+    "X Drake": "X Drake.jpg",
+    "Urouge": "Urouge.jpg",
+
+    "Shanks": "Shanks.jpg",
+    "Benn Beckman": "Benn Beckman.jpg",
+    "Yasopp": "Yasopp.jpg",
+    "Lucky Roux": "Lucky Roux.jpg",
+
+    "Gol D. Roger": "Gol D. Roger.jpg",
+    "Silvers Rayleigh": "Silvers Rayleigh.jpg",
+    "Scopper Gaban": "Scopper Gaban.jpg",
+
+    "Edward Newgate": "Edward Newgate.jpg",
+    "Portgas D. Ace": "Portgas D. Ace.jpg",
+    "Marco": "Marco.jpg",
+    "Jozu": "Jozu.jpg",
+    "Vista": "Vista.jpg",
+
+    "Kaido": "Kaido.jpg",
+    "King": "King.jpg",
+    "Queen": "Queen.jpg",
+    "Jack": "Jack.jpg",
+    "Ulti": "Ulti.jpg",
+    "Who's-Who": "Who's-Who.jpg",
+
+    "Charlotte Linlin": "Charlotte Linlin.jpg",
+    "Charlotte Katakuri": "Charlotte Katakuri.jpg",
+    "Charlotte Smoothie": "Charlotte Smoothie.jpg",
+    "Charlotte Cracker": "Charlotte Cracker.jpg",
+
+    "Monkey D. Garp": "Garp.jpg",
+    "Sengoku": "Sengoku.jpg",
+    "Sakazuki": "Akainu.jpg",
+    "Kuzan": "Aokiji.jpg",
+    "Borsalino": "Kizaru.jpg",
+    "Fujitora": "Fujitora.jpg",
+    "Ryokugyu": "Ryokugyu.jpg",
+    "Smoker": "Smoker.jpg",
+    "Rob Lucci": "Rob Lucci.jpg",
+    "Koby": "Koby.jpg",
+
+    "Dracule Mihawk": "Mihawk.jpg",
+    "Crocodile": "Crocodile.jpg",
+    "Buggy": "Buggy.jpg",
+
+    "Monkey D. Dragon": "Monkey D. Dragon.jpg",
+    "Sabo": "Sabo.jpg",
+    "Emporio Ivankov": "Emporio Ivankov.jpg",
+
+    "Donquixote Doflamingo": "Donquixote Doflamingo.jpg",
+    "Boa Hancock": "Boa Hancock.jpg",
+    "Bartholomew Kuma": "Bartholomew Kuma.jpg",
+    "Gecko Moria": "Gecko Moria.jpg",
+    "Marshall D. Teach": "Marshall D. Teach.jpg",
+
+    "Enel": "Enel.jpg",
+    "Magellan": "Magellan.jpg",
+    "Bartolomeo": "Bartolomeo.jpg",
+    "Cavendish": "Cavendish.jpg",
+    "Don Chinjao": "Don Chinjao.jpg",
+    "Kyros": "Kyros.jpg",
+
+    "Yamato": "Yamato.jpg",
+    "Denjiro": "Denjiro.jpg",
+    "Kikunojo": "Kikunojo.jpg",
+    "Kin'emon": "Kin'emon.jpg",
+    "Ashura Doji": "Ashura Doji.jpg",
+
+    "Perona": "Perona.jpg",
+    "Hody Jones": "Hody Jones.jpg",
+    "Arlong": "Arlong.jpg",
+    "Don Krieg": "Don Krieg.jpg",
+    "Kuro": "Kuro.jpg",
+    "Bellamy": "Bellamy.jpg"
+};
+
+
+// ============================================================
+// GET CHARACTER IMAGE
+// ============================================================
+
+function getCharacterImage(name) {
+
+    const canonicalName =
+        getCanonicalCharacterName(name);
+
+    if (
+        !canonicalName ||
+        canonicalName === "Unknown"
+    ) {
+        return null;
+    }
+
+    const filename =
+        ONE_PIECE_IMAGE_NAMES[
+            canonicalName
+        ];
+
+    if (!filename) {
+
+        console.warn(
+            "⚠️ No image mapping for:",
+            canonicalName
+        );
+
+        return null;
+    }
+
+    return (
+        "assets/characters/one-piece/" +
+        encodeURI(filename)
+    );
 }
 
 
@@ -1255,7 +1292,7 @@ function getRandomOnePieceCharacter(
 
 
 // ============================================================
-// GET DATABASE FOR ANIME
+// GET CHARACTERS FOR ANIME
 // ============================================================
 
 function getAnimeCharacters(anime) {
@@ -1282,7 +1319,7 @@ function getAnimeCharacters(anime) {
 
 
 // ============================================================
-// GET CHARACTER DATABASE
+// GET DATABASE FOR ANIME
 // ============================================================
 
 function getAnimeDatabase(anime) {
@@ -1386,12 +1423,7 @@ const ADG_DATABASE_READY =
 
 
 // ============================================================
-// DEBUG INFORMATION
-// ============================================================
-//
-// This does NOT reveal stats to players.
-// It only appears in the browser console.
-//
+// CONSOLE STATUS
 // ============================================================
 
 console.log(
@@ -1412,12 +1444,7 @@ console.log(
 
 
 // ============================================================
-// OPTIONAL GLOBAL ACCESS
-// ============================================================
-//
-// These make the database accessible to older ADG files
-// without requiring import/export modules.
-//
+// GLOBAL ACCESS
 // ============================================================
 
 window.ADG_DATABASE_VERSION =
@@ -1438,6 +1465,9 @@ window.getCharacterStats =
 window.getCanonicalCharacterName =
     getCanonicalCharacterName;
 
+window.getCharacterImage =
+    getCharacterImage;
+
 window.characterExists =
     characterExists;
 
@@ -1449,6 +1479,9 @@ window.getAnimeCharacters =
 
 window.getAnimeDatabase =
     getAnimeDatabase;
+
+window.validateAnimeDatabase =
+    validateAnimeDatabase;
 
 window.ADG_DATABASE_READY =
     ADG_DATABASE_READY;
