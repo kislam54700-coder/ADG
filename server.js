@@ -70,50 +70,59 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================================================
-   SPA / PAGE FALLBACK
-   =========================================================
-   
-   Express 5 does not support:
-   
-       app.get("*", ...)
-   
-   Therefore we use middleware.
+   SPA FALLBACK
    ========================================================= */
+
+/*
+ * Express 5 / path-to-regexp does not accept:
+ *
+ *     app.get("*", ...)
+ *
+ * Therefore we use normal middleware.
+ */
 
 app.use((req, res, next) => {
 
-    /* Never interfere with Socket.IO. */
+    /*
+     * Let Socket.IO handle its own requests.
+     */
+
     if (req.path.startsWith("/socket.io/")) {
         return next();
     }
 
-    /* Only handle normal GET page requests. */
-    if (
-        req.method === "GET" &&
-        !req.path.includes(".")
-    ) {
-        return res.sendFile(
-            path.join(__dirname, "index.html")
-        );
+    /*
+     * Only handle GET requests.
+     */
+
+    if (req.method !== "GET") {
+        return next();
     }
 
-    next();
+    /*
+     * If the request points to a real file,
+     * express.static() should handle it.
+     */
+
+    if (req.path.includes(".")) {
+        return next();
+    }
+
+    /*
+     * Serve index.html for application routes.
+     */
+
+    return res.sendFile(
+        path.join(__dirname, "index.html")
+    );
 });
 
 /* =========================================================
    MATCH STORAGE
-   =========================================================
-
-   Current prototype uses in-memory storage.
-
-   IMPORTANT:
-   Render restarts/redeployments will erase active matches.
-   This is acceptable for the current prototype.
    ========================================================= */
 
 const matches = new Map();
 
-/* Socket ID -> Match ID */
 const socketMatches = new Map();
 
 /* =========================================================
@@ -126,16 +135,16 @@ function createMatchId() {
         .randomBytes(4)
         .toString("hex")
         .toUpperCase();
-}
 
+}
 
 function normalizeName(name) {
 
     return String(name || "")
         .trim()
         .slice(0, 24);
-}
 
+}
 
 function normalizeAnime(anime) {
 
@@ -144,36 +153,52 @@ function normalizeAnime(anime) {
     )
         .trim()
         .slice(0, 64);
-}
 
+}
 
 function findPlayer(match, socketId) {
 
+    if (!match) {
+        return null;
+    }
+
     return match.players.find(
         player => player.socketId === socketId
-    );
-}
+    ) || null;
 
+}
 
 function getPlayer(match, playerNumber) {
 
+    if (!match) {
+        return null;
+    }
+
     return match.players.find(
         player => player.number === playerNumber
-    );
-}
+    ) || null;
 
+}
 
 function otherPlayer(match, playerNumber) {
 
+    if (!match) {
+        return null;
+    }
+
     return match.players.find(
         player => player.number !== playerNumber
-    );
-}
+    ) || null;
 
+}
 
 function isSocketConnected(socketId) {
 
-    return io.sockets.sockets.has(socketId);
+    return Boolean(
+        socketId &&
+        io.sockets.sockets.has(socketId)
+    );
+
 }
 
 /* =========================================================
@@ -198,18 +223,15 @@ function getPublicMatchData(match, playerNumber) {
             ? player.name
             : "",
 
-        playerCount:
-            match.players.length,
+        playerCount: match.players.length,
 
-        ready:
-            match.players.length === 2,
+        ready: match.players.length === 2,
 
-        draftStarted:
-            match.draft.started,
+        draftStarted: match.draft.started,
 
-        draftComplete:
-            match.draft.complete
+        draftComplete: match.draft.complete
     };
+
 }
 
 /* =========================================================
@@ -241,6 +263,7 @@ function getPrivateDraftState(match, player) {
         draftComplete:
             match.draft.complete
     };
+
 }
 
 /* =========================================================
@@ -249,7 +272,7 @@ function getPrivateDraftState(match, player) {
 
 function sendDraftState(match, player) {
 
-    if (!player) {
+    if (!player || !player.socketId) {
         return;
     }
 
@@ -260,6 +283,7 @@ function sendDraftState(match, player) {
             player
         )
     );
+
 }
 
 /* =========================================================
@@ -269,6 +293,10 @@ function sendDraftState(match, player) {
 function sendDraftTurn(match) {
 
     match.players.forEach(player => {
+
+        if (!player.socketId) {
+            return;
+        }
 
         io.to(player.socketId).emit(
             "draft:turn",
@@ -283,6 +311,7 @@ function sendDraftTurn(match) {
         );
 
     });
+
 }
 
 /* =========================================================
@@ -292,6 +321,10 @@ function sendDraftTurn(match) {
 function sendDraftComplete(match) {
 
     match.players.forEach(player => {
+
+        if (!player.socketId) {
+            return;
+        }
 
         io.to(player.socketId).emit(
             "draft:complete",
@@ -307,6 +340,7 @@ function sendDraftComplete(match) {
         );
 
     });
+
 }
 
 /* =========================================================
@@ -393,10 +427,11 @@ function getCharacterDatabase(anime) {
         "Boa Marigold"
 
     ];
+
 }
 
 /* =========================================================
-   RANDOM CHARACTER
+   DRAW RANDOM CHARACTER
    ========================================================= */
 
 function drawRandomCharacter(match) {
@@ -418,8 +453,7 @@ function drawRandomCharacter(match) {
 
     const index =
         Math.floor(
-            Math.random() *
-            available.length
+            Math.random() * available.length
         );
 
     const name =
@@ -431,6 +465,7 @@ function drawRandomCharacter(match) {
         name,
         anime: match.anime
     };
+
 }
 
 /* =========================================================
@@ -456,9 +491,13 @@ function createMatch(socket, playerName, anime) {
         usedCharacters: new Set(),
 
         draft: {
+
             started: false,
+
             currentPlayer: 1,
+
             complete: false
+
         },
 
         roles: {
@@ -472,7 +511,9 @@ function createMatch(socket, playerName, anime) {
                 1: false,
                 2: false
             }
+
         }
+
     };
 
     const player = {
@@ -486,6 +527,7 @@ function createMatch(socket, playerName, anime) {
         team: [],
 
         dropToken: true
+
     };
 
     match.players.push(player);
@@ -501,6 +543,7 @@ function createMatch(socket, playerName, anime) {
     );
 
     return match;
+
 }
 
 /* =========================================================
@@ -513,12 +556,22 @@ function joinExistingMatch(
     playerName
 ) {
 
+    if (!match) {
+
+        return {
+            success: false,
+            message: "Match not found."
+        };
+
+    }
+
     if (match.players.length >= 2) {
 
         return {
             success: false,
             message: "This match is already full."
         };
+
     }
 
     const player = {
@@ -532,6 +585,7 @@ function joinExistingMatch(
         team: [],
 
         dropToken: true
+
     };
 
     match.players.push(player);
@@ -545,6 +599,7 @@ function joinExistingMatch(
         success: true,
         player
     };
+
 }
 
 /* =========================================================
@@ -552,6 +607,10 @@ function joinExistingMatch(
    ========================================================= */
 
 function startDraft(match) {
+
+    if (!match) {
+        return;
+    }
 
     if (match.players.length !== 2) {
         return;
@@ -568,6 +627,10 @@ function startDraft(match) {
     match.draft.complete = false;
 
     match.players.forEach(player => {
+
+        if (!player.socketId) {
+            return;
+        }
 
         io.to(player.socketId).emit(
             "match:ready",
@@ -589,6 +652,22 @@ function startDraft(match) {
         );
 
     });
+
+}
+
+/* =========================================================
+   DRAFT ERROR HELPER
+   ========================================================= */
+
+function draftError(socket, message) {
+
+    socket.emit(
+        "draft:error",
+        {
+            message
+        }
+    );
+
 }
 
 /* =========================================================
@@ -597,20 +676,21 @@ function startDraft(match) {
 
 function handleDraftDraw(socket, data) {
 
-    const matchId = data?.matchId;
+    const matchId =
+        String(data?.matchId || "")
+            .trim()
+            .toUpperCase();
 
-    const match = matches.get(matchId);
+    const match =
+        matches.get(matchId);
 
     if (!match) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message: "Match not found."
-            }
+        return draftError(
+            socket,
+            "Match not found."
         );
 
-        return;
     }
 
     const player =
@@ -621,41 +701,29 @@ function handleDraftDraw(socket, data) {
 
     if (!player) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "You are not part of this match."
-            }
+        return draftError(
+            socket,
+            "You are not part of this match."
         );
 
-        return;
     }
 
     if (!match.draft.started) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "The draft has not started yet."
-            }
+        return draftError(
+            socket,
+            "The draft has not started yet."
         );
 
-        return;
     }
 
     if (match.draft.complete) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "The draft is already complete."
-            }
+        return draftError(
+            socket,
+            "The draft is already complete."
         );
 
-        return;
     }
 
     if (
@@ -663,28 +731,20 @@ function handleDraftDraw(socket, data) {
         player.number
     ) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "It is not your turn."
-            }
+        return draftError(
+            socket,
+            "It is not your turn."
         );
 
-        return;
     }
 
     if (player.team.length >= TEAM_SIZE) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "Your team already has 6 characters."
-            }
+        return draftError(
+            socket,
+            "Your team already has 6 characters."
         );
 
-        return;
     }
 
     const character =
@@ -692,22 +752,14 @@ function handleDraftDraw(socket, data) {
 
     if (!character) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "No characters are available."
-            }
+        return draftError(
+            socket,
+            "No characters are available."
         );
 
-        return;
     }
 
     player.team.push(character);
-
-    /*
-     * The freshly drawn character is private.
-     */
 
     socket.emit(
         "draft:character",
@@ -728,10 +780,6 @@ function handleDraftDraw(socket, data) {
         }
     );
 
-    /*
-     * Check whether both teams are complete.
-     */
-
     const allComplete =
         match.players.every(
             item =>
@@ -743,11 +791,8 @@ function handleDraftDraw(socket, data) {
         completeDraft(match);
 
         return;
-    }
 
-    /*
-     * Pass turn to the other player.
-     */
+    }
 
     match.draft.currentPlayer =
         match.draft.currentPlayer === 1
@@ -764,6 +809,7 @@ function handleDraftDraw(socket, data) {
         );
 
     });
+
 }
 
 /* =========================================================
@@ -772,21 +818,21 @@ function handleDraftDraw(socket, data) {
 
 function handleDraftDrop(socket, data) {
 
-    const matchId = data?.matchId;
+    const matchId =
+        String(data?.matchId || "")
+            .trim()
+            .toUpperCase();
 
-    const match = matches.get(matchId);
+    const match =
+        matches.get(matchId);
 
     if (!match) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "Match not found."
-            }
+        return draftError(
+            socket,
+            "Match not found."
         );
 
-        return;
     }
 
     const player =
@@ -797,54 +843,38 @@ function handleDraftDrop(socket, data) {
 
     if (!player) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "You are not part of this match."
-            }
+        return draftError(
+            socket,
+            "You are not part of this match."
         );
 
-        return;
     }
 
     if (match.draft.complete) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "The draft is already complete."
-            }
+        return draftError(
+            socket,
+            "The draft is already complete."
         );
 
-        return;
     }
 
     if (!player.dropToken) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "Your Drop Token has already been used."
-            }
+        return draftError(
+            socket,
+            "Your Drop Token has already been used."
         );
 
-        return;
     }
 
     if (player.team.length !== TEAM_SIZE) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "You can only drop after drafting 6 characters."
-            }
+        return draftError(
+            socket,
+            "You can only drop after drafting 6 characters."
         );
 
-        return;
     }
 
     if (
@@ -852,20 +882,12 @@ function handleDraftDrop(socket, data) {
         player.number
     ) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "It is not your turn."
-            }
+        return draftError(
+            socket,
+            "It is not your turn."
         );
 
-        return;
     }
-
-    /*
-     * Find requested character.
-     */
 
     let characterIndex = -1;
 
@@ -877,17 +899,14 @@ function handleDraftDrop(socket, data) {
                     character.name ===
                     data.character
             );
-    }
 
-    /*
-     * If no valid character was supplied,
-     * use the last character.
-     */
+    }
 
     if (characterIndex === -1) {
 
         characterIndex =
             player.team.length - 1;
+
     }
 
     const droppedCharacter =
@@ -895,52 +914,28 @@ function handleDraftDrop(socket, data) {
 
     if (!droppedCharacter) {
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "Invalid character."
-            }
+        return draftError(
+            socket,
+            "Invalid character."
         );
 
-        return;
     }
-
-    /*
-     * Remove dropped character.
-     */
 
     player.team.splice(
         characterIndex,
         1
     );
 
-    /*
-     * Make dropped character available again.
-     */
-
     match.usedCharacters.delete(
         droppedCharacter.name
     );
 
-    /*
-     * Consume Drop Token.
-     */
-
     player.dropToken = false;
-
-    /*
-     * Draw replacement.
-     */
 
     const replacement =
         drawRandomCharacter(match);
 
     if (!replacement) {
-
-        /*
-         * Safety rollback.
-         */
 
         player.team.push(
             droppedCharacter
@@ -952,22 +947,21 @@ function handleDraftDrop(socket, data) {
 
         player.dropToken = true;
 
-        socket.emit(
-            "draft:error",
-            {
-                message:
-                    "Unable to draw a replacement character."
-            }
+        return draftError(
+            socket,
+            "Unable to draw a replacement character."
         );
 
-        return;
     }
 
-    player.team.push(replacement);
+    player.team.push(
+        replacement
+    );
 
     socket.emit(
         "draft:dropped",
         {
+
             team: player.team.map(
                 item => ({
                     ...item
@@ -979,30 +973,31 @@ function handleDraftDrop(socket, data) {
 
             replacement:
                 replacement.name
+
         }
     );
 
     socket.emit(
         "draft:character",
         {
-            character: replacement,
 
-            team: player.team.map(
-                item => ({
-                    ...item
-                })
-            ),
+            character:
+                replacement,
+
+            team:
+                player.team.map(
+                    item => ({
+                        ...item
+                    })
+                ),
 
             dropToken: false,
 
             message:
                 `${droppedCharacter.name} was dropped. ${replacement.name} is your replacement.`
+
         }
     );
-
-    /*
-     * Check completion.
-     */
 
     const allComplete =
         match.players.every(
@@ -1015,11 +1010,8 @@ function handleDraftDrop(socket, data) {
         completeDraft(match);
 
         return;
-    }
 
-    /*
-     * Continue alternating turns.
-     */
+    }
 
     match.draft.currentPlayer =
         match.draft.currentPlayer === 1
@@ -1036,6 +1028,7 @@ function handleDraftDrop(socket, data) {
         );
 
     });
+
 }
 
 /* =========================================================
@@ -1043,6 +1036,10 @@ function handleDraftDrop(socket, data) {
    ========================================================= */
 
 function completeDraft(match) {
+
+    if (!match) {
+        return;
+    }
 
     if (match.draft.complete) {
         return;
@@ -1054,10 +1051,6 @@ function completeDraft(match) {
 
     sendDraftComplete(match);
 
-    /*
-     * Send private state one final time.
-     */
-
     match.players.forEach(player => {
 
         sendDraftState(
@@ -1066,10 +1059,6 @@ function completeDraft(match) {
         );
 
     });
-
-    /*
-     * Tell both clients to move to roles.
-     */
 
     setTimeout(() => {
 
@@ -1093,19 +1082,24 @@ function completeDraft(match) {
         });
 
     }, 700);
+
 }
 
 /* =========================================================
    RECONNECT
    ========================================================= */
 
-function reconnectPlayer(
-    socket,
-    matchId
-) {
+function reconnectPlayer(socket, matchId) {
+
+    const normalizedMatchId =
+        String(matchId || "")
+            .trim()
+            .toUpperCase();
 
     const match =
-        matches.get(matchId);
+        matches.get(
+            normalizedMatchId
+        );
 
     if (!match) {
 
@@ -1118,12 +1112,8 @@ function reconnectPlayer(
         );
 
         return;
-    }
 
-    /*
-     * Current prototype:
-     * client sends player number.
-     */
+    }
 
     const playerNumber =
         Number(
@@ -1137,12 +1127,6 @@ function reconnectPlayer(
                 playerNumber
             )
             : null;
-
-    /*
-     * Development fallback:
-     * If exactly one player is disconnected,
-     * allow reconnection.
-     */
 
     if (!player) {
 
@@ -1160,7 +1144,9 @@ function reconnectPlayer(
 
             player =
                 disconnectedPlayers[0];
+
         }
+
     }
 
     if (!player) {
@@ -1174,16 +1160,11 @@ function reconnectPlayer(
         );
 
         return;
+
     }
 
-    /*
-     * Prevent taking an active player's slot.
-     */
-
     if (
-        isSocketConnected(
-            player.socketId
-        ) &&
+        isSocketConnected(player.socketId) &&
         player.socketId !== socket.id
     ) {
 
@@ -1196,6 +1177,7 @@ function reconnectPlayer(
         );
 
         return;
+
     }
 
     player.socketId = socket.id;
@@ -1221,21 +1203,22 @@ function reconnectPlayer(
         );
 
         sendDraftTurn(match);
+
     }
+
 }
 
 /* =========================================================
    ROLE ASSIGNMENT
    ========================================================= */
 
-function handleRoleAssignment(
-    socket,
-    data
-) {
+function handleRoleAssignment(socket, data) {
 
     const match =
         matches.get(
-            data?.matchId
+            String(data?.matchId || "")
+                .trim()
+                .toUpperCase()
         );
 
     if (!match) {
@@ -1249,6 +1232,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     const player =
@@ -1268,6 +1252,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     if (!match.draft.complete) {
@@ -1281,6 +1266,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     if (player.team.length !== TEAM_SIZE) {
@@ -1294,6 +1280,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     const assignments =
@@ -1314,12 +1301,8 @@ function handleRoleAssignment(
         );
 
         return;
-    }
 
-    /*
-     * Only accept assignments for the
-     * player's actual six characters.
-     */
+    }
 
     const teamNames =
         new Set(
@@ -1345,6 +1328,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     for (
@@ -1364,7 +1348,9 @@ function handleRoleAssignment(
             );
 
             return;
+
         }
+
     }
 
     const roles =
@@ -1397,6 +1383,7 @@ function handleRoleAssignment(
         );
 
         return;
+
     }
 
     for (const role of roles) {
@@ -1412,12 +1399,10 @@ function handleRoleAssignment(
             );
 
             return;
-        }
-    }
 
-    /*
-     * Store server-validated assignments.
-     */
+        }
+
+    }
 
     match.roles.assignments[
         player.number
@@ -1432,37 +1417,45 @@ function handleRoleAssignment(
     socket.emit(
         "roles:state",
         {
-            matchId: match.id,
 
-            assignments: {
-                ...assignments
-            },
+            matchId:
+                match.id,
 
-            complete: true
+            assignments:
+                {
+                    ...assignments
+                },
+
+            complete:
+                true
+
         }
     );
-
-    /*
-     * Check whether both players are ready.
-     */
 
     const bothReady =
         match.roles.complete[1] &&
         match.roles.complete[2];
 
-    if (bothReady) {
-
-        match.players.forEach(item => {
-
-            io.to(item.socketId).emit(
-                "match:battle",
-                {
-                    matchId: match.id
-                }
-            );
-
-        });
+    if (!bothReady) {
+        return;
     }
+
+    match.players.forEach(item => {
+
+        if (!item.socketId) {
+            return;
+        }
+
+        io.to(item.socketId).emit(
+            "match:battle",
+            {
+                matchId:
+                    match.id
+            }
+        );
+
+    });
+
 }
 
 /* =========================================================
@@ -1499,6 +1492,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             const match =
@@ -1519,6 +1513,7 @@ io.on("connection", socket => {
             console.log(
                 `[ADG] Match created: ${match.id}`
             );
+
         }
     );
 
@@ -1551,6 +1546,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             let found = null;
@@ -1564,13 +1560,12 @@ io.on("connection", socket => {
                 ) {
 
                     found = match;
-                    break;
-                }
-            }
 
-            /*
-             * No waiting match found.
-             */
+                    break;
+
+                }
+
+            }
 
             if (!found) {
 
@@ -1584,6 +1579,7 @@ io.on("connection", socket => {
                 socket.emit(
                     "match:waiting",
                     {
+
                         ...getPublicMatchData(
                             match,
                             1
@@ -1591,15 +1587,13 @@ io.on("connection", socket => {
 
                         message:
                             "Match created. Waiting for another player..."
+
                     }
                 );
 
                 return;
-            }
 
-            /*
-             * Join waiting match.
-             */
+            }
 
             const result =
                 joinExistingMatch(
@@ -1619,11 +1613,8 @@ io.on("connection", socket => {
                 );
 
                 return;
-            }
 
-            /*
-             * Notify both players.
-             */
+            }
 
             found.players.forEach(player => {
 
@@ -1638,11 +1629,12 @@ io.on("connection", socket => {
             });
 
             startDraft(found);
+
         }
     );
 
     /* =====================================================
-       JOIN MATCH BY ID
+       JOIN MATCH
        ===================================================== */
 
     socket.on(
@@ -1672,6 +1664,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             const match =
@@ -1688,6 +1681,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             const result =
@@ -1708,6 +1702,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             socket.emit(
@@ -1731,11 +1726,12 @@ io.on("connection", socket => {
             });
 
             startDraft(match);
+
         }
     );
 
     /* =====================================================
-       CANCEL WAITING MATCH
+       CANCEL MATCH
        ===================================================== */
 
     socket.on(
@@ -1758,23 +1754,22 @@ io.on("connection", socket => {
                 return;
             }
 
-            /*
-             * Only remove a waiting
-             * one-player match.
-             */
-
             if (
                 match.players.length === 1 &&
                 match.players[0].socketId === socket.id &&
                 !match.draft.started
             ) {
 
-                matches.delete(matchId);
+                matches.delete(
+                    matchId
+                );
+
             }
 
             socketMatches.delete(
                 socket.id
             );
+
         }
     );
 
@@ -1790,6 +1785,7 @@ io.on("connection", socket => {
                 socket,
                 data?.matchId
             );
+
         }
     );
 
@@ -1805,6 +1801,7 @@ io.on("connection", socket => {
                 socket,
                 data
             );
+
         }
     );
 
@@ -1820,6 +1817,7 @@ io.on("connection", socket => {
                 socket,
                 data
             );
+
         }
     );
 
@@ -1835,12 +1833,13 @@ io.on("connection", socket => {
                 socket,
                 data
             );
+
         }
     );
 
-    /*
-     * Backwards-compatible event name.
-     */
+    /* =====================================================
+       BACKWARD COMPATIBILITY
+       ===================================================== */
 
     socket.on(
         "role:assign",
@@ -1850,6 +1849,7 @@ io.on("connection", socket => {
                 socket,
                 data
             );
+
         }
     );
 
@@ -1861,6 +1861,7 @@ io.on("connection", socket => {
                 socket,
                 data
             );
+
         }
     );
 
@@ -1875,12 +1876,6 @@ io.on("connection", socket => {
             console.log(
                 `[ADG] Disconnected: ${socket.id} (${reason})`
             );
-
-            /*
-             * Do NOT immediately delete the player.
-             *
-             * The player may reconnect.
-             */
 
             const matchId =
                 socketMatches.get(
@@ -1901,6 +1896,7 @@ io.on("connection", socket => {
                 );
 
                 return;
+
             }
 
             const player =
@@ -1914,13 +1910,16 @@ io.on("connection", socket => {
                 console.log(
                     `[ADG] Player ${player.number} disconnected from ${match.id}`
                 );
+
             }
 
             socketMatches.delete(
                 socket.id
             );
+
         }
     );
+
 });
 
 /* =========================================================
@@ -1935,6 +1934,7 @@ server.on(
             "[ADG] Server error:",
             error
         );
+
     }
 );
 
@@ -1978,10 +1978,6 @@ server.listen(
         console.log(
             "=============================================="
         );
+
     }
 );
-
-/* =========================================================
-   END OF SERVER.JS
-   ========================================================= */
-```
