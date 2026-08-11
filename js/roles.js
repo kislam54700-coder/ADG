@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — ROLES.JS
    Private Online Multiplayer Role Assignment Client
@@ -11,8 +10,12 @@
    SOCKET
    ========================================================= */
 
-const rolesSocket = io(
-    window.location.origin,
+const ADG_SERVER_URL =
+    "https://adg-server-t6y1.onrender.com";
+
+
+const roleSocket = io(
+    ADG_SERVER_URL,
     {
         transports: [
             "websocket",

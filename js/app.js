@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — APP.JS
    Main Application / Match Lobby Client
@@ -11,8 +10,12 @@
    SOCKET
    ========================================================= */
 
+const ADG_SERVER_URL =
+    "https://adg-server-t6y1.onrender.com";
+
+
 const appSocket = io(
-    window.location.origin,
+    ADG_SERVER_URL,
     {
         transports: [
             "websocket",

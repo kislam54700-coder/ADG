@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — FIREBASE.JS
    Firebase Initialization

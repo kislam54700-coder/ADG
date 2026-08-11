@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — BATTLE.JS
    Server-Authoritative Battle Client
@@ -7,12 +6,16 @@
 "use strict";
 
 
-/* =========================================================
+//* =========================================================
    SOCKET
    ========================================================= */
 
+const ADG_SERVER_URL =
+    "https://adg-server-t6y1.onrender.com";
+
+
 const battleSocket = io(
-    window.location.origin,
+    ADG_SERVER_URL,
     {
         transports: [
             "websocket",
