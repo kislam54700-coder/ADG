@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,7 +9,13 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>⚔️ ADG — Battle</title>
+    <meta name="theme-color"
+          content="#05070c">
+
+    <meta name="description"
+          content="ADG — Battle Arena">
+
+    <title>⚔️ ADG — Battle Arena</title>
 
     <link rel="stylesheet"
           href="css/style.css">
@@ -16,113 +23,104 @@
 </head>
 
 
-<body>
+<body class="battle-page">
+
 
     <!-- =====================================================
-         ADG BATTLE PAGE
+         HEADER
          ===================================================== -->
 
-    <main class="battle-page">
+    <header class="adg-header">
+
+        <div class="adg-logo">
+            ⚔️ <span>ADG</span>
+        </div>
+
+
+        <div
+            id="connectionStatus"
+            class="connection-status">
+
+            Connecting...
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN BATTLE AREA
+         ===================================================== -->
+
+    <main class="container">
 
 
         <!-- =================================================
-             HEADER
+             BATTLE HEADER
              ================================================= -->
 
-        <header class="battle-header">
-
-            <div class="adg-logo">
-                ⚔️ ADG
-            </div>
+        <section class="battle-header">
 
             <h1>
-                BATTLE ARENA
+                ⚔️ BATTLE ARENA
             </h1>
 
-            <p>
-                Anime Draft Game
+
+            <div
+                id="battlePhase"
+                data-battle-phase>
+
+                PREPARING BATTLE...
+
+            </div>
+
+
+            <p
+                id="battleStatus"
+                style="margin-top:10px;color:var(--text-muted);">
+
+                Waiting for both players...
+
             </p>
-
-        </header>
-
-
-        <!-- =================================================
-             BATTLE STATUS
-             ================================================= -->
-
-        <section class="battle-top">
-
-            <div class="round-display">
-
-                <span>
-                    ROUND
-                </span>
-
-                <strong
-                    id="currentRound">
-                    Round 1
-                </strong>
-
-            </div>
-
-
-            <div class="battle-status"
-                 id="battleStatus">
-
-                ⚔️ READY FOR BATTLE
-
-            </div>
 
         </section>
 
 
         <!-- =================================================
              BATTLE ARENA
-             ================================================= -->
+         ================================================= -->
 
-        <section class="battle-arena">
+        <section
+            id="battleArena"
+            class="battle-arena">
 
 
             <!-- =============================================
                  PLAYER 1
                  ============================================= -->
 
-            <div class="battle-side player-one-side">
+            <section
+                id="player1BattleTeam"
+                class="battle-team">
 
-                <div class="battle-player-header">
 
-                    <div>
+                <div
+                    class="battle-team-title"
+                    id="player1Name">
 
-                        <span class="player-label">
-                            PLAYER 1
-                        </span>
-
-                        <h2>
-                            YOUR TEAM
-                        </h2>
-
-                    </div>
-
-                    <div class="round-number">
-                        1
-                    </div>
+                    PLAYER 1
 
                 </div>
 
 
-                <!-- PLAYER 1 FIGHTERS -->
+                <!--
+                    battle.js creates Player 1 cards here.
 
-                <div class="battle-team"
-                     id="player1Battle">
+                    Both teams are intentionally rendered only
+                    after the server enters the Battle phase.
+                -->
 
-                    <!--
-                        Fighters are generated
-                        automatically by battle.js
-                    -->
-
-                </div>
-
-            </div>
+            </section>
 
 
             <!-- =============================================
@@ -131,13 +129,7 @@
 
             <div class="battle-vs">
 
-                <div class="vs-line"></div>
-
-                <div class="vs-text">
-                    VS
-                </div>
-
-                <div class="vs-line"></div>
+                VS
 
             </div>
 
@@ -146,61 +138,25 @@
                  PLAYER 2
                  ============================================= -->
 
-            <div class="battle-side player-two-side">
+            <section
+                id="player2BattleTeam"
+                class="battle-team">
 
-                <div class="battle-player-header">
 
-                    <div>
+                <div
+                    class="battle-team-title"
+                    id="player2Name">
 
-                        <span class="player-label">
-                            PLAYER 2
-                        </span>
-
-                        <h2>
-                            OPPONENT TEAM
-                        </h2>
-
-                    </div>
-
-                    <div class="round-number">
-                        1
-                    </div>
+                    PLAYER 2
 
                 </div>
 
 
-                <!-- PLAYER 2 FIGHTERS -->
+                <!--
+                    battle.js creates Player 2 cards here.
+                -->
 
-                <div class="battle-team"
-                     id="player2Battle">
-
-                    <!--
-                        Fighters are generated
-                        automatically by battle.js
-                    -->
-
-                </div>
-
-            </div>
-
-
-        </section>
-
-
-        <!-- =================================================
-             BATTLE CONTROLS
-             ================================================= -->
-
-        <section class="battle-controls">
-
-            <button
-                id="startBattleBtn"
-                class="start-battle-btn"
-                type="button">
-
-                ⚔️ START BATTLE
-
-            </button>
+            </section>
 
         </section>
 
@@ -209,40 +165,16 @@
              BATTLE LOG
              ================================================= -->
 
-        <section class="battle-log-section">
-
-            <div class="section-title">
-
-                <span>
-                    📜
-                </span>
-
-                <h2>
-                    BATTLE LOG
-                </h2>
-
-            </div>
-
+        <section
+            id="battleLog"
+            class="battle-log"
+            aria-live="polite"
+            aria-label="Battle log">
 
             <div
-                id="battleLog"
-                class="battle-log">
+                class="battle-log-entry">
 
-                <p>
-                    🏴 Player 1 and Player 2 teams loaded.
-                </p>
-
-                <p>
-                    🎭 Role abilities ready.
-                </p>
-
-                <p>
-                    🔥 Character special abilities ready.
-                </p>
-
-                <p>
-                    ⚡ Maximum 50 battle rounds.
-                </p>
+                Waiting for battle events...
 
             </div>
 
@@ -250,125 +182,233 @@
 
 
         <!-- =================================================
-             BATTLE RESULT
+             BATTLE CONTROLS
              ================================================= -->
 
-        <section class="result-box hidden">
+        <section
+            id="battleControls"
+            class="roles-actions">
 
-
-            <div class="result-header">
-
-                <span class="result-trophy">
-                    🏆
-                </span>
-
-                <h2 id="winnerText">
-                    BATTLE RESULT
-                </h2>
-
-                <p id="resultSummary">
-                    Battle completed.
-                </p>
-
-            </div>
-
-
-            <!-- =============================================
-                 RESULT TEAMS
-                 ============================================= -->
-
-            <div class="result-teams">
-
-
-                <!-- PLAYER 1 RESULT -->
-
-                <div class="result-player player-one-result">
-
-                    <span class="player-label">
-                        PLAYER 1
-                    </span>
-
-                    <h3>
-                        YOUR TEAM
-                    </h3>
-
-                    <div id="player1Result">
-
-                    </div>
-
-                </div>
-
-
-                <!-- PLAYER 2 RESULT -->
-
-                <div class="result-player player-two-result">
-
-                    <span class="player-label">
-                        PLAYER 2
-                    </span>
-
-                    <h3>
-                        OPPONENT TEAM
-                    </h3>
-
-                    <div id="player2Result">
-
-                    </div>
-
-                </div>
-
-
-
-            </div>
-
-
-            <!-- =============================================
-                 BATTLE STATISTICS
-                 ============================================= -->
-
-            <div id="battleStatistics">
-
-                <!--
-                    Statistics are generated
-                    automatically by battle.js
-                -->
-
-            </div>
-
+            <!--
+                The battle is server controlled.
+                No attack buttons are provided to players.
+            -->
 
         </section>
 
 
         <!-- =================================================
-             FOOTER
+             SOUND CONTROL
              ================================================= -->
 
-        <footer class="battle-footer">
+        <div
+            class="sound-control"
+            style="width:max-content;margin:25px auto 0;">
 
-            <p>
-                ⚔️ ADG — Anime Draft Game
-            </p>
+            <span data-volume-icon>
+                🔊
+            </span>
 
-            <p>
-                AI Battle Simulation
-            </p>
 
-        </footer>
+            <input
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+                aria-label="Master volume"
+                data-master-volume>
 
+
+            <span data-volume-value>
+                65%
+            </span>
+
+
+            <button
+                type="button"
+                aria-label="Mute"
+                aria-pressed="false"
+                data-mute-button>
+
+                🔊
+
+            </button>
+
+        </div>
 
     </main>
 
 
     <!-- =====================================================
-         SCRIPTS
+         BATTLE RESULT OVERLAY
          ===================================================== -->
 
-    <script src="js/database.js"></script>
+    <div
+        id="battleResult"
+        data-battle-result
+        class="hidden">
 
-    <script src="js/battle.js"></script>
 
+        <div class="battle-result-content">
+
+
+            <div
+                id="battleResultIcon"
+                class="battle-result-icon">
+
+                ⚔️
+
+            </div>
+
+
+            <h1
+                id="battleResultTitle">
+
+                BATTLE FINISHED
+
+            </h1>
+
+
+            <h2
+                id="battleResultWinner">
+
+                Waiting...
+
+            </h2>
+
+
+            <p
+                id="battleResultMessage">
+
+                The battle has ended.
+
+            </p>
+
+
+            <!-- =============================================
+                 RESULT ACTIONS
+                 ============================================= -->
+
+            <div class="battle-result-actions">
+
+
+                <button
+                    id="rematchButton"
+                    type="button">
+
+                    🔄 REMATCH
+
+                </button>
+
+
+                <button
+                    id="profileButton"
+                    type="button">
+
+                    👤 PROFILE
+
+                </button>
+
+
+                <button
+                    id="homeButton"
+                    type="button">
+
+                    🏠 HOME
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         POST-MATCH CHARACTER DETAILS
+         ===================================================== -->
+
+    <section
+        id="matchDetailsSection"
+        class="container hidden">
+
+
+        <div class="page-title">
+
+            <h2>
+                📊 MATCH CHARACTER DETAILS
+            </h2>
+
+            <p>
+                Battle statistics are revealed after the match.
+            </p>
+
+        </div>
+
+
+        <div
+            id="matchDetailsContainer"
+            data-match-details-container>
+
+            <!--
+                battle.js creates post-match statistics here.
+            -->
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         GLOBAL MESSAGE
+         ===================================================== -->
+
+    <div
+        id="adgMessage"
+        class="adg-message hidden"
+        role="status"
+        aria-live="polite">
+
+    </div>
+
+
+    <!-- =====================================================
+         SOCKET.IO CLIENT
+         ===================================================== -->
+
+    <script
+        src="/socket.io/socket.io.js">
+    </script>
+
+
+    <!-- =====================================================
+         DATABASE
+         ===================================================== -->
+
+    <script
+        src="js/database.js">
+    </script>
+
+
+    <!-- =====================================================
+         SOUND
+         ===================================================== -->
+
+    <script
+        src="js/sound.js">
+    </script>
+
+
+    <!-- =====================================================
+         BATTLE ENGINE
+         ===================================================== -->
+
+    <script
+        src="js/battle.js">
+    </script>
 
 </body>
 
 </html>
-
+```

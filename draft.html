@@ -1,0 +1,321 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080b12"
+    >
+
+    <meta
+        name="description"
+        content="ADG — Anime Draft"
+    >
+
+    <title>⚔️ ADG — Draft</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+
+<body class="draft-page">
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="adg-header">
+
+        <div class="adg-logo">
+            ⚔️ <span>ADG</span>
+        </div>
+
+
+        <div
+            id="connectionStatus"
+            class="connection-status"
+        >
+            Connecting...
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             DRAFT HEADER
+             ================================================= -->
+
+        <section class="draft-header">
+
+            <h1>
+                ⚔️ ANIME DRAFT
+            </h1>
+
+
+            <p>
+                <span id="animeTitle">
+                    One Piece
+                </span>
+            </p>
+
+
+            <div
+                id="draftTurn"
+                class="draft-turn waiting"
+            >
+                Waiting for match...
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CHARACTER DRAW AREA
+             ================================================= -->
+
+        <section class="draft-panel">
+
+            <div
+                id="characterCard"
+                class="character-card"
+            >
+
+                <div
+                    id="characterImageFallback"
+                    class="character-image-fallback"
+                >
+                    <span>?</span>
+                </div>
+
+
+                <img
+                    id="characterImage"
+                    class="hidden"
+                    src=""
+                    alt="Draft character"
+                >
+
+
+                <h2 id="characterName">
+                    Waiting for draw...
+                </h2>
+
+
+                <p id="draftMessage">
+                    Your character will appear here.
+                </p>
+
+            </div>
+
+
+            <!-- =============================================
+                 ACTIONS
+                 ============================================= -->
+
+            <div class="draft-actions">
+
+                <button
+                    id="drawCharacterButton"
+                    class="primary-btn"
+                    type="button"
+                    disabled
+                >
+                    🎲 Draw Character
+                </button>
+
+
+                <button
+                    id="dropCharacterButton"
+                    class="warning-btn"
+                    type="button"
+                    disabled
+                >
+                    🔄 Use Drop Token
+                </button>
+
+            </div>
+
+
+            <!-- =============================================
+                 DROP TOKEN
+                 ============================================= -->
+
+            <div
+                class="drop-token"
+                style="width:max-content;margin-left:auto;margin-right:auto;"
+            >
+
+                <span>
+                    Drop Token:
+                </span>
+
+
+                <strong id="dropTokenCount">
+                    1
+                </strong>
+
+            </div>
+
+
+            <!-- =============================================
+                 STATUS
+                 ============================================= -->
+
+            <div
+                id="draftStatus"
+                class="hidden"
+                role="status"
+                aria-live="polite"
+            ></div>
+
+        </section>
+
+
+        <!-- =================================================
+             PRIVATE TEAM
+             ================================================= -->
+
+        <section class="draft-panel">
+
+            <div class="draft-header">
+
+                <h2>
+                    🏴 Your Team
+                </h2>
+
+                <p>
+                    Draft 6 unique characters.
+                </p>
+
+            </div>
+
+
+            <div
+                id="draftTeam"
+                class="draft-team"
+            >
+
+                <!--
+                    draft.js creates all six slots.
+                -->
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             GLOBAL MESSAGE
+             ================================================= -->
+
+        <div
+            id="adgMessage"
+            class="hidden"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <!-- =================================================
+             SOUND CONTROL
+             ================================================= -->
+
+        <div
+            class="sound-control"
+            style="width:max-content;margin:25px auto 0;"
+        >
+
+            <span data-volume-icon>
+                🔊
+            </span>
+
+
+            <input
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+                aria-label="Master volume"
+                data-master-volume
+            >
+
+
+            <span data-volume-value>
+                65%
+            </span>
+
+
+            <button
+                type="button"
+                aria-label="Mute"
+                aria-pressed="false"
+                data-mute-button
+            >
+                🔊
+            </button>
+
+        </div>
+
+    </main>
+
+
+    <!-- =====================================================
+         SOCKET.IO
+         ===================================================== -->
+
+    <script
+        src="/socket.io/socket.io.js"
+    ></script>
+
+
+    <!-- =====================================================
+         CHARACTER DATABASE / IMAGE HELPERS
+         ===================================================== -->
+
+    <script
+        src="js/database.js"
+    ></script>
+
+
+    <!-- =====================================================
+         SOUND
+         ===================================================== -->
+
+    <script
+        src="js/sound.js"
+    ></script>
+
+
+    <!-- =====================================================
+         DRAFT ENGINE
+         ===================================================== -->
+
+    <script
+        src="js/draft.js"
+    ></script>
+
+</body>
+
+</html>
+```

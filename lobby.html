@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#070a10"
+    >
+
+    <title>ADG — Online Lobby</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+
+<body class="page-lobby">
+
+
+    <!-- =====================================================
+         TOP BAR
+         ===================================================== -->
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <span class="brand-icon">
+                ⚔️
+            </span>
+
+            <div>
+
+                <div class="brand-name">
+                    ADG
+                </div>
+
+                <div class="brand-subtitle">
+                    Anime Draft Game
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="topbar-actions">
+
+            <div
+                id="connectionStatus"
+                class="connection-status"
+            >
+
+                <span
+                    id="connectionDot"
+                    class="connection-dot"
+                ></span>
+
+                <span id="connectionText">
+                    CONNECTING
+                </span>
+
+            </div>
+
+
+            <button
+                id="volumeButton"
+                class="icon-button"
+                type="button"
+                title="Sound"
+            >
+                🔊
+            </button>
+
+
+            <button
+                id="backButton"
+                class="icon-button"
+                type="button"
+                title="Back"
+            >
+                ✕
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <main class="lobby-page">
+
+
+        <!-- =================================================
+             HEADER
+             ================================================= -->
+
+        <section class="lobby-header">
+
+            <div class="phase-badge">
+                🌐 ONLINE MULTIPLAYER
+            </div>
+
+
+            <h1>
+                BATTLE LOBBY
+            </h1>
+
+
+            <p>
+                Create a match or join another player.
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             LOBBY CONTENT
+             ================================================= -->
+
+        <section class="lobby-container">
+
+
+            <!-- =============================================
+                 PLAYER CARD
+                 ============================================= -->
+
+            <div class="lobby-player-card">
+
+                <div class="player-card-header">
+
+                    <span class="player-number">
+                        PLAYER 1
+                    </span>
+
+                    <span
+                        id="playerStatus"
+                        class="status-badge waiting"
+                    >
+                        WAITING
+                    </span>
+
+                </div>
+
+
+                <div class="player-avatar">
+                    👤
+                </div>
+
+
+                <label
+                    for="playerName"
+                    class="input-label"
+                >
+                    PLAYER NAME
+                </label>
+
+
+                <input
+                    id="playerName"
+                    class="text-input"
+                    type="text"
+                    maxlength="20"
+                    autocomplete="off"
+                    placeholder="Enter your name"
+                >
+
+
+                <div
+                    id="playerIdentity"
+                    class="player-identity hidden"
+                >
+
+                    <span>
+                        Connected as
+                    </span>
+
+                    <strong id="identityName">
+                        Player
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 VS
+                 ============================================= -->
+
+            <div class="lobby-vs">
+
+                <div class="vs-line"></div>
+
+                <div class="vs-circle">
+                    VS
+                </div>
+
+                <div class="vs-line"></div>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 OPPONENT CARD
+                 ============================================= -->
+
+            <div class="lobby-player-card opponent-card">
+
+                <div class="player-card-header">
+
+                    <span class="player-number">
+                        PLAYER 2
+                    </span>
+
+                    <span
+                        id="opponentStatus"
+                        class="status-badge waiting"
+                    >
+                        WAITING
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="opponentAvatar"
+                    class="player-avatar opponent-avatar"
+                >
+                    ?
+                </div>
+
+
+                <div class="opponent-name-container">
+
+                    <div class="opponent-label">
+                        OPPONENT
+                    </div>
+
+                    <div
+                        id="opponentName"
+                        class="opponent-name"
+                    >
+                        Waiting for player...
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="opponentConnection"
+                    class="opponent-connection"
+                >
+
+                    <span class="small-dot"></span>
+
+                    <span>
+                        Waiting for opponent
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             MATCH ACTIONS
+             ================================================= -->
+
+        <section class="match-actions">
+
+
+            <!-- =============================================
+                 CREATE MATCH
+                 ============================================= -->
+
+            <div
+                id="createMatchPanel"
+                class="match-panel"
+            >
+
+                <div class="panel-icon">
+                    ⚔️
+                </div>
+
+
+                <h2>
+                    CREATE MATCH
+                </h2>
+
+
+                <p>
+                    Create a private battle and invite
+                    another player.
+                </p>
+
+
+                <button
+                    id="createMatchButton"
+                    class="primary-button large-button"
+                    type="button"
+                >
+                    CREATE MATCH
+                </button>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 JOIN MATCH
+                 ============================================= -->
+
+            <div
+                id="joinMatchPanel"
+                class="match-panel"
+            >
+
+                <div class="panel-icon">
+                    🔗
+                </div>
+
+
+                <h2>
+                    JOIN MATCH
+                </h2>
+
+
+                <p>
+                    Enter the six-character match code.
+                </p>
+
+
+                <input
+                    id="matchCodeInput"
+                    class="text-input match-code-input"
+                    type="text"
+                    maxlength="6"
+                    autocomplete="off"
+                    placeholder="ABC123"
+                >
+
+
+                <button
+                    id="joinMatchButton"
+                    class="secondary-button large-button"
+                    type="button"
+                >
+                    JOIN MATCH
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             MATCH CODE
+             ================================================= -->
+
+        <section
+            id="matchCodePanel"
+            class="match-code-panel hidden"
+        >
+
+            <div class="match-code-header">
+
+                <span class="section-kicker">
+                    YOUR MATCH CODE
+                </span>
+
+                <span class="secure-label">
+                    🔒 PRIVATE
+                </span>
+
+            </div>
+
+
+            <div
+                id="matchCode"
+                class="match-code"
+            >
+                ------ 
+            </div>
+
+
+            <p class="match-code-help">
+
+                Send this code to your opponent.
+
+                <br>
+
+                Do not share it publicly.
+
+            </p>
+
+
+            <button
+                id="copyMatchCodeButton"
+                class="copy-code-button"
+                type="button"
+            >
+                📋 COPY CODE
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             GAME INFORMATION
+             ================================================= -->
+
+        <section class="lobby-info-grid">
+
+
+            <div class="info-card">
+
+                <span class="info-icon">
+                    🔒
+                </span>
+
+                <div>
+
+                    <h3>
+                        PRIVATE TEAMS
+                    </h3>
+
+                    <p>
+                        Your draft and roles remain hidden
+                        from your opponent.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <span class="info-icon">
+                    🎴
+                </span>
+
+                <div>
+
+                    <h3>
+                        6 CHARACTERS
+                    </h3>
+
+                    <p>
+                        Each player drafts six unique
+                        characters.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <span class="info-icon">
+                    ⚔️
+                </span>
+
+                <div>
+
+                    <h3>
+                        BATTLE REVEAL
+                    </h3>
+
+                    <p>
+                        Both teams are revealed only when
+                        Battle begins.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             WAITING PANEL
+             ================================================= -->
+
+        <section
+            id="waitingPanel"
+            class="waiting-panel hidden"
+        >
+
+            <div class="waiting-animation">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </div>
+
+
+            <h2>
+                WAITING FOR OPPONENT
+            </h2>
+
+
+            <p>
+                Your match is ready.
+                Give the code to Player 2.
+            </p>
+
+
+            <div class="waiting-code">
+
+                <span>
+                    MATCH CODE
+                </span>
+
+                <strong
+                    id="waitingMatchCode"
+                >
+                    ------
+                </strong>
+
+            </div>
+
+
+            <button
+                id="cancelMatchButton"
+                class="danger-button"
+                type="button"
+            >
+                CANCEL MATCH
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             READY PANEL
+             ================================================= -->
+
+        <section
+            id="readyPanel"
+            class="ready-panel hidden"
+        >
+
+            <div class="ready-icon">
+                ⚔️
+            </div>
+
+
+            <h2>
+                BOTH PLAYERS CONNECTED
+            </h2>
+
+
+            <p>
+                Prepare for the draft.
+            </p>
+
+
+            <div class="ready-players">
+
+                <div class="ready-player">
+
+                    <span class="ready-check">
+                        ✓
+                    </span>
+
+                    <span id="readyPlayer1">
+                        Player 1
+                    </span>
+
+                </div>
+
+
+                <div class="ready-player">
+
+                    <span class="ready-check">
+                        ✓
+                    </span>
+
+                    <span id="readyPlayer2">
+                        Player 2
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="continueButton"
+                class="primary-button large-button"
+                type="button"
+            >
+                CONTINUE TO DRAFT
+            </button>
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         VOLUME PANEL
+         ===================================================== -->
+
+    <div
+        id="volumePanel"
+        class="volume-panel hidden"
+    >
+
+        <div class="volume-title">
+            🔊 Master Volume
+        </div>
+
+
+        <input
+            id="masterVolume"
+            type="range"
+            min="0"
+            max="100"
+            value="70"
+        >
+
+
+        <button
+            id="muteButton"
+            class="secondary-button"
+            type="button"
+        >
+            MUTE
+        </button>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         LOADING OVERLAY
+         ===================================================== -->
+
+    <div
+        id="loadingOverlay"
+        class="loading-overlay hidden"
+    >
+
+        <div class="loader"></div>
+
+        <p id="loadingText">
+            Connecting...
+        </p>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+
+    <div
+        id="toast"
+        class="toast hidden"
+    >
+    </div>
+
+
+
+    <!-- =====================================================
+         FIREBASE IS NOT USED
+         ===================================================== -->
+
+
+    <!-- =====================================================
+         APPLICATION
+         ===================================================== -->
+
+    <script src="js/lobby.js"></script>
+
+</body>
+
+</html>

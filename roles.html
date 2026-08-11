@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,280 +6,240 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#080a12">
+
+    <meta name="description"
+          content="ADG — Role Assignment">
 
     <title>⚔️ ADG — Role Assignment</title>
 
-    <link
-        rel="stylesheet"
-        href="css/style.css">
+    <link rel="stylesheet"
+          href="css/style.css">
 
 </head>
 
 
-<body>
+<body class="roles-page">
+
 
     <!-- =====================================================
-         ADG ROLE ASSIGNMENT
+         HEADER
          ===================================================== -->
 
-    <main class="role-page">
+    <header class="adg-header">
+
+        <div class="adg-logo">
+            ⚔️ <span>ADG</span>
+        </div>
+
+
+        <div
+            id="connectionStatus"
+            class="connection-status">
+
+            Connecting...
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <main class="container">
 
 
         <!-- =================================================
-             HEADER
+             ROLE HEADER
              ================================================= -->
 
-        <header class="role-header">
-
-            <div class="adg-logo">
-                ⚔️ ADG
-            </div>
+        <section class="roles-header">
 
             <h1>
-                ROLE ASSIGNMENT
+                🎭 ROLE ASSIGNMENT
             </h1>
 
-            <p>
-                Assign one unique role to each character
+
+            <p
+                id="roleAnimeTitle"
+                class="role-status">
+
+                One Piece
+
             </p>
 
-        </header>
+
+            <div
+                id="roleCounter"
+                class="role-counter">
+
+                0 / 6 Roles Assigned
+
+            </div>
+
+        </section>
 
 
         <!-- =================================================
-             PLAYER 1
+             PRIVATE TEAM
              ================================================= -->
 
         <section
-            class="player-section player-one">
+            id="roleContainer"
+            data-role-container>
 
-            <div class="player-title">
+            <!--
 
-                <div>
+                roles.js generates the six character cards.
 
-                    <span class="player-label">
-                        PLAYER 1
-                    </span>
+                IMPORTANT:
 
-                    <h2>
-                        Your Team
-                    </h2>
+                Only the current player's six characters
+                are sent to this page.
 
-                </div>
+                The opponent's team and roles are never
+                rendered here.
 
-
-                <span
-                    class="role-count"
-                    id="player1RoleCount">
-
-                    0 / 6
-
-                </span>
-
-            </div>
-
-
-            <!-- PLAYER 1 CHARACTERS -->
-
-            <div
-                class="character-grid"
-                id="player1Characters">
-
-            </div>
+            -->
 
         </section>
 
 
         <!-- =================================================
-             PLAYER 2
-             ================================================= -->
-
-        <section
-            class="player-section player-two">
-
-            <div class="player-title">
-
-                <div>
-
-                    <span class="player-label">
-                        PLAYER 2
-                    </span>
-
-                    <h2>
-                        Opponent Team
-                    </h2>
-
-                </div>
-
-
-                <span
-                    class="role-count"
-                    id="player2RoleCount">
-
-                    0 / 6
-
-                </span>
-
-            </div>
-
-
-            <!-- PLAYER 2 CHARACTERS -->
-
-            <div
-                class="character-grid"
-                id="player2Characters">
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             ROLE LEGEND
-             ================================================= -->
-
-        <section class="role-legend">
-
-            <h3>
-                AVAILABLE ROLES
-            </h3>
-
-
-            <div class="role-list">
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        👑
-                    </span>
-
-                    <span class="role-name">
-                        Leader
-                    </span>
-
-                </div>
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        ⚔️
-                    </span>
-
-                    <span class="role-name">
-                        Attacker
-                    </span>
-
-                </div>
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        🛡️
-                    </span>
-
-                    <span class="role-name">
-                        Defender
-                    </span>
-
-                </div>
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        ❤️
-                    </span>
-
-                    <span class="role-name">
-                        Support
-                    </span>
-
-                </div>
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        ⭐
-                    </span>
-
-                    <span class="role-name">
-                        Specialist
-                    </span>
-
-                </div>
-
-
-                <div class="role-item">
-
-                    <span class="role-icon">
-                        ☠️
-                    </span>
-
-                    <span class="role-name">
-                        Wildcard
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             STATUS
+             VALIDATION
              ================================================= -->
 
         <div
-            class="role-status"
-            id="roleStatus">
+            id="roleValidation"
+            data-role-validation
+            class="invalid">
 
-            Assign all roles to continue.
+            Assign all six unique roles to continue.
 
         </div>
 
 
         <!-- =================================================
-             CONTINUE
+             ACTIONS
              ================================================= -->
 
-        <div class="continue-container">
+        <section class="roles-actions">
+
 
             <button
-                id="continueBattleBtn"
-                class="continue-battle-btn"
+                id="backToDraftButton"
+                class="adg-button secondary"
+                type="button">
+
+                ← Back
+
+            </button>
+
+
+            <button
+                id="continueBattleButton"
+                class="adg-button"
                 type="button"
                 disabled>
 
-                ⚔️ CONTINUE TO BATTLE
+                Continue → Battle Arena
+
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             SOUND CONTROL
+             ================================================= -->
+
+        <div
+            class="sound-control"
+            style="width:max-content;margin:25px auto 0;">
+
+            <span data-volume-icon>
+                🔊
+            </span>
+
+
+            <input
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+                aria-label="Master volume"
+                data-master-volume>
+
+
+            <span data-volume-value>
+                65%
+            </span>
+
+
+            <button
+                type="button"
+                aria-label="Mute"
+                aria-pressed="false"
+                data-mute-button>
+
+                🔊
 
             </button>
 
         </div>
 
-
     </main>
 
 
     <!-- =====================================================
-         SCRIPTS
+         GLOBAL MESSAGE
          ===================================================== -->
 
-    <!-- DATABASE MUST LOAD FIRST -->
+    <div
+        id="adgMessage"
+        class="adg-message hidden"
+        role="status"
+        aria-live="polite">
+
+    </div>
+
+
+    <!-- =====================================================
+         SOCKET.IO
+         ===================================================== -->
+
+    <script
+        src="/socket.io/socket.io.js">
+    </script>
+
+
+    <!-- =====================================================
+         GAME DATABASE
+         ===================================================== -->
 
     <script
         src="js/database.js">
     </script>
 
 
-    <!-- ROLE SYSTEM -->
+    <!-- =====================================================
+         SOUND
+         ===================================================== -->
+
+    <script
+        src="js/sound.js">
+    </script>
+
+
+    <!-- =====================================================
+         ROLE ENGINE
+         ===================================================== -->
 
     <script
         src="js/roles.js">
@@ -287,4 +248,4 @@
 </body>
 
 </html>
-
+```

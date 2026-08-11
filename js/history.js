@@ -1,507 +1,1368 @@
-document.addEventListener("DOMContentLoaded", () => {
+```javascript
+/* =========================================================
+   ADG — HISTORY.JS
+   Match History
+   No Firebase
+   ========================================================= */
 
-    "use strict";
+"use strict";
 
-    // =========================================================
-    // ELEMENTS
-    // =========================================================
 
-    const historyContainer =
-        document.getElementById(
-            "historyContainer"
+/* =========================================================
+   SOCKET
+   ========================================================= */
+
+const historySocket = io(
+    window.location.origin,
+    {
+        transports: [
+            "websocket",
+            "polling"
+        ]
+    }
+);
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+const historyState = {
+
+    connected: false,
+
+    playerId: null,
+
+    playerName: "",
+
+    history: [],
+
+    loading: false
+
+};
+
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+function historyGetSession(key) {
+
+    try {
+
+        return sessionStorage.getItem(key);
+
+    } catch (error) {
+
+        return null;
+
+    }
+
+}
+
+
+historyState.playerId =
+    historyGetSession(
+        "adg_playerId"
+    );
+
+
+historyState.playerName =
+    historyGetSession(
+        "adg_playerName"
+    ) ||
+    "Player";
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const historyContainer =
+    document.getElementById(
+        "historyContainer"
+    );
+
+const historyLoading =
+    document.getElementById(
+        "historyLoading"
+    );
+
+const historyEmpty =
+    document.getElementById(
+        "historyEmpty"
+    );
+
+const historyError =
+    document.getElementById(
+        "historyError"
+    );
+
+const connectionStatus =
+    document.getElementById(
+        "connectionStatus"
+    );
+
+const refreshHistoryButton =
+    document.getElementById(
+        "refreshHistory"
+    );
+
+const clearHistoryButton =
+    document.getElementById(
+        "clearHistory"
+    );
+
+const backButton =
+    document.getElementById(
+        "backButton"
+    );
+
+
+/* =========================================================
+   CONNECTION
+   ========================================================= */
+
+historySocket.on(
+    "connect",
+    () => {
+
+        historyState.connected =
+            true;
+
+
+        historyState.playerId =
+            historyState.playerId ||
+            historySocket.id;
+
+
+        updateConnectionStatus(
+            true
         );
 
-    const historyStatus =
-        document.getElementById(
-            "historyStatus"
+
+        requestHistory();
+
+    }
+);
+
+
+historySocket.on(
+    "disconnect",
+    () => {
+
+        historyState.connected =
+            false;
+
+
+        updateConnectionStatus(
+            false
         );
 
-    const backBtn =
-        document.getElementById(
-            "backBtn"
+    }
+);
+
+
+historySocket.on(
+    "connect_error",
+    () => {
+
+        historyState.connected =
+            false;
+
+
+        updateConnectionStatus(
+            false
         );
 
-    const clearHistoryBtn =
-        document.getElementById(
-            "clearHistoryBtn"
+
+        showError(
+            "Unable to connect to the game server."
         );
 
+    }
+);
 
-    // =========================================================
-    // HTML SAFETY
-    // =========================================================
 
-    function escapeHtml(value) {
+/* =========================================================
+   CONNECTION UI
+   ========================================================= */
 
-        return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+function updateConnectionStatus(
+    connected
+) {
+
+    if (!connectionStatus) {
+        return;
     }
 
 
-    // =========================================================
-    // LOAD HISTORY
-    // =========================================================
-
-    function loadHistory() {
-
-        try {
-
-            const saved =
-                JSON.parse(
-                    localStorage.getItem(
-                        "battleHistory"
-                    ) || "[]"
-                );
-
-            if (!Array.isArray(saved)) {
-                return [];
-            }
-
-            return saved;
-
-        } catch (error) {
-
-            console.error(
-                "Unable to load battle history:",
-                error
-            );
-
-            return [];
-        }
-    }
+    connectionStatus.textContent =
+        connected
+            ? "🟢 Connected"
+            : "🔴 Disconnected";
 
 
-    // =========================================================
-    // DATE FORMAT
-    // =========================================================
-
-    function formatDate(dateValue) {
-
-        if (!dateValue) {
-            return "Unknown date";
-        }
-
-        const date =
-            new Date(dateValue);
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "Unknown date";
-        }
-
-        return date.toLocaleString();
-    }
+    connectionStatus.classList.toggle(
+        "connected",
+        connected
+    );
 
 
-    // =========================================================
-    // WINNER TEXT
-    // =========================================================
+    connectionStatus.classList.toggle(
+        "disconnected",
+        !connected
+    );
 
-    function getWinnerText(winner) {
-
-        if (winner === 1) {
-            return "🏆 PLAYER 1 WINS";
-        }
-
-        if (winner === 2) {
-            return "🏆 PLAYER 2 WINS";
-        }
-
-        return "🤝 DRAW";
-    }
+}
 
 
-    // =========================================================
-    // TEAM HTML
-    // =========================================================
+/* =========================================================
+   REQUEST HISTORY
+   ========================================================= */
 
-    function buildTeam(team) {
+function requestHistory() {
 
-        if (
-            !team ||
-            !Array.isArray(team)
-        ) {
-
-            return `
-                <p>
-                    No team data available.
-                </p>
-            `;
-        }
-
-        return team.map(fighter => {
-
-            const hp =
-                Math.max(
-                    0,
-                    Number(
-                        fighter.remainingHP
-                    ) || 0
-                );
-
-            return `
-                <div class="history-fighter">
-
-                    <strong>
-                        ${escapeHtml(
-                            fighter.name || "Unknown"
-                        )}
-                    </strong>
-
-                    <span>
-                        ${escapeHtml(
-                            fighter.role || "Unknown"
-                        )}
-                    </span>
-
-                    <span>
-                        ❤️ ${Math.floor(hp)}
-                    </span>
-
-                    <span>
-                        💥 ${Math.floor(
-                            Number(
-                                fighter.damageDealt
-                            ) || 0
-                        )}
-                    </span>
-
-                    <span>
-                        💀 ${Number(
-                            fighter.KOs
-                        ) || 0}
-                    </span>
-
-                    <span>
-                        🔥 ${Number(
-                            fighter.specialsUsed
-                        ) || 0}
-                    </span>
-
-                </div>
-            `;
-
-        }).join("");
-    }
-
-
-    // =========================================================
-    // SINGLE BATTLE CARD
-    // =========================================================
-
-    function buildBattleCard(
-        battle,
-        index
+    if (
+        !historyState.connected
     ) {
 
-        const winner =
-            Number(
-                battle.winner
-            ) || 0;
+        showError(
+            "Not connected to the server."
+        );
 
-        const rounds =
-            Number(
-                battle.rounds
-            ) || 0;
+        return;
 
-        const statistics =
-            battle.statistics || {};
-
-
-        return `
-            <div
-                class="history-card"
-                data-history-index="${index}">
-
-                <!-- HEADER -->
-
-                <div class="history-card-header">
-
-                    <div>
-
-                        <h2>
-                            ${getWinnerText(winner)}
-                        </h2>
-
-                        <p>
-                            📅 ${escapeHtml(
-                                formatDate(
-                                    battle.date
-                                )
-                            )}
-                        </p>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            ⚔️ Battle #${index + 1}
-                        </strong>
-
-                        <p>
-                            🔄 ${rounds} rounds
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <!-- TEAMS -->
-
-                <div class="history-teams">
-
-
-                    <!-- PLAYER 1 -->
-
-                    <div class="history-team">
-
-                        <h3>
-                            🏴 PLAYER 1
-                        </h3>
-
-                        ${buildTeam(
-                            battle.player1 &&
-                            battle.player1.team
-                        )}
-
-                    </div>
-
-
-                    <!-- PLAYER 2 -->
-
-                    <div class="history-team">
-
-                        <h3>
-                            🏴 PLAYER 2
-                        </h3>
-
-                        ${buildTeam(
-                            battle.player2 &&
-                            battle.player2.team
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <!-- BATTLE STATISTICS -->
-
-                <div class="history-statistics">
-
-                    <h3>
-                        📊 Battle Statistics
-                    </h3>
-
-                    <p>
-                        💥 Total Damage:
-                        <strong>
-                            ${Math.floor(
-                                Number(
-                                    statistics.totalDamage
-                                ) || 0
-                            )}
-                        </strong>
-                    </p>
-
-                    <p>
-                        💀 Total KOs:
-                        <strong>
-                            ${Number(
-                                statistics.totalKOs
-                            ) || 0}
-                        </strong>
-                    </p>
-
-                    <p>
-                        🔥 Specials:
-                        <strong>
-                            ${Number(
-                                statistics.totalSpecials
-                            ) || 0}
-                        </strong>
-                    </p>
-
-                    <p>
-                        🔄 Rounds:
-                        <strong>
-                            ${rounds}
-                        </strong>
-                    </p>
-
-                </div>
-
-            </div>
-        `;
     }
 
 
-    // =========================================================
-    // DISPLAY HISTORY
-    // =========================================================
+    if (
+        !historyState.playerId
+    ) {
 
-    function displayHistory() {
+        showError(
+            "Player information is missing."
+        );
+
+        return;
+
+    }
+
+
+    setLoading(
+        true
+    );
+
+
+    historySocket.emit(
+        "history:get",
+        {
+            playerId:
+                historyState.playerId
+        }
+    );
+
+}
+
+
+/* =========================================================
+   HISTORY RESPONSE
+   ========================================================= */
+
+historySocket.on(
+    "history:data",
+    data => {
+
+        historyState.loading =
+            false;
+
+
+        setLoading(
+            false
+        );
+
 
         const history =
-            loadHistory();
-
-
-        if (
-            !historyContainer
-        ) {
-            return;
-        }
-
-
-        historyContainer.innerHTML =
-            "";
-
-
-        // No history
-
-        if (
-            history.length === 0
-        ) {
-
-            if (historyStatus) {
-
-                historyStatus.textContent =
-                    "📭 No battles recorded yet.";
-            }
-
-            historyContainer.innerHTML = `
-                <div class="history-empty">
-
-                    <h2>
-                        📭 No Battle History
-                    </h2>
-
-                    <p>
-                        Complete a battle to
-                        create your first
-                        history record.
-                    </p>
-
-                </div>
-            `;
-
-            return;
-        }
-
-
-        // History exists
-
-        if (historyStatus) {
-
-            historyStatus.textContent =
-                `📜 ${history.length} battle` +
-                `${history.length === 1 ? "" : "s"} recorded.`;
-        }
-
-
-        // Newest battle first
-
-        const reversedHistory =
-            [...history].reverse();
-
-
-        reversedHistory.forEach(
-            (battle, reversedIndex) => {
-
-                const originalIndex =
-                    history.length -
-                    reversedIndex -
-                    1;
-
-                historyContainer.insertAdjacentHTML(
-                    "beforeend",
-                    buildBattleCard(
-                        battle,
-                        originalIndex
-                    )
+            Array.isArray(
+                data
+            )
+                ? data
+                : (
+                    data?.history ||
+                    data?.matches ||
+                    []
                 );
 
-            }
+
+        historyState.history =
+            history;
+
+
+        renderHistory(
+            history
         );
+
+    }
+);
+
+
+/* =========================================================
+   HISTORY ERROR
+   ========================================================= */
+
+historySocket.on(
+    "history:error",
+    data => {
+
+        historyState.loading =
+            false;
+
+
+        setLoading(
+            false
+        );
+
+
+        showError(
+            data?.message ||
+            "Unable to load match history."
+        );
+
+    }
+);
+
+
+/* =========================================================
+   RENDER HISTORY
+   ========================================================= */
+
+function renderHistory(
+    history
+) {
+
+    if (!historyContainer) {
+        return;
     }
 
 
-    // =========================================================
-    // CLEAR HISTORY
-    // =========================================================
+    historyContainer.innerHTML =
+        "";
 
-    function clearHistory() {
 
-        const history =
-            loadHistory();
+    hideElement(
+        historyEmpty
+    );
 
-        if (
-            history.length === 0
-        ) {
 
-            return;
+    hideElement(
+        historyError
+    );
+
+
+    if (
+        !Array.isArray(history) ||
+        history.length === 0
+    ) {
+
+        showElement(
+            historyEmpty
+        );
+
+        return;
+
+    }
+
+
+    history.forEach(
+        (match, index) => {
+
+            const row =
+                createHistoryRow(
+                    match,
+                    index
+                );
+
+
+            historyContainer.appendChild(
+                row
+            );
+
         }
+    );
+
+}
 
 
-        const confirmed =
-            window.confirm(
-                "Are you sure you want to delete all battle history?"
+/* =========================================================
+   CREATE HISTORY ROW
+   ========================================================= */
+
+function createHistoryRow(
+    match,
+    index
+) {
+
+    const row =
+        document.createElement(
+            "article"
+        );
+
+
+    row.className =
+        "history-card";
+
+
+    const result =
+        normalizeResult(
+            match.result
+        );
+
+
+    row.classList.add(
+        `result-${result.toLowerCase()}`
+    );
+
+
+    /* -----------------------------------------------------
+       RESULT
+       ----------------------------------------------------- */
+
+    const resultSection =
+        document.createElement(
+            "div"
+        );
+
+
+    resultSection.className =
+        "history-result";
+
+
+    const resultIcon =
+        document.createElement(
+            "span"
+        );
+
+
+    resultIcon.className =
+        "history-result-icon";
+
+
+    resultIcon.textContent =
+        getResultIcon(
+            result
+        );
+
+
+    resultSection.appendChild(
+        resultIcon
+    );
+
+
+    const resultText =
+        document.createElement(
+            "strong"
+        );
+
+
+    resultText.textContent =
+        result;
+
+
+    resultSection.appendChild(
+        resultText
+    );
+
+
+    row.appendChild(
+        resultSection
+    );
+
+
+    /* -----------------------------------------------------
+       MATCH INFORMATION
+       ----------------------------------------------------- */
+
+    const information =
+        document.createElement(
+            "div"
+        );
+
+
+    information.className =
+        "history-information";
+
+
+    const anime =
+        document.createElement(
+            "h3"
+        );
+
+
+    anime.textContent =
+        match.anime ||
+        "One Piece";
+
+
+    information.appendChild(
+        anime
+    );
+
+
+    const opponent =
+        document.createElement(
+            "p"
+        );
+
+
+    opponent.textContent =
+        `Opponent: ${
+            match.opponentName ||
+            match.opponent ||
+            "Unknown"
+        }`;
+
+
+    information.appendChild(
+        opponent
+    );
+
+
+    if (
+        match.matchCode
+    ) {
+
+        const code =
+            document.createElement(
+                "p"
             );
 
 
-        if (!confirmed) {
-            return;
-        }
+        code.textContent =
+            `Match: ${
+                match.matchCode
+            }`;
 
 
-        localStorage.removeItem(
-            "battleHistory"
+        information.appendChild(
+            code
         );
 
-
-        displayHistory();
     }
 
 
-    // =========================================================
-    // BUTTONS
-    // =========================================================
+    row.appendChild(
+        information
+    );
 
-    if (backBtn) {
 
-        backBtn.addEventListener(
+    /* -----------------------------------------------------
+       SCORE
+       ----------------------------------------------------- */
+
+    const score =
+        document.createElement(
+            "div"
+        );
+
+
+    score.className =
+        "history-score";
+
+
+    const playerScore =
+        Number(
+            match.playerScore ??
+            match.myScore ??
+            0
+        );
+
+
+    const opponentScore =
+        Number(
+            match.opponentScore ??
+            0
+        );
+
+
+    if (
+        match.playerScore !==
+        undefined ||
+        match.myScore !==
+        undefined ||
+        match.opponentScore !==
+        undefined
+    ) {
+
+        score.textContent =
+            `${playerScore} - ${opponentScore}`;
+
+    }
+
+
+    row.appendChild(
+        score
+    );
+
+
+    /* -----------------------------------------------------
+       DATE
+       ----------------------------------------------------- */
+
+    const date =
+        document.createElement(
+            "time"
+        );
+
+
+    date.className =
+        "history-date";
+
+
+    date.dateTime =
+        getDateTimeValue(
+            match.finishedAt ||
+            match.date ||
+            match.createdAt
+        );
+
+
+    date.textContent =
+        formatDate(
+            match.finishedAt ||
+            match.date ||
+            match.createdAt
+        );
+
+
+    row.appendChild(
+        date
+    );
+
+
+    /* -----------------------------------------------------
+       DETAILS BUTTON
+       ----------------------------------------------------- */
+
+    if (
+        match.matchId ||
+        match.id
+    ) {
+
+        const detailsButton =
+            document.createElement(
+                "button"
+            );
+
+
+        detailsButton.type =
+            "button";
+
+
+        detailsButton.className =
+            "history-details-button";
+
+
+        detailsButton.textContent =
+            "Details";
+
+
+        detailsButton.addEventListener(
             "click",
             () => {
 
-                window.history.back();
+                showMatchDetails(
+                    match
+                );
 
             }
         );
-    }
 
 
-    if (clearHistoryBtn) {
-
-        clearHistoryBtn.addEventListener(
-            "click",
-            clearHistory
+        row.appendChild(
+            detailsButton
         );
+
     }
 
 
-    // =========================================================
-    // INITIAL LOAD
-    // =========================================================
+    return row;
 
-    displayHistory();
+}
 
-});
+
+/* =========================================================
+   RESULT NORMALIZATION
+   ========================================================= */
+
+function normalizeResult(
+    result
+) {
+
+    const value =
+        String(
+            result ||
+            "DRAW"
+        )
+        .trim()
+        .toUpperCase();
+
+
+    if (
+        value === "WIN" ||
+        value === "WON" ||
+        value === "VICTORY"
+    ) {
+
+        return "WIN";
+
+    }
+
+
+    if (
+        value === "LOSS" ||
+        value === "LOST" ||
+        value === "DEFEAT"
+    ) {
+
+        return "LOSS";
+
+    }
+
+
+    return "DRAW";
+
+}
+
+
+/* =========================================================
+   RESULT ICON
+   ========================================================= */
+
+function getResultIcon(
+    result
+) {
+
+    switch (
+        result
+    ) {
+
+        case "WIN":
+            return "🏆";
+
+        case "LOSS":
+            return "💀";
+
+        default:
+            return "⚔️";
+
+    }
+
+}
+
+
+/* =========================================================
+   DATE
+   ========================================================= */
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+
+        return "Unknown date";
+
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "Unknown date";
+
+    }
+
+
+    return date.toLocaleString(
+        undefined,
+        {
+            year:
+                "numeric",
+
+            month:
+                "short",
+
+            day:
+                "numeric",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   DATE TIME VALUE
+   ========================================================= */
+
+function getDateTimeValue(
+    value
+) {
+
+    if (!value) {
+
+        return "";
+
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "";
+
+    }
+
+
+    return date.toISOString();
+
+}
+
+
+/* =========================================================
+   MATCH DETAILS
+   ========================================================= */
+
+function showMatchDetails(
+    match
+) {
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.className =
+        "history-modal";
+
+
+    modal.setAttribute(
+        "role",
+        "dialog"
+    );
+
+
+    modal.setAttribute(
+        "aria-modal",
+        "true"
+    );
+
+
+    const content =
+        document.createElement(
+            "div"
+        );
+
+
+    content.className =
+        "history-modal-content";
+
+
+    const title =
+        document.createElement(
+            "h2"
+        );
+
+
+    title.textContent =
+        "Match Details";
+
+
+    content.appendChild(
+        title
+    );
+
+
+    const details = [
+
+        [
+            "Result",
+            normalizeResult(
+                match.result
+            )
+        ],
+
+        [
+            "Anime",
+            match.anime ||
+            "One Piece"
+        ],
+
+        [
+            "Opponent",
+            match.opponentName ||
+            match.opponent ||
+            "Unknown"
+        ],
+
+        [
+            "Match Code",
+            match.matchCode ||
+            "—"
+        ],
+
+        [
+            "Score",
+            formatScore(
+                match
+            )
+        ],
+
+        [
+            "Date",
+            formatDate(
+                match.finishedAt ||
+                match.date ||
+                match.createdAt
+            )
+        ]
+
+    ];
+
+
+    details.forEach(
+        item => {
+
+            const line =
+                document.createElement(
+                    "p"
+                );
+
+
+            const label =
+                document.createElement(
+                    "strong"
+                );
+
+
+            label.textContent =
+                `${item[0]}: `;
+
+
+            line.appendChild(
+                label
+            );
+
+
+            const value =
+                document.createTextNode(
+                    item[1]
+                );
+
+
+            line.appendChild(
+                value
+            );
+
+
+            content.appendChild(
+                line
+            );
+
+        }
+    );
+
+
+    if (
+        Array.isArray(
+            match.characters
+        )
+    ) {
+
+        const charactersTitle =
+            document.createElement(
+                "h3"
+            );
+
+
+        charactersTitle.textContent =
+            "Characters";
+
+
+        content.appendChild(
+            charactersTitle
+        );
+
+
+        const list =
+            document.createElement(
+                "ul"
+            );
+
+
+        match.characters.forEach(
+            character => {
+
+                const item =
+                    document.createElement(
+                        "li"
+                    );
+
+
+                item.textContent =
+                    typeof character ===
+                        "string"
+                        ? character
+                        : (
+                            character.name ||
+                            "Unknown"
+                        );
+
+
+                list.appendChild(
+                    item
+                );
+
+            }
+        );
+
+
+        content.appendChild(
+            list
+        );
+
+    }
+
+
+    const closeButton =
+        document.createElement(
+            "button"
+        );
+
+
+    closeButton.type =
+        "button";
+
+
+    closeButton.className =
+        "history-close-button";
+
+
+    closeButton.textContent =
+        "Close";
+
+
+    closeButton.addEventListener(
+        "click",
+        () => {
+
+            modal.remove();
+
+        }
+    );
+
+
+    content.appendChild(
+        closeButton
+    );
+
+
+    modal.appendChild(
+        content
+    );
+
+
+    modal.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                modal
+            ) {
+
+                modal.remove();
+
+            }
+
+        }
+    );
+
+
+    document.body.appendChild(
+        modal
+    );
+
+}
+
+
+/* =========================================================
+   SCORE
+   ========================================================= */
+
+function formatScore(
+    match
+) {
+
+    const playerScore =
+        match.playerScore ??
+        match.myScore;
+
+
+    const opponentScore =
+        match.opponentScore;
+
+
+    if (
+        playerScore ===
+        undefined &&
+        opponentScore ===
+        undefined
+    ) {
+
+        return "—";
+
+    }
+
+
+    return `${
+        playerScore ??
+        0
+    } - ${
+        opponentScore ??
+        0
+    }`;
+
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+function setLoading(
+    loading
+) {
+
+    historyState.loading =
+        loading;
+
+
+    if (historyLoading) {
+
+        historyLoading.classList.toggle(
+            "hidden",
+            !loading
+        );
+
+    }
+
+
+    if (
+        refreshHistoryButton
+    ) {
+
+        refreshHistoryButton.disabled =
+            loading;
+
+    }
+
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+function showError(
+    message
+) {
+
+    if (historyError) {
+
+        historyError.textContent =
+            message;
+
+
+        historyError.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ELEMENT HELPERS
+   ========================================================= */
+
+function showElement(
+    element
+) {
+
+    if (element) {
+
+        element.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+function hideElement(
+    element
+) {
+
+    if (element) {
+
+        element.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   REFRESH
+   ========================================================= */
+
+if (
+    refreshHistoryButton
+) {
+
+    refreshHistoryButton.addEventListener(
+        "click",
+        requestHistory
+    );
+
+}
+
+
+/* =========================================================
+   CLEAR HISTORY
+   ========================================================= */
+
+if (
+    clearHistoryButton
+) {
+
+    clearHistoryButton.addEventListener(
+        "click",
+        () => {
+
+            const confirmed =
+                window.confirm(
+                    "Clear your local match history view?"
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            /*
+             * This only clears the browser's cached history
+             * if one exists. Server history is never deleted
+             * without an explicit server-side operation.
+             */
+
+            historyState.history =
+                [];
+
+
+            renderHistory(
+                []
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
+
+if (
+    backButton
+) {
+
+    backButton.addEventListener(
+        "click",
+        () => {
+
+            if (
+                document.referrer
+            ) {
+
+                history.back();
+
+            } else {
+
+                window.location.href =
+                    "index.html";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   GLOBAL API
+   ========================================================= */
+
+window.ADG_HISTORY =
+    {
+
+        state:
+            historyState,
+
+        refresh:
+            requestHistory,
+
+        render:
+            renderHistory
+
+    };
+
+
+/* =========================================================
+   END OF HISTORY.JS
+   ========================================================= */
+```

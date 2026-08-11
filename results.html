@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADG — Results</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-results.css">
+</head>
+<body class="results-page" id="resultsBody">
+  <div class="results-container">
+    <div class="results-badge" id="resultsBadge">🏆 VICTORY</div>
+    <h1 id="resultsTitle">PLAYER 1 WINS</h1>
+    <p id="resultsSubtitle"></p>
+
+    <section class="match-stats" id="matchStats"></section>
+
+    <div class="results-actions">
+      <button id="rematchBtn" class="btn-primary">🔄 REMATCH</button>
+      <button id="mainMenuBtn" class="btn-secondary">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <div class="volume-control">
+    <span>🔊</span>
+    <input type="range" id="masterVolume" min="0" max="100" value="70">
+    <button id="muteBtn">🔊</button>
+  </div>
+
+  <script src="js/database.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/results.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

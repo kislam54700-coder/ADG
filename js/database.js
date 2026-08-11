@@ -1,1492 +1,641 @@
+```javascript id="p8x4kd"
+/* =========================================================
+   ADG — DATABASE.JS
+   Character Database
+   ========================================================= */
+
 "use strict";
 
-/*
-=============================================================
- ADG DATABASE
-=============================================================
-
- PURPOSE:
- Character database used by ADG.
-
- IMPORTANT:
- - Character names are used by draft.js / roles.js / battle.js.
- - Battle stats remain hidden from players.
- - Players only see character name, image and role selection.
- - Battle.js can use the hidden stats.
- - Character images are stored in:
-
-   assets/characters/one-piece/
-
-=============================================================
-*/
-
-const ADG_DATABASE_VERSION = "7.4";
-
-
-// ============================================================
-// ONE PIECE CHARACTER DATABASE
-// ============================================================
-
-const ONE_PIECE_DATABASE = [
-
-    // ========================================================
-    // STRAW HAT PIRATES
-    // ========================================================
-
-    {
-        name: "Monkey D. Luffy",
-        aliases: ["Luffy", "Monkey D Luffy"],
-        stats: {
-            hp: 100,
-            attack: 100,
-            defense: 88,
-            speed: 96
-        }
-    },
-
-    {
-        name: "Roronoa Zoro",
-        aliases: ["Zoro", "Roronoa Zolo"],
-        stats: {
-            hp: 96,
-            attack: 98,
-            defense: 91,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Sanji",
-        aliases: [],
-        stats: {
-            hp: 88,
-            attack: 94,
-            defense: 82,
-            speed: 100
-        }
-    },
-
-    {
-        name: "Nami",
-        aliases: [],
-        stats: {
-            hp: 62,
-            attack: 72,
-            defense: 58,
-            speed: 75
-        }
-    },
-
-    {
-        name: "Usopp",
-        aliases: ["Sogeking"],
-        stats: {
-            hp: 65,
-            attack: 68,
-            defense: 60,
-            speed: 70
-        }
-    },
-
-    {
-        name: "Tony Tony Chopper",
-        aliases: ["Chopper"],
-        stats: {
-            hp: 78,
-            attack: 70,
-            defense: 78,
-            speed: 66
-        }
-    },
-
-    {
-        name: "Nico Robin",
-        aliases: ["Robin"],
-        stats: {
-            hp: 74,
-            attack: 82,
-            defense: 68,
-            speed: 72
-        }
-    },
-
-    {
-        name: "Franky",
-        aliases: [],
-        stats: {
-            hp: 92,
-            attack: 84,
-            defense: 94,
-            speed: 58
-        }
-    },
-
-    {
-        name: "Brook",
-        aliases: [],
-        stats: {
-            hp: 76,
-            attack: 84,
-            defense: 66,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Jinbe",
-        aliases: ["Jimbei"],
-        stats: {
-            hp: 98,
-            attack: 92,
-            defense: 96,
-            speed: 68
-        }
-    },
-
-
-    // ========================================================
-    // WORST GENERATION
-    // ========================================================
-
-    {
-        name: "Trafalgar Law",
-        aliases: [
-            "Law",
-            "Trafalgar D. Water Law"
-        ],
-        stats: {
-            hp: 88,
-            attack: 94,
-            defense: 78,
-            speed: 87
-        }
-    },
-
-    {
-        name: "Eustass Kid",
-        aliases: ["Kid"],
-        stats: {
-            hp: 92,
-            attack: 93,
-            defense: 84,
-            speed: 70
-        }
-    },
-
-    {
-        name: "Killer",
-        aliases: [],
-        stats: {
-            hp: 80,
-            attack: 84,
-            defense: 72,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Jewelry Bonney",
-        aliases: ["Bonney"],
-        stats: {
-            hp: 72,
-            attack: 70,
-            defense: 65,
-            speed: 77
-        }
-    },
-
-    {
-        name: "Capone Bege",
-        aliases: ["Bege"],
-        stats: {
-            hp: 82,
-            attack: 76,
-            defense: 88,
-            speed: 60
-        }
-    },
-
-    {
-        name: "Basil Hawkins",
-        aliases: ["Hawkins"],
-        stats: {
-            hp: 80,
-            attack: 78,
-            defense: 75,
-            speed: 68
-        }
-    },
-
-    {
-        name: "Scratchmen Apoo",
-        aliases: ["Apoo"],
-        stats: {
-            hp: 74,
-            attack: 80,
-            defense: 67,
-            speed: 76
-        }
-    },
-
-    {
-        name: "X Drake",
-        aliases: ["Drake"],
-        stats: {
-            hp: 84,
-            attack: 82,
-            defense: 82,
-            speed: 70
-        }
-    },
-
-    {
-        name: "Urouge",
-        aliases: [],
-        stats: {
-            hp: 91,
-            attack: 86,
-            defense: 86,
-            speed: 64
-        }
-    },
-
-
-    // ========================================================
-    // RED HAIR PIRATES
-    // ========================================================
-
-    {
-        name: "Shanks",
-        aliases: [],
-        stats: {
-            hp: 100,
-            attack: 100,
-            defense: 92,
-            speed: 97
-        }
-    },
-
-    {
-        name: "Benn Beckman",
-        aliases: ["Benn Beckmann"],
-        stats: {
-            hp: 91,
-            attack: 94,
-            defense: 88,
-            speed: 86
-        }
-    },
-
-    {
-        name: "Yasopp",
-        aliases: [],
-        stats: {
-            hp: 78,
-            attack: 91,
-            defense: 72,
-            speed: 84
-        }
-    },
-
-    {
-        name: "Lucky Roux",
-        aliases: [],
-        stats: {
-            hp: 89,
-            attack: 87,
-            defense: 90,
-            speed: 67
-        }
-    },
-
-
-    // ========================================================
-    // ROGER PIRATES
-    // ========================================================
-
-    {
-        name: "Gol D. Roger",
-        aliases: [
-            "Gol D Roger",
-            "Roger"
-        ],
-        stats: {
-            hp: 100,
-            attack: 100,
-            defense: 96,
-            speed: 96
-        }
-    },
-
-    {
-        name: "Silvers Rayleigh",
-        aliases: ["Rayleigh"],
-        stats: {
-            hp: 96,
-            attack: 96,
-            defense: 92,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Scopper Gaban",
-        aliases: ["Gaban"],
-        stats: {
-            hp: 91,
-            attack: 91,
-            defense: 87,
-            speed: 86
-        }
-    },
-
-
-    // ========================================================
-    // WHITEBEARD PIRATES
-    // ========================================================
-
-    {
-        name: "Edward Newgate",
-        aliases: [
-            "Whitebeard",
-            "Edward Newgate"
-        ],
-        stats: {
-            hp: 100,
-            attack: 100,
-            defense: 97,
-            speed: 78
-        }
-    },
-
-    {
-        name: "Portgas D. Ace",
-        aliases: ["Ace"],
-        stats: {
-            hp: 91,
-            attack: 93,
-            defense: 79,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Marco",
-        aliases: [],
-        stats: {
-            hp: 94,
-            attack: 86,
-            defense: 88,
-            speed: 92
-        }
-    },
-
-    {
-        name: "Jozu",
-        aliases: [],
-        stats: {
-            hp: 95,
-            attack: 87,
-            defense: 98,
-            speed: 65
-        }
-    },
-
-    {
-        name: "Vista",
-        aliases: [],
-        stats: {
-            hp: 84,
-            attack: 88,
-            defense: 78,
-            speed: 87
-        }
-    },
-
-
-    // ========================================================
-    // BEAST PIRATES
-    // ========================================================
-
-    {
-        name: "Kaido",
-        aliases: [],
-        stats: {
-            hp: 100,
-            attack: 100,
-            defense: 100,
-            speed: 72
-        }
-    },
-
-    {
-        name: "King",
-        aliases: [],
-        stats: {
-            hp: 94,
-            attack: 95,
-            defense: 93,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Queen",
-        aliases: [],
-        stats: {
-            hp: 94,
-            attack: 87,
-            defense: 91,
-            speed: 62
-        }
-    },
-
-    {
-        name: "Jack",
-        aliases: [],
-        stats: {
-            hp: 96,
-            attack: 83,
-            defense: 94,
-            speed: 58
-        }
-    },
-
-    {
-        name: "Ulti",
-        aliases: [],
-        stats: {
-            hp: 82,
-            attack: 82,
-            defense: 84,
-            speed: 76
-        }
-    },
-
-    {
-        name: "Who's-Who",
-        aliases: ["Whos Who"],
-        stats: {
-            hp: 81,
-            attack: 83,
-            defense: 77,
-            speed: 85
-        }
-    },
-
-
-    // ========================================================
-    // BIG MOM PIRATES
-    // ========================================================
-
-    {
-        name: "Charlotte Linlin",
-        aliases: ["Big Mom"],
-        stats: {
-            hp: 100,
-            attack: 99,
-            defense: 100,
-            speed: 65
-        }
-    },
-
-    {
-        name: "Charlotte Katakuri",
-        aliases: ["Katakuri"],
-        stats: {
-            hp: 95,
-            attack: 96,
-            defense: 90,
-            speed: 94
-        }
-    },
-
-    {
-        name: "Charlotte Smoothie",
-        aliases: ["Smoothie"],
-        stats: {
-            hp: 87,
-            attack: 87,
-            defense: 86,
-            speed: 72
-        }
-    },
-
-    {
-        name: "Charlotte Cracker",
-        aliases: ["Cracker"],
-        stats: {
-            hp: 85,
-            attack: 88,
-            defense: 89,
-            speed: 74
-        }
-    },
-
-
-    // ========================================================
-    // MARINES
-    // ========================================================
-
-    {
-        name: "Monkey D. Garp",
-        aliases: ["Garp"],
-        stats: {
-            hp: 98,
-            attack: 99,
-            defense: 94,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Sengoku",
-        aliases: [],
-        stats: {
-            hp: 96,
-            attack: 94,
-            defense: 94,
-            speed: 78
-        }
-    },
-
-    {
-        name: "Sakazuki",
-        aliases: ["Akainu"],
-        stats: {
-            hp: 96,
-            attack: 98,
-            defense: 92,
-            speed: 76
-        }
-    },
-
-    {
-        name: "Kuzan",
-        aliases: ["Aokiji"],
-        stats: {
-            hp: 94,
-            attack: 94,
-            defense: 90,
-            speed: 82
-        }
-    },
-
-    {
-        name: "Borsalino",
-        aliases: ["Kizaru"],
-        stats: {
-            hp: 91,
-            attack: 95,
-            defense: 87,
-            speed: 100
-        }
-    },
-
-    {
-        name: "Fujitora",
-        aliases: ["Issho"],
-        stats: {
-            hp: 92,
-            attack: 92,
-            defense: 89,
-            speed: 74
-        }
-    },
-
-    {
-        name: "Ryokugyu",
-        aliases: [
-            "Green Bull",
-            "Aramaki"
-        ],
-        stats: {
-            hp: 94,
-            attack: 91,
-            defense: 92,
-            speed: 75
-        }
-    },
-
-    {
-        name: "Smoker",
-        aliases: [],
-        stats: {
-            hp: 79,
-            attack: 77,
-            defense: 76,
-            speed: 79
-        }
-    },
-
-    {
-        name: "Rob Lucci",
-        aliases: ["Lucci"],
-        stats: {
-            hp: 87,
-            attack: 92,
-            defense: 83,
-            speed: 94
-        }
-    },
-
-    {
-        name: "Koby",
-        aliases: ["Coby"],
-        stats: {
-            hp: 68,
-            attack: 73,
-            defense: 65,
-            speed: 78
-        }
-    },
-
-
-    // ========================================================
-    // CROSS GUILD
-    // ========================================================
-
-    {
-        name: "Dracule Mihawk",
-        aliases: ["Mihawk"],
-        stats: {
-            hp: 97,
-            attack: 100,
-            defense: 91,
-            speed: 94
-        }
-    },
-
-    {
-        name: "Crocodile",
-        aliases: [],
-        stats: {
-            hp: 87,
-            attack: 89,
-            defense: 80,
-            speed: 77
-        }
-    },
-
-    {
-        name: "Buggy",
-        aliases: [],
-        stats: {
-            hp: 55,
-            attack: 45,
-            defense: 48,
-            speed: 61
-        }
-    },
-
-
-    // ========================================================
-    // REVOLUTIONARY ARMY
-    // ========================================================
-
-    {
-        name: "Monkey D. Dragon",
-        aliases: ["Dragon"],
-        stats: {
-            hp: 98,
-            attack: 98,
-            defense: 93,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Sabo",
-        aliases: [],
-        stats: {
-            hp: 88,
-            attack: 93,
-            defense: 82,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Emporio Ivankov",
-        aliases: ["Ivankov"],
-        stats: {
-            hp: 76,
-            attack: 75,
-            defense: 74,
-            speed: 70
-        }
-    },
-
-
-    // ========================================================
-    // WARLORDS / MAJOR PIRATES
-    // ========================================================
-
-    {
-        name: "Donquixote Doflamingo",
-        aliases: ["Doflamingo"],
-        stats: {
-            hp: 91,
-            attack: 93,
-            defense: 86,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Boa Hancock",
-        aliases: ["Hancock"],
-        stats: {
-            hp: 82,
-            attack: 91,
-            defense: 77,
-            speed: 86
-        }
-    },
-
-    {
-        name: "Bartholomew Kuma",
-        aliases: ["Kuma"],
-        stats: {
-            hp: 97,
-            attack: 90,
-            defense: 97,
-            speed: 63
-        }
-    },
-
-    {
-        name: "Gecko Moria",
-        aliases: ["Moria"],
-        stats: {
-            hp: 82,
-            attack: 76,
-            defense: 79,
-            speed: 55
-        }
-    },
-
-    {
-        name: "Marshall D. Teach",
-        aliases: [
-            "Blackbeard",
-            "Teach"
-        ],
-        stats: {
-            hp: 98,
-            attack: 99,
-            defense: 91,
-            speed: 68
-        }
-    },
-
-
-    // ========================================================
-    // SKY / OTHER MAJOR CHARACTERS
-    // ========================================================
-
-    {
-        name: "Enel",
-        aliases: ["Eneru"],
-        stats: {
-            hp: 84,
-            attack: 96,
-            defense: 72,
-            speed: 96
-        }
-    },
-
-    {
-        name: "Magellan",
-        aliases: [],
-        stats: {
-            hp: 92,
-            attack: 94,
-            defense: 90,
-            speed: 62
-        }
-    },
-
-    {
-        name: "Bartolomeo",
-        aliases: ["Bartolomew"],
-        stats: {
-            hp: 79,
-            attack: 74,
-            defense: 91,
-            speed: 67
-        }
-    },
-
-    {
-        name: "Cavendish",
-        aliases: ["Hakuba"],
-        stats: {
-            hp: 76,
-            attack: 83,
-            defense: 68,
-            speed: 94
-        }
-    },
-
-    {
-        name: "Don Chinjao",
-        aliases: ["Chinjao"],
-        stats: {
-            hp: 86,
-            attack: 88,
-            defense: 84,
-            speed: 63
-        }
-    },
-
-    {
-        name: "Kyros",
-        aliases: [],
-        stats: {
-            hp: 82,
-            attack: 84,
-            defense: 76,
-            speed: 86
-        }
-    },
-
-
-    // ========================================================
-    // WANO
-    // ========================================================
-
-    {
-        name: "Yamato",
-        aliases: [],
-        stats: {
-            hp: 94,
-            attack: 94,
-            defense: 89,
-            speed: 88
-        }
-    },
-
-    {
-        name: "Denjiro",
-        aliases: [],
-        stats: {
-            hp: 82,
-            attack: 86,
-            defense: 76,
-            speed: 81
-        }
-    },
-
-    {
-        name: "Kikunojo",
-        aliases: ["Kiku"],
-        stats: {
-            hp: 74,
-            attack: 77,
-            defense: 70,
-            speed: 78
-        }
-    },
-
-    {
-        name: "Kin'emon",
-        aliases: ["Kinemon"],
-        stats: {
-            hp: 78,
-            attack: 80,
-            defense: 73,
-            speed: 73
-        }
-    },
-
-    {
-        name: "Ashura Doji",
-        aliases: ["Ashura"],
-        stats: {
-            hp: 87,
-            attack: 90,
-            defense: 86,
-            speed: 65
-        }
-    },
-
-
-    // ========================================================
-    // OTHER IMPORTANT CHARACTERS
-    // ========================================================
-
-    {
-        name: "Perona",
-        aliases: [],
-        stats: {
-            hp: 61,
-            attack: 70,
-            defense: 56,
-            speed: 74
-        }
-    },
-
-    {
-        name: "Hody Jones",
-        aliases: ["Hody"],
-        stats: {
-            hp: 79,
-            attack: 78,
-            defense: 75,
-            speed: 67
-        }
-    },
-
-    {
-        name: "Arlong",
-        aliases: [],
-        stats: {
-            hp: 78,
-            attack: 79,
-            defense: 74,
-            speed: 62
-        }
-    },
-
-    {
-        name: "Don Krieg",
-        aliases: ["Krieg"],
-        stats: {
-            hp: 70,
-            attack: 65,
-            defense: 73,
-            speed: 48
-        }
-    },
-
-    {
-        name: "Kuro",
-        aliases: ["Captain Kuro"],
-        stats: {
-            hp: 67,
-            attack: 75,
-            defense: 61,
-            speed: 91
-        }
-    },
-
-    {
-        name: "Bellamy",
-        aliases: [],
-        stats: {
-            hp: 69,
-            attack: 72,
-            defense: 63,
-            speed: 79
-        }
-    }
+
+/* =========================================================
+   ONE PIECE CHARACTERS
+   ========================================================= */
+
+const ONE_PIECE_CHARACTERS = [
+
+    "Monkey D. Luffy",
+    "Roronoa Zoro",
+    "Sanji",
+    "Nami",
+    "Usopp",
+    "Tony Tony Chopper",
+    "Nico Robin",
+    "Franky",
+    "Brook",
+    "Jinbe",
+
+    "Shanks",
+    "Benn Beckman",
+    "Yasopp",
+    "Lucky Roux",
+
+    "Gol D. Roger",
+    "Silvers Rayleigh",
+    "Scopper Gaban",
+
+    "Portgas D. Ace",
+    "Sabo",
+    "Monkey D. Dragon",
+    "Monkey D. Garp",
+
+    "Trafalgar D. Water Law",
+    "Eustass Kid",
+    "Killer",
+
+    "Dracule Mihawk",
+    "Boa Hancock",
+    "Buggy",
+
+    "Edward Newgate",
+    "Marco",
+    "Jozu",
+    "Vista",
+
+    "Charlotte Linlin",
+    "Charlotte Katakuri",
+    "Charlotte Smoothie",
+    "Charlotte Cracker",
+
+    "Kaido",
+    "King",
+    "Queen",
+    "Jack",
+
+    "Marshall D. Teach",
+    "Shiryu",
+    "Van Augur",
+
+    "Borsalino",
+    "Sakazuki",
+    "Kuzan",
+    "Issho",
+    "Aramaki",
+
+    "Sengoku",
+    "Tsuru",
+
+    "Donquixote Doflamingo",
+    "Crocodile",
+    "Rob Lucci",
+    "Kaku",
+
+    "Enel",
+    "Gecko Moria",
+    "Perona",
+
+    "Magellan",
+    "Hannyabal",
+
+    "Bartolomeo",
+    "Cavendish",
+    "Don Sai",
+
+    "Bonney",
+    "Capone Bege",
+    "Basil Hawkins",
+    "Scratchmen Apoo",
+    "X Drake",
+    "Jewelry Bonney",
+
+    "Koby",
+    "Helmeppo",
+
+    "Smoker",
+    "Tashigi",
+
+    "Vinsmoke Reiju",
+    "Vinsmoke Ichiji",
+    "Vinsmoke Niji",
+    "Vinsmoke Yonji",
+
+    "Yamato",
+    "Kozuki Oden",
+    "Kin'emon",
+
+    "Momonosuke",
+    "Denjiro",
+    "Ashura Doji",
+
+    "Nefertari Vivi",
+    "Nefertari Cobra",
+
+    "Boa Sandersonia",
+    "Boa Marigold",
+
+    "Kuma",
+    "Emporio Ivankov",
+
+    "Fisher Tiger",
+    "Arlong",
+
+    "Hachi",
+    "Kuroobi",
+
+    "Mr. 1",
+    "Mr. 2 Bon Clay",
+    "Mr. 3",
+
+    "Daz Bonez",
+
+    "Bellamy",
+
+    "Enies Lobby Sogeking"
+
 ];
 
 
-// ============================================================
-// SIMPLE CHARACTER LIST
-// ============================================================
+/* =========================================================
+   CHARACTER OBJECTS
+   ========================================================= */
 
-const ONE_PIECE_CHARACTERS =
-    ONE_PIECE_DATABASE.map(
-        character => character.name
-    );
+const ADG_CHARACTER_DATA = {};
 
 
-// ============================================================
-// NORMALIZE CHARACTER NAME
-// ============================================================
+/* =========================================================
+   BUILD CHARACTER DATABASE
+   ========================================================= */
 
-function normalizeCharacterName(name) {
+function initializeCharacterDatabase() {
 
-    return String(name || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[’']/g, "")
-        .replace(/\./g, "")
-        .replace(/\s+/g, " ");
-}
+    ONE_PIECE_CHARACTERS.forEach(
+        (
+            character,
+            index
+        ) => {
 
+            if (
+                ADG_CHARACTER_DATA[
+                    character
+                ]
+            ) {
 
-// ============================================================
-// GET CHARACTER DATA
-// ============================================================
+                return;
 
-function getCharacterData(name) {
-
-    const normalized =
-        normalizeCharacterName(name);
-
-    if (!normalized) {
-        return null;
-    }
-
-    const character =
-        ONE_PIECE_DATABASE.find(
-            entry => {
-
-                if (
-                    normalizeCharacterName(
-                        entry.name
-                    ) === normalized
-                ) {
-                    return true;
-                }
-
-                return entry.aliases.some(
-                    alias =>
-                        normalizeCharacterName(
-                            alias
-                        ) === normalized
-                );
             }
-        );
-
-    return character || null;
-}
 
 
-// ============================================================
-// GET HIDDEN BATTLE STATS
-// ============================================================
+            ADG_CHARACTER_DATA[
+                character
+            ] = {
 
-function getCharacterStats(name) {
+                id:
+                    `op_${String(
+                        index + 1
+                    ).padStart(
+                        3,
+                        "0"
+                    )}`,
 
-    const character =
-        getCharacterData(name);
+                name:
+                    character,
 
-    if (
-        !character ||
-        !character.stats
-    ) {
+                anime:
+                    "One Piece",
 
-        return {
-            hp: 100,
-            attack: 100,
-            defense: 80,
-            speed: 80
-        };
-    }
+                index,
 
-    return {
-        hp: Number(character.stats.hp) || 100,
-        attack: Number(character.stats.attack) || 100,
-        defense: Number(character.stats.defense) || 80,
-        speed: Number(character.stats.speed) || 80
-    };
-}
+                image:
+                    getCharacterImagePath(
+                        character
+                    )
 
+            };
 
-// ============================================================
-// GET CANONICAL CHARACTER NAME
-// ============================================================
-
-function getCanonicalCharacterName(name) {
-
-    const character =
-        getCharacterData(name);
-
-    if (character) {
-        return character.name;
-    }
-
-    return String(name || "Unknown");
-}
-
-
-// ============================================================
-// CHARACTER IMAGE FILE MAP
-// ============================================================
-//
-// IMPORTANT:
-// Actual folder:
-//
-// assets/characters/one-piece/
-//
-// This map connects database names to your image filenames.
-//
-// ============================================================
-
-const ONE_PIECE_IMAGE_NAMES = {
-
-    "Monkey D. Luffy": "Luffy.jpg",
-    "Roronoa Zoro": "Zoro.jpg",
-    "Sanji": "Sanji.jpg",
-    "Nami": "Nami.jpg",
-    "Usopp": "Usopp.jpg",
-    "Tony Tony Chopper": "Chopper.jpg",
-    "Nico Robin": "Robin.jpg",
-    "Franky": "Franky.jpg",
-    "Brook": "Brook.jpg",
-    "Jinbe": "Jinbe.jpg",
-
-    "Trafalgar Law": "Trafalgar Law.jpg",
-    "Eustass Kid": "Eustass Kid.jpg",
-    "Killer": "Killer.jpg",
-    "Jewelry Bonney": "Jewelry Bonney.jpg",
-    "Capone Bege": "Capone Bege.jpg",
-    "Basil Hawkins": "Basil Hawkins.jpg",
-    "Scratchmen Apoo": "Scratchmen Apoo.jpg",
-    "X Drake": "X Drake.jpg",
-    "Urouge": "Urouge.jpg",
-
-    "Shanks": "Shanks.jpg",
-    "Benn Beckman": "Benn Beckman.jpg",
-    "Yasopp": "Yasopp.jpg",
-    "Lucky Roux": "Lucky Roux.jpg",
-
-    "Gol D. Roger": "Gol D. Roger.jpg",
-    "Silvers Rayleigh": "Silvers Rayleigh.jpg",
-    "Scopper Gaban": "Scopper Gaban.jpg",
-
-    "Edward Newgate": "Edward Newgate.jpg",
-    "Portgas D. Ace": "Portgas D. Ace.jpg",
-    "Marco": "Marco.jpg",
-    "Jozu": "Jozu.jpg",
-    "Vista": "Vista.jpg",
-
-    "Kaido": "Kaido.jpg",
-    "King": "King.jpg",
-    "Queen": "Queen.jpg",
-    "Jack": "Jack.jpg",
-    "Ulti": "Ulti.jpg",
-    "Who's-Who": "Who's-Who.jpg",
-
-    "Charlotte Linlin": "Charlotte Linlin.jpg",
-    "Charlotte Katakuri": "Charlotte Katakuri.jpg",
-    "Charlotte Smoothie": "Charlotte Smoothie.jpg",
-    "Charlotte Cracker": "Charlotte Cracker.jpg",
-
-    "Monkey D. Garp": "Garp.jpg",
-    "Sengoku": "Sengoku.jpg",
-    "Sakazuki": "Akainu.jpg",
-    "Kuzan": "Aokiji.jpg",
-    "Borsalino": "Kizaru.jpg",
-    "Fujitora": "Fujitora.jpg",
-    "Ryokugyu": "Ryokugyu.jpg",
-    "Smoker": "Smoker.jpg",
-    "Rob Lucci": "Rob Lucci.jpg",
-    "Koby": "Koby.jpg",
-
-    "Dracule Mihawk": "Mihawk.jpg",
-    "Crocodile": "Crocodile.jpg",
-    "Buggy": "Buggy.jpg",
-
-    "Monkey D. Dragon": "Monkey D. Dragon.jpg",
-    "Sabo": "Sabo.jpg",
-    "Emporio Ivankov": "Emporio Ivankov.jpg",
-
-    "Donquixote Doflamingo": "Donquixote Doflamingo.jpg",
-    "Boa Hancock": "Boa Hancock.jpg",
-    "Bartholomew Kuma": "Bartholomew Kuma.jpg",
-    "Gecko Moria": "Gecko Moria.jpg",
-    "Marshall D. Teach": "Marshall D. Teach.jpg",
-
-    "Enel": "Enel.jpg",
-    "Magellan": "Magellan.jpg",
-    "Bartolomeo": "Bartolomeo.jpg",
-    "Cavendish": "Cavendish.jpg",
-    "Don Chinjao": "Don Chinjao.jpg",
-    "Kyros": "Kyros.jpg",
-
-    "Yamato": "Yamato.jpg",
-    "Denjiro": "Denjiro.jpg",
-    "Kikunojo": "Kikunojo.jpg",
-    "Kin'emon": "Kin'emon.jpg",
-    "Ashura Doji": "Ashura Doji.jpg",
-
-    "Perona": "Perona.jpg",
-    "Hody Jones": "Hody Jones.jpg",
-    "Arlong": "Arlong.jpg",
-    "Don Krieg": "Don Krieg.jpg",
-    "Kuro": "Kuro.jpg",
-    "Bellamy": "Bellamy.jpg"
-};
-
-
-// ============================================================
-// GET CHARACTER IMAGE
-// ============================================================
-
-function getCharacterImage(name) {
-
-    const canonicalName =
-        getCanonicalCharacterName(name);
-
-    if (
-        !canonicalName ||
-        canonicalName === "Unknown"
-    ) {
-        return null;
-    }
-
-    const filename =
-        ONE_PIECE_IMAGE_NAMES[
-            canonicalName
-        ];
-
-    if (!filename) {
-
-        console.warn(
-            "⚠️ No image mapping for:",
-            canonicalName
-        );
-
-        return null;
-    }
-
-    return (
-        "assets/characters/one-piece/" +
-        encodeURI(filename)
+        }
     );
+
 }
 
 
-// ============================================================
-// CHARACTER EXISTS
-// ============================================================
+/* =========================================================
+   IMAGE PATH
+   ========================================================= */
 
-function characterExists(name) {
-
-    return Boolean(
-        getCharacterData(name)
-    );
-}
-
-
-// ============================================================
-// RANDOM CHARACTER
-// ============================================================
-
-function getRandomOnePieceCharacter(
-    excludedCharacters = []
+function getCharacterImagePath(
+    character
 ) {
 
-    const excluded =
-        new Set(
-            excludedCharacters.map(
-                normalizeCharacterName
-            )
+    const filename =
+        String(
+            character
+        )
+        .replace(
+            /[\\/:*?"<>|]/g,
+            ""
+        )
+        .replace(
+            /\s+/g,
+            " "
         );
 
-    const available =
-        ONE_PIECE_CHARACTERS.filter(
-            name =>
-                !excluded.has(
-                    normalizeCharacterName(name)
+
+    return `assets/images/one-piece/${filename}.jpg`;
+
+}
+
+
+/* =========================================================
+   GET CHARACTER
+   ========================================================= */
+
+function getCharacter(
+    name
+) {
+
+    if (
+        !name
+    ) {
+
+        return null;
+
+    }
+
+
+    return (
+        ADG_CHARACTER_DATA[
+            name
+        ] ||
+        null
+    );
+
+}
+
+
+/* =========================================================
+   GET ALL CHARACTERS
+   ========================================================= */
+
+function getAllCharacters(
+    anime = "One Piece"
+) {
+
+    if (
+        anime ===
+        "One Piece"
+    ) {
+
+        return ONE_PIECE_CHARACTERS.map(
+            character =>
+                getCharacter(
+                    character
                 )
         );
 
-    if (available.length === 0) {
-        return null;
     }
 
-    return available[
+
+    return [];
+
+}
+
+
+/* =========================================================
+   GET CHARACTER NAMES
+   ========================================================= */
+
+function getCharacterNames(
+    anime = "One Piece"
+) {
+
+    if (
+        anime ===
+        "One Piece"
+    ) {
+
+        return [
+            ...ONE_PIECE_CHARACTERS
+        ];
+
+    }
+
+
+    return [];
+
+}
+
+
+/* =========================================================
+   FIND CHARACTER
+   ========================================================= */
+
+function findCharacter(
+    search
+) {
+
+    if (
+        !search
+    ) {
+
+        return null;
+
+    }
+
+
+    const query =
+        String(
+            search
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const exact =
+        ONE_PIECE_CHARACTERS.find(
+            character =>
+                character.toLowerCase() ===
+                query
+        );
+
+
+    if (
+        exact
+    ) {
+
+        return getCharacter(
+            exact
+        );
+
+    }
+
+
+    const partial =
+        ONE_PIECE_CHARACTERS.find(
+            character =>
+                character
+                    .toLowerCase()
+                    .includes(
+                        query
+                    )
+        );
+
+
+    return partial
+        ? getCharacter(
+            partial
+        )
+        : null;
+
+}
+
+
+/* =========================================================
+   RANDOM CHARACTER
+   ========================================================= */
+
+function getRandomCharacter(
+    excluded = []
+) {
+
+    const excludedSet =
+        new Set(
+            excluded.map(
+                name =>
+                    String(
+                        name
+                    )
+                        .trim()
+                        .toLowerCase()
+            )
+        );
+
+
+    const available =
+        ONE_PIECE_CHARACTERS.filter(
+            character =>
+                !excludedSet.has(
+                    character
+                        .toLowerCase()
+                )
+        );
+
+
+    if (
+        available.length ===
+        0
+    ) {
+
+        return null;
+
+    }
+
+
+    const randomIndex =
         Math.floor(
             Math.random() *
             available.length
+        );
+
+
+    return getCharacter(
+        available[
+            randomIndex
+        ]
+    );
+
+}
+
+
+/* =========================================================
+   RANDOM CHARACTER NAMES
+   ========================================================= */
+
+function getRandomCharacterName(
+    excluded = []
+) {
+
+    const character =
+        getRandomCharacter(
+            excluded
+        );
+
+
+    return character
+        ? character.name
+        : null;
+
+}
+
+
+/* =========================================================
+   CHECK CHARACTER
+   ========================================================= */
+
+function characterExists(
+    name
+) {
+
+    return Boolean(
+        getCharacter(
+            name
         )
-    ];
+    );
+
 }
 
 
-// ============================================================
-// GET CHARACTERS FOR ANIME
-// ============================================================
+/* =========================================================
+   VALIDATE TEAM
+   ========================================================= */
 
-function getAnimeCharacters(anime) {
+function validateTeam(
+    team
+) {
 
-    const normalized =
-        String(anime || "")
-            .trim()
-            .toLowerCase();
+    if (
+        !Array.isArray(
+            team
+        )
+    ) {
 
-    switch (normalized) {
+        return {
 
-        case "one piece":
-        case "onepiece":
+            valid:
+                false,
 
-            return [
-                ...ONE_PIECE_CHARACTERS
-            ];
+            reason:
+                "Team must be an array."
 
-        default:
+        };
 
-            return [];
     }
-}
 
-
-// ============================================================
-// GET DATABASE FOR ANIME
-// ============================================================
-
-function getAnimeDatabase(anime) {
-
-    const normalized =
-        String(anime || "")
-            .trim()
-            .toLowerCase();
-
-    switch (normalized) {
-
-        case "one piece":
-        case "onepiece":
-
-            return [
-                ...ONE_PIECE_DATABASE
-            ];
-
-        default:
-
-            return [];
-    }
-}
-
-
-// ============================================================
-// DATABASE VALIDATION
-// ============================================================
-
-function validateAnimeDatabase(database) {
-
-    if (!Array.isArray(database)) {
-        return false;
-    }
 
     const names =
-        new Set();
+        team
+            .map(
+                member =>
+                    typeof member ===
+                    "string"
+                        ? member
+                        : member?.name
+            )
+            .filter(
+                Boolean
+            );
+
+
+    const unique =
+        new Set(
+            names
+        );
+
+
+    if (
+        names.length !==
+        unique.size
+    ) {
+
+        return {
+
+            valid:
+                false,
+
+            reason:
+                "Duplicate characters are not allowed."
+
+        };
+
+    }
+
 
     for (
-        const character
-        of database
+        const name of
+        names
     ) {
 
         if (
-            !character ||
-            typeof character.name !== "string"
+            !characterExists(
+                name
+            )
         ) {
 
-            return false;
+            return {
+
+                valid:
+                    false,
+
+                reason:
+                    `Unknown character: ${name}`
+
+            };
+
         }
 
-        const normalized =
-            normalizeCharacterName(
-                character.name
-            );
-
-        if (
-            !normalized ||
-            names.has(normalized)
-        ) {
-
-            return false;
-        }
-
-        names.add(normalized);
-
-        if (
-            !character.stats ||
-            typeof character.stats !== "object"
-        ) {
-
-            return false;
-        }
-
-        const stats =
-            character.stats;
-
-        if (
-            typeof stats.hp !== "number" ||
-            typeof stats.attack !== "number" ||
-            typeof stats.defense !== "number" ||
-            typeof stats.speed !== "number"
-        ) {
-
-            return false;
-        }
     }
 
-    return true;
+
+    return {
+
+        valid:
+            true,
+
+        reason:
+            null
+
+    };
+
 }
 
 
-// ============================================================
-// DATABASE STATUS
-// ============================================================
+/* =========================================================
+   DATABASE READY
+   ========================================================= */
 
-const ADG_DATABASE_READY =
-    validateAnimeDatabase(
-        ONE_PIECE_DATABASE
-    );
+initializeCharacterDatabase();
 
 
-// ============================================================
-// CONSOLE STATUS
-// ============================================================
+/* =========================================================
+   GLOBAL API
+   ========================================================= */
 
-console.log(
-    `✅ ADG Database v${ADG_DATABASE_VERSION} loaded.`
-);
+window.ADG_DATABASE = {
 
-console.log(
-    `✅ One Piece characters: ${ONE_PIECE_CHARACTERS.length}`
-);
+    ONE_PIECE_CHARACTERS,
 
-console.log(
-    `✅ Database validation: ${
-        ADG_DATABASE_READY
-            ? "PASSED"
-            : "FAILED"
-    }`
-);
+    characters:
+        ADG_CHARACTER_DATA,
+
+    initialize:
+        initializeCharacterDatabase,
+
+    get:
+        getCharacter,
+
+    getAll:
+        getAllCharacters,
+
+    getNames:
+        getCharacterNames,
+
+    find:
+        findCharacter,
+
+    random:
+        getRandomCharacter,
+
+    randomName:
+        getRandomCharacterName,
+
+    exists:
+        characterExists,
+
+    validateTeam,
+
+    getImagePath:
+        getCharacterImagePath
+
+};
 
 
-// ============================================================
-// GLOBAL ACCESS
-// ============================================================
-
-window.ADG_DATABASE_VERSION =
-    ADG_DATABASE_VERSION;
-
-window.ONE_PIECE_DATABASE =
-    ONE_PIECE_DATABASE;
+/* =========================================================
+   BACKWARD COMPATIBILITY
+   ========================================================= */
 
 window.ONE_PIECE_CHARACTERS =
     ONE_PIECE_CHARACTERS;
 
-window.getCharacterData =
-    getCharacterData;
 
-window.getCharacterStats =
-    getCharacterStats;
-
-window.getCanonicalCharacterName =
-    getCanonicalCharacterName;
-
-window.getCharacterImage =
-    getCharacterImage;
-
-window.characterExists =
-    characterExists;
-
-window.getRandomOnePieceCharacter =
-    getRandomOnePieceCharacter;
-
-window.getAnimeCharacters =
-    getAnimeCharacters;
-
-window.getAnimeDatabase =
-    getAnimeDatabase;
-
-window.validateAnimeDatabase =
-    validateAnimeDatabase;
-
-window.ADG_DATABASE_READY =
-    ADG_DATABASE_READY;
-
-
-// ============================================================
-// END DATABASE.JS
-// ============================================================
+/* =========================================================
+   END OF DATABASE.JS
+   ========================================================= */
+```

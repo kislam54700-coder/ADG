@@ -1,3467 +1,2978 @@
-document.addEventListener("DOMContentLoaded", () => {
+```javascript
+/* =========================================================
+   ADG — BATTLE.JS
+   Server-Authoritative Battle Client
+   ========================================================= */
 
-    /* =====================================================
-       ADG BATTLE — FINAL VERSION
-       ===================================================== */
+"use strict";
 
-    const player1Team =
-        JSON.parse(localStorage.getItem("player1Team")) || [];
 
-    const player2Team =
-        JSON.parse(localStorage.getItem("player2Team")) || [];
+/* =========================================================
+   SOCKET
+   ========================================================= */
 
-    const player1Roles =
-        JSON.parse(localStorage.getItem("player1Roles")) || {};
+const battleSocket = io(
+    window.location.origin,
+    {
+        transports: [
+            "websocket",
+            "polling"
+        ]
+    }
+);
 
-    const player2Roles =
-        JSON.parse(localStorage.getItem("player2Roles")) || {};
 
-    const selectedAnime =
-        localStorage.getItem("selectedAnime") ||
-        localStorage.getItem("selectedAnimeName") ||
-        "One Piece";
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
 
-    /* =====================================================
-       BATTLE SETTINGS
-       ===================================================== */
+const TEAM_SIZE = 6;
 
-    const MAX_ROUNDS = 50;
-    const TEAM_SIZE = 6;
 
-    const BASE_HP = 1000;
-    const BASE_ATTACK = 100;
-    const BASE_DEFENSE = 80;
-    const BASE_SPEED = 80;
+/* =========================================================
+   STATE
+   ========================================================= */
 
-    const NORMAL_ATTACK_MIN = 0.85;
-    const NORMAL_ATTACK_MAX = 1.15;
+const battleState = {
 
-    const CRITICAL_CHANCE = 0.10;
-    const CRITICAL_MULTIPLIER = 1.75;
+    matchId:
+        null,
 
-    let round = 1;
-    let battleRunning = false;
-    let battleFinished = false;
+    playerNumber:
+        null,
 
-    let player1Fighters = [];
-    let player2Fighters = [];
+    anime:
+        "One Piece",
 
-    let battleStats = {
-        totalDamage: 0,
-        totalKOs: 0,
-        totalSpecials: 0,
-        completedRounds: 0
-    };
+    phase:
+        "waiting",
 
-    /* =====================================================
-       DOM
-       ===================================================== */
+    teams:
+        {
+            1: [],
+            2: []
+        },
 
-    const player1Battle =
-        document.getElementById("player1Battle");
+    active:
+        {
+            1: null,
+            2: null
+        },
 
-    const player2Battle =
-        document.getElementById("player2Battle");
+    winner:
+        null,
 
-    const battleLog =
-        document.getElementById("battleLog");
+    finished:
+        false,
 
-    const battleStatus =
-        document.getElementById("battleStatus");
+    events:
+        [],
 
-    const currentRound =
-        document.getElementById("currentRound");
+    connected:
+        false
 
-    const startBattleBtn =
-        document.getElementById("startBattleBtn");
+};
 
-    const rematchBtn =
-        document.getElementById("rematchBtn");
 
-    const characterDetailsBtn =
-        document.getElementById("characterDetailsBtn");
+/* =========================================================
+   SESSION
+   ========================================================= */
 
-    const resultBox =
-        document.querySelector(".result-box");
+function getSession(
+    key
+) {
 
-    const winnerText =
-        document.getElementById("winnerText");
+    try {
 
-    const resultSummary =
-        document.getElementById("resultSummary");
-
-    const player1Result =
-        document.getElementById("player1Result");
-
-    const player2Result =
-        document.getElementById("player2Result");
-
-    const battleStatistics =
-        document.getElementById("battleStatistics");
-
-    const player1CharacterDetails =
-        document.getElementById(
-            "player1CharacterDetails"
+        return sessionStorage.getItem(
+            key
         );
 
-    const player2CharacterDetails =
-        document.getElementById(
-            "player2CharacterDetails"
-        );
-
-    const characterDetailsOverlay =
-        document.querySelector(
-            ".character-details-overlay"
-        );
-
-    const closeCharacterDetails =
-        document.getElementById(
-            "closeCharacterDetails"
-        );
-
-    const animeTitle =
-        document.getElementById("animeTitle");
-
-    if (animeTitle) {
-        animeTitle.textContent =
-            `🎌 ${selectedAnime}`;
-    }
-
-    /* =====================================================
-       ROLE HELPERS
-       ===================================================== */
-
-    function getRoleEmoji(role) {
-
-        const emojis = {
-            "Captain": "👑",
-            "Vice Captain": "⚔️",
-            "Tank": "🛡️",
-            "Healer": "❤️",
-            "Support": "⭐",
-            "Wildcard": "☠️"
-        };
-
-        return emojis[role] || "🔥";
-    }
-
-    function normalizeRole(role) {
-
-        const validRoles = [
-            "Captain",
-            "Vice Captain",
-            "Tank",
-            "Healer",
-            "Support",
-            "Wildcard"
-        ];
-
-        if (validRoles.includes(role)) {
-            return role;
-        }
-
-        return "Wildcard";
-    }
-
-    /* =====================================================
-       FIGHTER CREATION
-       ===================================================== */
-
-    function createFighter(name, role) {
-
-        const fighterRole =
-            normalizeRole(role);
-
-        const fighter = {
-
-            name: String(name),
-
-            role: fighterRole,
-
-            emoji:
-                getRoleEmoji(
-                    fighterRole
-                ),
-
-            hp: BASE_HP,
-
-            maxHp: BASE_HP,
-
-            attack: BASE_ATTACK,
-
-            defense: BASE_DEFENSE,
-
-            speed: BASE_SPEED,
-
-            alive: true,
-
-            abilityUsed: false,
-
-            specialUsed: false,
-
-            specialCount: 0,
-
-            protecting: false,
-
-            protectedBy: null,
-
-            burn: 0,
-
-            bleed: 0,
-
-            stun: 0,
-
-            freeze: 0,
-
-            shield: 0,
-
-            regeneration: 0,
-
-            attackBuff: 1,
-
-            defenseBuff: 1,
-
-            speedBuff: 1,
-
-            damageDealt: 0,
-
-            damageTaken: 0,
-
-            healingDone: 0,
-
-            koCount: 0,
-
-            criticalHits: 0,
-
-            attacks: 0
-        };
-
-        applyRoleBonus(
-            fighter
-        );
-
-        fighter.maxHp =
-            fighter.hp;
-
-        return fighter;
-    }
-
-    /* =====================================================
-       ROLE BASE STATS
-       ===================================================== */
-
-    function applyRoleBonus(fighter) {
-
-        switch (fighter.role) {
-
-            case "Captain":
-
-                fighter.hp *= 1.20;
-                fighter.attack *= 1.20;
-                fighter.defense *= 1.20;
-                fighter.speed *= 1.20;
-
-                break;
-
-            case "Vice Captain":
-
-                fighter.hp *= 1.10;
-                fighter.attack *= 1.10;
-                fighter.defense *= 1.10;
-                fighter.speed *= 1.10;
-
-                break;
-
-            case "Tank":
-
-                fighter.hp *= 1.30;
-                fighter.defense *= 1.30;
-
-                break;
-
-            case "Healer":
-
-                fighter.hp *= 1.20;
-
-                break;
-
-            case "Support":
-
-                fighter.speed *= 1.15;
-
-                break;
-
-            case "Wildcard":
-
-                fighter.attack *= 1.25;
-
-                break;
-        }
-    }
-
-    /* =====================================================
-       CREATE TEAMS
-       ===================================================== */
-
-    player1Team
-        .slice(0, TEAM_SIZE)
-        .forEach(character => {
-
-            player1Fighters.push(
-                createFighter(
-                    character,
-                    player1Roles[character]
-                )
-            );
-
-        });
-
-    player2Team
-        .slice(0, TEAM_SIZE)
-        .forEach(character => {
-
-            player2Fighters.push(
-                createFighter(
-                    character,
-                    player2Roles[character]
-                )
-            );
-
-        });
-
-    /* =====================================================
-       TEAM HELPERS
-       ===================================================== */
-
-    function getAliveFighters(team) {
-
-        return team.filter(
-            fighter =>
-                fighter.alive &&
-                fighter.hp > 0
-        );
-    }
-
-    function getDeadFighters(team) {
-
-        return team.filter(
-            fighter =>
-                !fighter.alive ||
-                fighter.hp <= 0
-        );
-    }
-
-    function isTeamDefeated(team) {
-
-        return getAliveFighters(team).length === 0;
-    }
-
-    function getOwnTeam(fighter) {
-
-        if (
-            player1Fighters.includes(
-                fighter
-            )
-        ) {
-            return player1Fighters;
-        }
-
-        if (
-            player2Fighters.includes(
-                fighter
-            )
-        ) {
-            return player2Fighters;
-        }
+    } catch (error) {
 
         return null;
+
     }
 
-    function getEnemyTeam(fighter) {
-
-        if (
-            player1Fighters.includes(
-                fighter
-            )
-        ) {
-            return player2Fighters;
-        }
-
-        if (
-            player2Fighters.includes(
-                fighter
-            )
-        ) {
-            return player1Fighters;
-        }
-
-        return null;
-    }
-
-    function chooseTarget(team) {
-
-        const alive =
-            getAliveFighters(team);
-
-        if (alive.length === 0) {
-            return null;
-        }
-
-        return alive[
-            Math.floor(
-                Math.random() *
-                alive.length
-            )
-        ];
-    }
-
-    function chooseLowestHP(team) {
-
-        const alive =
-            getAliveFighters(team);
-
-        if (alive.length === 0) {
-            return null;
-        }
-
-        return alive.reduce(
-            (lowest, fighter) => {
-
-                const lowestRatio =
-                    lowest.hp /
-                    lowest.maxHp;
-
-                const fighterRatio =
-                    fighter.hp /
-                    fighter.maxHp;
-
-                return fighterRatio <
-                    lowestRatio
-                    ? fighter
-                    : lowest;
-
-            },
-            alive[0]
-        );
-    }
-
-    function chooseAITarget(
-        attacker,
-        enemyTeam
-    ) {
-
-        const alive =
-            getAliveFighters(
-                enemyTeam
-            );
-
-        if (alive.length === 0) {
-            return null;
-        }
-
-        /*
-         * AI gives Healers a small priority,
-         * then sometimes attacks the weakest target,
-         * otherwise chooses randomly.
-         */
-
-        const healers =
-            alive.filter(
-                fighter =>
-                    fighter.role === "Healer"
-            );
-
-        if (
-            healers.length > 0 &&
-            Math.random() < 0.30
-        ) {
-
-            return healers[
-                Math.floor(
-                    Math.random() *
-                    healers.length
-                )
-            ];
-        }
-
-        if (Math.random() < 0.45) {
-
-            return chooseLowestHP(
-                enemyTeam
-            );
-        }
-
-        return chooseTarget(
-            enemyTeam
-        );
-    }
-
-    /* =====================================================
-       UI / LOG
-       ===================================================== */
-
-    function logBattle(message) {
-
-        if (!battleLog) {
-            return;
-        }
-
-        const line =
-            document.createElement("p");
-
-        line.innerHTML =
-            message;
-
-        battleLog.appendChild(
-            line
-        );
-
-        battleLog.scrollTop =
-            battleLog.scrollHeight;
-    }
-
-    function setBattleStatus(message) {
-
-        if (battleStatus) {
-            battleStatus.textContent =
-                message;
-        }
-    }
-
-    function updateRoundUI() {
-
-        if (currentRound) {
-
-            currentRound.textContent =
-                `Round ${Math.min(
-                    round,
-                    MAX_ROUNDS
-                )} / ${MAX_ROUNDS}`;
-        }
-    }
-
-    function wait(milliseconds) {
-
-        return new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    milliseconds
-                )
-        );
-    }
-
-    /* =====================================================
-       DAMAGE CALCULATION
-       ===================================================== */
-
-    function calculateDamage(
-        attacker,
-        defender
-    ) {
-
-        const attack =
-            attacker.attack *
-            attacker.attackBuff;
-
-        const defense =
-            defender.defense *
-            defender.defenseBuff;
-
-        let damage =
-            attack -
-            defense * 0.45;
-
-        damage =
-            Math.max(
-                20,
-                damage
-            );
-
-        const variation =
-            NORMAL_ATTACK_MIN +
-            Math.random() *
-            (
-                NORMAL_ATTACK_MAX -
-                NORMAL_ATTACK_MIN
-            );
-
-        damage *=
-            variation;
-
-        const critical =
-            Math.random() <
-            CRITICAL_CHANCE;
-
-        if (critical) {
-
-            damage *=
-                CRITICAL_MULTIPLIER;
-        }
-
-        return {
-
-            damage:
-                Math.floor(
-                    damage
-                ),
-
-            critical:
-                critical
-        };
-    }
-
-    /* =====================================================
-       APPLY DAMAGE
-       ===================================================== */
-
-    function applyDamage(
-        defender,
-        damage,
-        attacker = null,
-        abilityName = ""
-    ) {
-
-        if (
-            !defender ||
-            !defender.alive ||
-            defender.hp <= 0
-        ) {
-            return 0;
-        }
-
-        let finalDamage =
-            Math.max(
-                0,
-                Math.floor(
-                    damage
-                )
-            );
-
-        /* Shield */
-
-        if (
-            defender.shield > 0 &&
-            finalDamage > 0
-        ) {
-
-            const absorbed =
-                Math.min(
-                    defender.shield,
-                    finalDamage
-                );
-
-            defender.shield -=
-                absorbed;
-
-            finalDamage -=
-                absorbed;
-
-            if (absorbed > 0) {
-
-                logBattle(
-                    `🛡️ ${defender.name}'s shield absorbed <strong>${absorbed}</strong> damage!`
-                );
-            }
-        }
-
-        /* Tank protection */
-
-        if (
-            finalDamage > 0 &&
-            defender.protectedBy &&
-            defender.protectedBy.alive
-        ) {
-
-            finalDamage =
-                Math.floor(
-                    finalDamage * 0.50
-                );
-
-            logBattle(
-                `🛡️ ${defender.protectedBy.name} protected ${defender.name}!`
-            );
-        }
-
-        defender.hp -=
-            finalDamage;
-
-        defender.hp =
-            Math.max(
-                0,
-                defender.hp
-            );
-
-        defender.damageTaken +=
-            finalDamage;
-
-        battleStats.totalDamage +=
-            finalDamage;
-
-        if (attacker) {
-
-            attacker.damageDealt +=
-                finalDamage;
-        }
-
-        if (
-            defender.hp <= 0
-        ) {
-
-            defeatFighter(
-                defender,
-                attacker
-            );
-        }
-
-        return finalDamage;
-    }
-
-    /* =====================================================
-       DEFEAT
-       ===================================================== */
-
-    function defeatFighter(
-        fighter,
-        attacker = null
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive
-        ) {
-            return;
-        }
-
-        fighter.hp = 0;
-
-        fighter.alive = false;
-
-        fighter.protecting = false;
-
-        fighter.protectedBy = null;
-
-        battleStats.totalKOs++;
-
-        if (attacker) {
-
-            attacker.koCount++;
-        }
-
-        logBattle(
-            `💀 <strong>${fighter.name}</strong> has been defeated!`
-        );
-
-        adgShowAnnouncement(
-            `💀 ${fighter.name} KO!`
-        );
-    }
-
-    /* =====================================================
-       HEAL
-       ===================================================== */
-
-    function healFighter(
-        healer,
-        target,
-        amount
-    ) {
-
-        if (
-            !target ||
-            !target.alive
-        ) {
-            return 0;
-        }
-
-        const oldHP =
-            target.hp;
-
-        target.hp =
-            Math.min(
-                target.maxHp,
-                target.hp +
-                Math.floor(amount)
-            );
-
-        const healed =
-            Math.floor(
-                target.hp -
-                oldHP
-            );
-
-        if (healed > 0) {
-
-            if (healer) {
-
-                healer.healingDone +=
-                    healed;
-            }
-
-            logBattle(
-                `❤️ ${healer ? healer.name : "Regeneration"} restored <strong>${healed} HP</strong> to ${target.name}!`
-            );
-        }
-
-        return healed;
-    }
-
-    /* =====================================================
-       STATUS EFFECTS
-       ===================================================== */
-
-    function processStatusEffects(
-        fighter
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive
-        ) {
-            return;
-        }
-
-        /* Burn */
-
-        if (fighter.burn > 0) {
-
-            const damage =
-                Math.floor(
-                    fighter.maxHp *
-                    0.05
-                );
-
-            fighter.hp -=
-                damage;
-
-            fighter.hp =
-                Math.max(
-                    0,
-                    fighter.hp
-                );
-
-            fighter.damageTaken +=
-                damage;
-
-            battleStats.totalDamage +=
-                damage;
-
-            fighter.burn--;
-
-            logBattle(
-                `🔥 ${fighter.name} suffered <strong>${damage}</strong> Burn damage!`
-            );
-
-            if (
-                fighter.hp <= 0
-            ) {
-
-                defeatFighter(
-                    fighter
-                );
-
-                return;
-            }
-        }
-
-        /* Bleed */
-
-        if (
-            fighter.alive &&
-            fighter.bleed > 0
-        ) {
-
-            const damage =
-                Math.floor(
-                    fighter.maxHp *
-                    0.04
-                );
-
-            fighter.hp -=
-                damage;
-
-            fighter.hp =
-                Math.max(
-                    0,
-                    fighter.hp
-                );
-
-            fighter.damageTaken +=
-                damage;
-
-            battleStats.totalDamage +=
-                damage;
-
-            fighter.bleed--;
-
-            logBattle(
-                `🩸 ${fighter.name} suffered <strong>${damage}</strong> Bleed damage!`
-            );
-
-            if (
-                fighter.hp <= 0
-            ) {
-
-                defeatFighter(
-                    fighter
-                );
-
-                return;
-            }
-        }
-
-        /* Regeneration */
-
-        if (
-            fighter.alive &&
-            fighter.regeneration > 0
-        ) {
-
-            const heal =
-                Math.floor(
-                    fighter.maxHp *
-                    0.06
-                );
-
-            healFighter(
-                fighter,
-                fighter,
-                heal
-            );
-
-            fighter.regeneration--;
-        }
-
-        /* Reduce control effects */
-
-        if (fighter.stun > 0) {
-            fighter.stun--;
-        }
-
-        if (fighter.freeze > 0) {
-            fighter.freeze--;
-        }
-    }
-
-    function isStunnedOrFrozen(
-        fighter
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive
-        ) {
-            return true;
-        }
-
-        if (
-            fighter.stun > 0
-        ) {
-
-            logBattle(
-                `💫 ${fighter.name} is stunned and misses the turn!`
-            );
-
-            return true;
-        }
-
-        if (
-            fighter.freeze > 0
-        ) {
-
-            logBattle(
-                `❄️ ${fighter.name} is frozen and misses the turn!`
-            );
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /* =====================================================
-       ROLE ABILITIES
-       ===================================================== */
-
-    function captainAbility(
-        captain,
-        team
-    ) {
-
-        if (
-            captain.abilityUsed ||
-            !captain.alive
-        ) {
-            return false;
-        }
-
-        captain.abilityUsed =
+}
+
+
+battleState.matchId =
+    getSession(
+        "adg_matchId"
+    );
+
+
+battleState.playerNumber =
+    Number(
+        getSession(
+            "adg_playerNumber"
+        )
+    );
+
+
+battleState.anime =
+    getSession(
+        "adg_anime"
+    ) ||
+    "One Piece";
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const connectionStatus =
+    document.getElementById(
+        "connectionStatus"
+    );
+
+const battlePhase =
+    document.getElementById(
+        "battlePhase"
+    );
+
+const battleStatus =
+    document.getElementById(
+        "battleStatus"
+    );
+
+const player1Team =
+    document.getElementById(
+        "player1BattleTeam"
+    );
+
+const player2Team =
+    document.getElementById(
+        "player2BattleTeam"
+    );
+
+const player1Name =
+    document.getElementById(
+        "player1Name"
+    );
+
+const player2Name =
+    document.getElementById(
+        "player2Name"
+    );
+
+const battleLog =
+    document.getElementById(
+        "battleLog"
+    );
+
+const battleResult =
+    document.getElementById(
+        "battleResult"
+    );
+
+const battleResultIcon =
+    document.getElementById(
+        "battleResultIcon"
+    );
+
+const battleResultTitle =
+    document.getElementById(
+        "battleResultTitle"
+    );
+
+const battleResultWinner =
+    document.getElementById(
+        "battleResultWinner"
+    );
+
+const battleResultMessage =
+    document.getElementById(
+        "battleResultMessage"
+    );
+
+const rematchButton =
+    document.getElementById(
+        "rematchButton"
+    );
+
+const profileButton =
+    document.getElementById(
+        "profileButton"
+    );
+
+const homeButton =
+    document.getElementById(
+        "homeButton"
+    );
+
+const matchDetailsSection =
+    document.getElementById(
+        "matchDetailsSection"
+    );
+
+const matchDetailsContainer =
+    document.getElementById(
+        "matchDetailsContainer"
+    );
+
+const globalMessage =
+    document.getElementById(
+        "adgMessage"
+    );
+
+
+/* =========================================================
+   CONNECTION
+   ========================================================= */
+
+battleSocket.on(
+    "connect",
+    () => {
+
+        battleState.connected =
             true;
 
-        team.forEach(
-            fighter => {
 
-                if (fighter.alive) {
-
-                    fighter.attackBuff *=
-                        1.10;
-
-                    fighter.defenseBuff *=
-                        1.10;
-                }
-            }
+        updateConnectionStatus(
+            true
         );
 
-        logBattle(
-            `👑 ${captain.name} used <strong>Captain's Command!</strong> ⚔️ Team Attack +10%, 🛡️ Defense +10%`
-        );
-
-        return true;
-    }
-
-    function viceCaptainAbility(
-        viceCaptain,
-        enemyTeam
-    ) {
 
         if (
-            viceCaptain.abilityUsed ||
-            !viceCaptain.alive
-        ) {
-            return false;
-        }
-
-        const target =
-            chooseAITarget(
-                viceCaptain,
-                enemyTeam
-            );
-
-        if (!target) {
-            return false;
-        }
-
-        viceCaptain.abilityUsed =
-            true;
-
-        const result =
-            calculateDamage(
-                viceCaptain,
-                target
-            );
-
-        const damage =
-            applyDamage(
-                target,
-                result.damage * 1.25,
-                viceCaptain,
-                "Vice Captain Strike"
-            );
-
-        logBattle(
-            `⚔️ ${viceCaptain.name} used <strong>Vice Captain Strike!</strong> — ${damage} damage!`
-        );
-
-        if (
-            typeof playSpecialEffect ===
-            "function"
+            battleState.matchId
         ) {
 
-            playSpecialEffect(
-                viceCaptain,
-                "Vice Captain Strike"
-            );
-        }
-
-        return true;
-    }
-
-    function tankAbility(
-        tank,
-        team
-    ) {
-
-        if (
-            tank.abilityUsed ||
-            !tank.alive
-        ) {
-            return false;
-        }
-
-        tank.abilityUsed =
-            true;
-
-        tank.protecting =
-            true;
-
-        team.forEach(
-            fighter => {
-
-                if (
-                    fighter.alive &&
-                    fighter !== tank
-                ) {
-
-                    fighter.protectedBy =
-                        tank;
-                }
-            }
-        );
-
-        logBattle(
-            `🛡️ ${tank.name} used <strong>Guardian Protection!</strong> — allies receive 50% damage reduction.`
-        );
-
-        return true;
-    }
-
-    function healerAbility(
-        healer,
-        team
-    ) {
-
-        if (
-            healer.abilityUsed ||
-            !healer.alive
-        ) {
-            return false;
-        }
-
-        const target =
-            chooseLowestHP(
-                team
-            );
-
-        if (!target) {
-            return false;
-        }
-
-        healer.abilityUsed =
-            true;
-
-        const healed =
-            healFighter(
-                healer,
-                target,
-                target.maxHp * 0.25
-            );
-
-        logBattle(
-            `❤️ ${healer.name} used <strong>Healing Wave!</strong> — ${healed} HP restored.`
-        );
-
-        return true;
-    }
-
-    function supportAbility(
-        support,
-        team
-    ) {
-
-        if (
-            support.abilityUsed ||
-            !support.alive
-        ) {
-            return false;
-        }
-
-        support.abilityUsed =
-            true;
-
-        team.forEach(
-            fighter => {
-
-                if (fighter.alive) {
-
-                    fighter.attackBuff *=
-                        1.05;
-
-                    fighter.speedBuff *=
-                        1.10;
-                }
-            }
-        );
-
-        logBattle(
-            `⭐ ${support.name} used <strong>Team Support!</strong> ⚔️ Attack +5%, ⚡ Speed +10%`
-        );
-
-        return true;
-    }
-
-    function wildcardAbility(
-        fighter
-    ) {
-
-        if (
-            fighter.abilityUsed ||
-            !fighter.alive
-        ) {
-            return false;
-        }
-
-        fighter.abilityUsed =
-            true;
-
-        const random =
-            Math.floor(
-                Math.random() * 3
-            );
-
-        if (random === 0) {
-
-            fighter.attackBuff *=
-                1.25;
-
-            logBattle(
-                `☠️ ${fighter.name} activated <strong>Berserker!</strong> ⚔️ Attack +25%`
-            );
-
-        } else if (
-            random === 1
-        ) {
-
-            fighter.defenseBuff *=
-                1.25;
-
-            logBattle(
-                `☠️ ${fighter.name} activated <strong>Guardian!</strong> 🛡️ Defense +25%`
-            );
-
-        } else {
-
-            fighter.speedBuff *=
-                1.25;
-
-            logBattle(
-                `☠️ ${fighter.name} activated <strong>Assassin!</strong> ⚡ Speed +25%`
-            );
-        }
-
-        return true;
-    }
-
-    function processRoleAbility(
-        fighter,
-        ownTeam,
-        enemyTeam
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive
-        ) {
-            return false;
-        }
-
-        switch (fighter.role) {
-
-            case "Captain":
-
-                return captainAbility(
-                    fighter,
-                    ownTeam
-                );
-
-            case "Vice Captain":
-
-                return viceCaptainAbility(
-                    fighter,
-                    enemyTeam
-                );
-
-            case "Tank":
-
-                return tankAbility(
-                    fighter,
-                    ownTeam
-                );
-
-            case "Healer":
-
-                return healerAbility(
-                    fighter,
-                    ownTeam
-                );
-
-            case "Support":
-
-                return supportAbility(
-                    fighter,
-                    ownTeam
-                );
-
-            case "Wildcard":
-
-                return wildcardAbility(
-                    fighter
-                );
-
-            default:
-
-                return false;
-        }
-    }
-
-    /* =====================================================
-       CHARACTER SPECIAL
-       ===================================================== */
-
-    async function tryCharacterSpecial(
-        fighter,
-        enemyTeam,
-        ownTeam
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive ||
-            fighter.specialUsed
-        ) {
-            return false;
-        }
-
-        /*
-         * 25% chance per turn.
-         * Only one special per character.
-         */
-
-        if (
-            Math.random() > 0.25
-        ) {
-            return false;
-        }
-
-        const target =
-            chooseAITarget(
-                fighter,
-                enemyTeam
-            );
-
-        if (!target) {
-            return false;
-        }
-
-        fighter.specialUsed =
-            true;
-
-        fighter.specialCount++;
-
-        battleStats.totalSpecials++;
-
-        let damageMultiplier =
-            1.50;
-
-        let effectMessage =
-            "Character Special";
-
-        /* Captain */
-
-        if (
-            fighter.role ===
-            "Captain"
-        ) {
-
-            damageMultiplier =
-                1.70;
-
-            effectMessage =
-                "👑 Captain Power";
-        }
-
-        /* Vice Captain */
-
-        else if (
-            fighter.role ===
-            "Vice Captain"
-        ) {
-
-            damageMultiplier =
-                1.60;
-
-            effectMessage =
-                "⚔️ Vice Captain Strike";
-        }
-
-        /* Tank */
-
-        else if (
-            fighter.role ===
-            "Tank"
-        ) {
-
-            damageMultiplier =
-                1.35;
-
-            fighter.shield +=
-                fighter.maxHp *
-                0.15;
-
-            effectMessage =
-                "🛡️ Tank Shield";
-        }
-
-        /* Healer */
-
-        else if (
-            fighter.role ===
-            "Healer"
-        ) {
-
-            const healTarget =
-                chooseLowestHP(
-                    ownTeam
-                );
-
-            if (healTarget) {
-
-                healFighter(
-                    fighter,
-                    healTarget,
-                    healTarget.maxHp *
-                    0.30
-                );
-            }
-
-            fighter.regeneration =
-                Math.max(
-                    fighter.regeneration,
-                    3
-                );
-
-            logBattle(
-                `❤️ ${fighter.name} used <strong>Healing Special!</strong> ❤️ Regeneration activated!`
-            );
-
-            playSpecialEffect(
-                fighter,
-                "Healing Special"
-            );
-
-            await wait(500);
-
-            return true;
-        }
-
-        /* Support */
-
-        else if (
-            fighter.role ===
-            "Support"
-        ) {
-
-            ownTeam.forEach(
-                member => {
-
-                    if (member.alive) {
-
-                        member.attackBuff *=
-                            1.10;
-
-                        member.speedBuff *=
-                            1.10;
-                    }
+            battleSocket.emit(
+                "match:reconnect",
+                {
+                    matchId:
+                        battleState.matchId
                 }
             );
 
-            damageMultiplier =
-                1.25;
-
-            effectMessage =
-                "⭐ Support Boost";
         }
 
-        /* Wildcard */
-
-        else if (
-            fighter.role ===
-            "Wildcard"
-        ) {
-
-            damageMultiplier =
-                1.90;
-
-            effectMessage =
-                "☠️ Wildcard Chaos";
-        }
-
-        const result =
-            calculateDamage(
-                fighter,
-                target
-            );
-
-        const damage =
-            applyDamage(
-                target,
-                result.damage *
-                damageMultiplier,
-                fighter,
-                effectMessage
-            );
-
-        logBattle(
-            `🔥 <strong>${fighter.name}</strong> used <strong>Special Ability!</strong> ${effectMessage} — <strong>${damage}</strong> damage!`
-        );
-
-        if (
-            result.critical
-        ) {
-
-            logBattle(
-                `💥 Special attack was CRITICAL!`
-            );
-        }
-
-        playSpecialEffect(
-            fighter,
-            effectMessage
-        );
-
-        await wait(500);
-
-        return true;
     }
+);
 
-    /* =====================================================
-       TURN ORDER
-       ===================================================== */
 
-    function getTurnOrder() {
+battleSocket.on(
+    "disconnect",
+    () => {
 
-        const fighters = [
-
-            ...getAliveFighters(
-                player1Fighters
-            ),
-
-            ...getAliveFighters(
-                player2Fighters
-            )
-
-        ];
-
-        return fighters.sort(
-            (a, b) => {
-
-                const speedA =
-                    a.speed *
-                    a.speedBuff;
-
-                const speedB =
-                    b.speed *
-                    b.speedBuff;
-
-                const valueA =
-                    speedA +
-                    Math.random() *
-                    10;
-
-                const valueB =
-                    speedB +
-                    Math.random() *
-                    10;
-
-                return valueB -
-                    valueA;
-            }
-        );
-    }
-
-    /* =====================================================
-       NORMAL ATTACK
-       ===================================================== */
-
-    async function performAttack(
-        attacker,
-        defender
-    ) {
-
-        if (
-            !attacker ||
-            !defender ||
-            !attacker.alive ||
-            !defender.alive
-        ) {
-            return;
-        }
-
-        const result =
-            calculateDamage(
-                attacker,
-                defender
-            );
-
-        attacker.attacks++;
-
-        if (
-            result.critical
-        ) {
-
-            attacker.criticalHits++;
-
-            logBattle(
-                `💥 ${attacker.name} lands a <strong>CRITICAL HIT!</strong>`
-            );
-        }
-
-        const damage =
-            applyDamage(
-                defender,
-                result.damage,
-                attacker,
-                "Normal Attack"
-            );
-
-        if (damage > 0) {
-
-            logBattle(
-                `⚔️ ${attacker.name} dealt <strong>${damage}</strong> damage to ${defender.name}.`
-            );
-        }
-
-        adgPlayAttackEffects(
-            attacker,
-            defender,
-            result.critical
-        );
-
-        await wait(300);
-    }
-
-    /* =====================================================
-       FIGHTER TURN
-       ===================================================== */
-
-    async function fighterTurn(
-        fighter
-    ) {
-
-        if (
-            !fighter ||
-            !fighter.alive ||
-            !battleRunning
-        ) {
-            return;
-        }
-
-        if (
-            isStunnedOrFrozen(
-                fighter
-            )
-        ) {
-            return;
-        }
-
-        /*
-         * Status effects happen once at the beginning
-         * of the fighter's turn.
-         */
-
-        processStatusEffects(
-            fighter
-        );
-
-        if (
-            !fighter.alive
-        ) {
-            return;
-        }
-
-        const ownTeam =
-            getOwnTeam(
-                fighter
-            );
-
-        const enemyTeam =
-            getEnemyTeam(
-                fighter
-            );
-
-        if (
-            !ownTeam ||
-            !enemyTeam
-        ) {
-            return;
-        }
-
-        /*
-         * Role ability happens once.
-         */
-
-        const abilityUsed =
-            processRoleAbility(
-                fighter,
-                ownTeam,
-                enemyTeam
-            );
-
-        if (abilityUsed) {
-
-            playSpecialEffect(
-                fighter,
-                `${fighter.role} Ability`
-            );
-
-            await wait(450);
-
-            if (
-                !fighter.alive
-            ) {
-                return;
-            }
-
-            /*
-             * A role ability does NOT automatically
-             * prevent the character from attacking.
-             */
-        }
-
-        /*
-         * Character special.
-         */
-
-        const specialUsed =
-            await tryCharacterSpecial(
-                fighter,
-                enemyTeam,
-                ownTeam
-            );
-
-        if (
-            specialUsed
-        ) {
-            return;
-        }
-
-        /*
-         * Normal attack.
-         */
-
-        const target =
-            chooseAITarget(
-                fighter,
-                enemyTeam
-            );
-
-        if (!target) {
-            return;
-        }
-
-        await performAttack(
-            fighter,
-            target
-        );
-    }
-
-    /* =====================================================
-       ROUND STATUS
-       ===================================================== */
-
-    function processRoundStatus() {
-
-        /*
-         * Status effects are already processed at the
-         * beginning of each fighter's turn.
-         *
-         * This function only removes invalid protection.
-         */
-
-        [
-            ...player1Fighters,
-            ...player2Fighters
-        ].forEach(
-            fighter => {
-
-                if (
-                    fighter.protectedBy &&
-                    !fighter.protectedBy.alive
-                ) {
-
-                    fighter.protectedBy =
-                        null;
-                }
-
-                if (
-                    !fighter.alive
-                ) {
-
-                    fighter.protecting =
-                        false;
-                }
-            }
-        );
-    }
-
-    /* =====================================================
-       WINNER
-       ===================================================== */
-
-    function checkBattleWinner() {
-
-        const p1Alive =
-            getAliveFighters(
-                player1Fighters
-            ).length;
-
-        const p2Alive =
-            getAliveFighters(
-                player2Fighters
-            ).length;
-
-        if (
-            p1Alive === 0 &&
-            p2Alive === 0
-        ) {
-
-            return 3;
-        }
-
-        if (
-            p2Alive === 0
-        ) {
-
-            return 1;
-        }
-
-        if (
-            p1Alive === 0
-        ) {
-
-            return 2;
-        }
-
-        return 0;
-    }
-
-    function getRemainingHP(
-        team
-    ) {
-
-        return team.reduce(
-            (total, fighter) =>
-                total +
-                Math.max(
-                    0,
-                    fighter.hp
-                ),
-            0
-        );
-    }
-
-    function finishByHP() {
-
-        const p1HP =
-            getRemainingHP(
-                player1Fighters
-            );
-
-        const p2HP =
-            getRemainingHP(
-                player2Fighters
-            );
-
-        if (
-            p1HP > p2HP
-        ) {
-            return 1;
-        }
-
-        if (
-            p2HP > p1HP
-        ) {
-            return 2;
-        }
-
-        const p1Alive =
-            getAliveFighters(
-                player1Fighters
-            ).length;
-
-        const p2Alive =
-            getAliveFighters(
-                player2Fighters
-            ).length;
-
-        if (
-            p1Alive > p2Alive
-        ) {
-            return 1;
-        }
-
-        if (
-            p2Alive > p1Alive
-        ) {
-            return 2;
-        }
-
-        return 3;
-    }
-
-    /* =====================================================
-       BATTLE UI
-       ===================================================== */
-
-    function escapeHTML(value) {
-
-        return String(value)
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-    }
-
-    function createFighterHTML(
-        fighter
-    ) {
-
-        const hpPercent =
-            fighter.maxHp > 0
-                ? (
-                    fighter.hp /
-                    fighter.maxHp
-                ) * 100
-                : 0;
-
-        const safeName =
-            escapeHTML(
-                fighter.name
-            );
-
-        const safeRole =
-            escapeHTML(
-                fighter.role
-            );
-
-        const defeatedClass =
-            fighter.alive
-                ? ""
-                : "dead";
-
-        return `
-            <div
-                class="fighter-card ${defeatedClass}"
-                data-fighter-name="${safeName}"
-            >
-
-                <h3>
-                    ${fighter.emoji}
-                    ${safeName}
-                </h3>
-
-                <p>
-                    ${fighter.role}
-                </p>
-
-                <div class="hp-bar">
-
-                    <div
-                        class="hp-fill"
-                        style="width:${Math.max(
-                            0,
-                            Math.min(
-                                100,
-                                hpPercent
-                            )
-                        )}%"
-                    ></div>
-
-                </div>
-
-                <p>
-                    ❤️
-                    ${Math.floor(
-                        Math.max(
-                            0,
-                            fighter.hp
-                        )
-                    )}
-                    /
-                    ${Math.floor(
-                        fighter.maxHp
-                    )}
-                </p>
-
-                <div class="battle-effects">
-
-                    ${
-                        fighter.shield > 0
-                            ? `<span>🛡️ Shield ${Math.floor(fighter.shield)}</span>`
-                            : ""
-                    }
-
-                    ${
-                        fighter.burn > 0
-                            ? `<span>🔥 Burn ${fighter.burn}</span>`
-                            : ""
-                    }
-
-                    ${
-                        fighter.bleed > 0
-                            ? `<span>🩸 Bleed ${fighter.bleed}</span>`
-                            : ""
-                    }
-
-                    ${
-                        fighter.stun > 0
-                            ? `<span>💫 Stun</span>`
-                            : ""
-                    }
-
-                    ${
-                        fighter.freeze > 0
-                            ? `<span>❄️ Freeze</span>`
-                            : ""
-                    }
-
-                    ${
-                        fighter.regeneration > 0
-                            ? `<span>💚 Regen ${fighter.regeneration}</span>`
-                            : ""
-                    }
-
-                </div>
-
-            </div>
-        `;
-    }
-
-    function updateBattleUI() {
-
-        if (player1Battle) {
-
-            player1Battle.innerHTML =
-                player1Fighters
-                    .map(
-                        createFighterHTML
-                    )
-                    .join("");
-        }
-
-        if (player2Battle) {
-
-            player2Battle.innerHTML =
-                player2Fighters
-                    .map(
-                        createFighterHTML
-                    )
-                    .join("");
-        }
-
-        updateRoundUI();
-    }
-
-    /* =====================================================
-       VISUAL EFFECTS
-       ===================================================== */
-
-    function adgFindCard(
-        fighter
-    ) {
-
-        if (!fighter) {
-            return null;
-        }
-
-        const cards =
-            document.querySelectorAll(
-                ".fighter-card"
-            );
-
-        for (
-            const card
-            of cards
-        ) {
-
-            const name =
-                card.dataset
-                    .fighterName;
-
-            if (
-                name ===
-                String(
-                    fighter.name
-                )
-            ) {
-
-                return card;
-            }
-        }
-
-        return null;
-    }
-
-    function adgShowAnnouncement(
-        message
-    ) {
-
-        const announcement =
-            document.createElement(
-                "div"
-            );
-
-        announcement.className =
-            "adg-announcement";
-
-        announcement.textContent =
-            message;
-
-        document.body.appendChild(
-            announcement
-        );
-
-        setTimeout(
-            () => {
-
-                announcement.remove();
-
-            },
-            1100
-        );
-    }
-
-    function adgAttackImpact(
-        attacker,
-        defender,
-        critical = false
-    ) {
-
-        const targetCard =
-            adgFindCard(
-                defender
-            );
-
-        if (targetCard) {
-
-            targetCard.classList.add(
-                "hit"
-            );
-
-            if (critical) {
-
-                targetCard.classList.add(
-                    "critical"
-                );
-            }
-
-            setTimeout(
-                () => {
-
-                    targetCard.classList.remove(
-                        "hit",
-                        "critical"
-                    );
-
-                },
-                500
-            );
-        }
-
-        const impact =
-            document.createElement(
-                "div"
-            );
-
-        impact.className =
-            "adg-attack-impact";
-
-        impact.textContent =
-            critical
-                ? "💥"
-                : "⚡";
-
-        document.body.appendChild(
-            impact
-        );
-
-        setTimeout(
-            () => {
-
-                impact.remove();
-
-            },
-            650
-        );
-    }
-
-    function adgFlash() {
-
-        const flash =
-            document.createElement(
-                "div"
-            );
-
-        flash.className =
-            "adg-arena-flash";
-
-        document.body.appendChild(
-            flash
-        );
-
-        setTimeout(
-            () => {
-
-                flash.remove();
-
-            },
-            350
-        );
-    }
-
-    function adgSpecialBanner(
-        fighter,
-        abilityName
-    ) {
-
-        const banner =
-            document.createElement(
-                "div"
-            );
-
-        banner.className =
-            "adg-special-banner";
-
-        banner.innerHTML =
-            `🔥 ${escapeHTML(
-                fighter.name
-            )} — ${escapeHTML(
-                abilityName
-            )}!`;
-
-        document.body.appendChild(
-            banner
-        );
-
-        setTimeout(
-            () => {
-
-                banner.remove();
-
-            },
-            1200
-        );
-    }
-
-    function adgPlayAttackEffects(
-        attacker,
-        defender,
-        critical = false
-    ) {
-
-        adgAttackImpact(
-            attacker,
-            defender,
-            critical
-        );
-
-        adgFlash();
-    }
-
-    function playSpecialEffect(
-        fighter,
-        abilityName
-    ) {
-
-        const card =
-            adgFindCard(
-                fighter
-            );
-
-        if (card) {
-
-            card.classList.add(
-                "special"
-            );
-
-            setTimeout(
-                () => {
-
-                    card.classList.remove(
-                        "special"
-                    );
-
-                },
-                900
-            );
-        }
-
-        adgSpecialBanner(
-            fighter,
-            abilityName
-        );
-
-        adgFlash();
-    }
-
-    /* =====================================================
-       VICTORY
-       ===================================================== */
-
-    function adgShowVictory(
-        playerNumber
-    ) {
-
-        if (
-            document.querySelector(
-                ".adg-victory-overlay"
-            )
-        ) {
-            return;
-        }
-
-        const overlay =
-            document.createElement(
-                "div"
-            );
-
-        overlay.className =
-            "adg-victory-overlay";
-
-        overlay.innerHTML = `
-            <div class="adg-victory-box">
-
-                <h1>
-                    🏆 PLAYER
-                    ${playerNumber}
-                    WINS!
-                </h1>
-
-                <p>
-                    ⚔️ Battle Complete!
-                </p>
-
-            </div>
-        `;
-
-        document.body.appendChild(
-            overlay
-        );
-    }
-
-    /* =====================================================
-       RESULT DATA
-       ===================================================== */
-
-    function createResultHTML(
-        team
-    ) {
-
-        return team.map(
-            fighter => {
-
-                return `
-                    <div class="result-team-stat">
-
-                        <p>
-                            ${
-                                fighter.alive
-                                    ? "🟢"
-                                    : "🔴"
-                            }
-
-                            <strong>
-                                ${escapeHTML(
-                                    fighter.name
-                                )}
-                            </strong>
-
-                            — ${Math.floor(
-                                Math.max(
-                                    0,
-                                    fighter.hp
-                                )
-                            )} HP
-                        </p>
-
-                        <p>
-                            ⚔️ Damage:
-                            ${Math.floor(
-                                fighter.damageDealt
-                            )}
-                        </p>
-
-                        <p>
-                            💥 Critical:
-                            ${fighter.criticalHits}
-                        </p>
-
-                        <p>
-                            💀 KOs:
-                            ${fighter.koCount}
-                        </p>
-
-                        <p>
-                            ❤️ Healing:
-                            ${Math.floor(
-                                fighter.healingDone
-                            )}
-                        </p>
-
-                    </div>
-                `;
-            }
-        ).join("");
-    }
-
-    function showBattleResult(
-        winner
-    ) {
-
-        if (!resultBox) {
-            return;
-        }
-
-        resultBox.classList.remove(
-            "hidden"
-        );
-
-        let text =
-            "🤝 DRAW";
-
-        if (winner === 1) {
-
-            text =
-                "🏆 PLAYER 1 WINS!";
-
-        } else if (
-            winner === 2
-        ) {
-
-            text =
-                "🏆 PLAYER 2 WINS!";
-        }
-
-        if (winnerText) {
-
-            winnerText.textContent =
-                text;
-        }
-
-        const p1HP =
-            Math.floor(
-                getRemainingHP(
-                    player1Fighters
-                )
-            );
-
-        const p2HP =
-            Math.floor(
-                getRemainingHP(
-                    player2Fighters
-                )
-            );
-
-        if (resultSummary) {
-
-            resultSummary.textContent =
-                `Battle completed in ${battleStats.completedRounds} rounds. Player 1 remaining HP: ${p1HP}. Player 2 remaining HP: ${p2HP}.`;
-        }
-
-        if (player1Result) {
-
-            player1Result.innerHTML =
-                createResultHTML(
-                    player1Fighters
-                );
-        }
-
-        if (player2Result) {
-
-            player2Result.innerHTML =
-                createResultHTML(
-                    player2Fighters
-                );
-        }
-
-        if (battleStatistics) {
-
-            battleStatistics.innerHTML = `
-                <div class="battle-statistics">
-
-                    <h3>
-                        📊 Battle Statistics
-                    </h3>
-
-                    <p>
-                        💥 Total Damage:
-                        <strong>
-                            ${Math.floor(
-                                battleStats.totalDamage
-                            )}
-                        </strong>
-                    </p>
-
-                    <p>
-                        💀 Total KOs:
-                        <strong>
-                            ${battleStats.totalKOs}
-                        </strong>
-                    </p>
-
-                    <p>
-                        🔥 Specials Used:
-                        <strong>
-                            ${battleStats.totalSpecials}
-                        </strong>
-                    </p>
-
-                    <p>
-                        ⚔️ Completed Rounds:
-                        <strong>
-                            ${battleStats.completedRounds}
-                        </strong>
-                    </p>
-
-                    <p>
-                        ❤️ Player 1 HP:
-                        <strong>
-                            ${p1HP}
-                        </strong>
-                    </p>
-
-                    <p>
-                        ❤️ Player 2 HP:
-                        <strong>
-                            ${p2HP}
-                        </strong>
-                    </p>
-
-                </div>
-            `;
-        }
-    }
-
-    /* =====================================================
-       CHARACTER DETAILS
-       ===================================================== */
-
-    function getDatabaseCharacter(
-        name
-    ) {
-
-        /*
-         * Try common database structures used by ADG.
-         * Battle stats remain hidden from players.
-         */
-
-        if (
-            typeof ONE_PIECE_CHARACTERS !==
-            "undefined"
-        ) {
-
-            const found =
-                ONE_PIECE_CHARACTERS.find(
-                    character => {
-
-                        const characterName =
-                            typeof character ===
-                            "string"
-                                ? character
-                                : character.name;
-
-                        return String(
-                            characterName
-                        ) === String(
-                            name
-                        );
-                    }
-                );
-
-            if (found) {
-                return found;
-            }
-        }
-
-        if (
-            typeof characters !==
-            "undefined" &&
-            Array.isArray(
-                characters
-            )
-        ) {
-
-            const found =
-                characters.find(
-                    character => {
-
-                        const characterName =
-                            typeof character ===
-                            "string"
-                                ? character
-                                : character.name;
-
-                        return String(
-                            characterName
-                        ) === String(
-                            name
-                        );
-                    }
-                );
-
-            if (found) {
-                return found;
-            }
-        }
-
-        return null;
-    }
-
-    function getCharacterStats(
-        fighter
-    ) {
-
-        const databaseCharacter =
-            getDatabaseCharacter(
-                fighter.name
-            );
-
-        if (
-            databaseCharacter &&
-            typeof databaseCharacter ===
-            "object"
-        ) {
-
-            return {
-
-                attack:
-                    databaseCharacter.attack ??
-                    databaseCharacter.atk ??
-                    databaseCharacter.power ??
-                    "N/A",
-
-                defense:
-                    databaseCharacter.defense ??
-                    databaseCharacter.def ??
-                    databaseCharacter.defence ??
-                    "N/A",
-
-                speed:
-                    databaseCharacter.speed ??
-                    databaseCharacter.spd ??
-                    "N/A",
-
-                hp:
-                    databaseCharacter.hp ??
-                    databaseCharacter.health ??
-                    "N/A",
-
-                description:
-                    databaseCharacter.description ??
-                    databaseCharacter.bio ??
-                    databaseCharacter.desc ??
-                    ""
-
-            };
-        }
-
-        return {
-
-            attack: "Database",
-
-            defense: "Database",
-
-            speed: "Database",
-
-            hp: "Database",
-
-            description:
-                "Original character database information."
-        };
-    }
-
-    function createDetailsCard(
-        fighter
-    ) {
-
-        const stats =
-            getCharacterStats(
-                fighter
-            );
-
-        return `
-            <div class="detail-card">
-
-                <h4>
-                    ${fighter.emoji}
-                    ${escapeHTML(
-                        fighter.name
-                    )}
-                </h4>
-
-                <div class="detail-role">
-                    Role:
-                    ${escapeHTML(
-                        fighter.role
-                    )}
-                </div>
-
-                <div class="detail-stat">
-                    <span>⚔️ Attack</span>
-                    <strong>
-                        ${escapeHTML(
-                            stats.attack
-                        )}
-                    </strong>
-                </div>
-
-                <div class="detail-stat">
-                    <span>🛡️ Defense</span>
-                    <strong>
-                        ${escapeHTML(
-                            stats.defense
-                        )}
-                    </strong>
-                </div>
-
-                <div class="detail-stat">
-                    <span>⚡ Speed</span>
-                    <strong>
-                        ${escapeHTML(
-                            stats.speed
-                        )}
-                    </strong>
-                </div>
-
-                <div class="detail-stat">
-                    <span>❤️ HP</span>
-                    <strong>
-                        ${escapeHTML(
-                            stats.hp
-                        )}
-                    </strong>
-                </div>
-
-                ${
-                    stats.description
-                        ? `
-                            <div class="detail-description">
-                                ${escapeHTML(
-                                    stats.description
-                                )}
-                            </div>
-                        `
-                        : ""
-                }
-
-            </div>
-        `;
-    }
-
-    function showCharacterDetails() {
-
-        if (
-            player1CharacterDetails
-        ) {
-
-            player1CharacterDetails.innerHTML =
-                player1Fighters
-                    .map(
-                        createDetailsCard
-                    )
-                    .join("");
-        }
-
-        if (
-            player2CharacterDetails
-        ) {
-
-            player2CharacterDetails.innerHTML =
-                player2Fighters
-                    .map(
-                        createDetailsCard
-                    )
-                    .join("");
-        }
-
-        if (
-            characterDetailsOverlay
-        ) {
-
-            characterDetailsOverlay.classList.add(
-                "show"
-            );
-        }
-    }
-
-    function hideCharacterDetails() {
-
-        if (
-            characterDetailsOverlay
-        ) {
-
-            characterDetailsOverlay.classList.remove(
-                "show"
-            );
-        }
-    }
-
-    /* =====================================================
-       FINISH BATTLE
-       ===================================================== */
-
-    function finishBattle(
-        winner
-    ) {
-
-        if (
-            battleFinished
-        ) {
-            return;
-        }
-
-        battleFinished =
-            true;
-
-        battleRunning =
+        battleState.connected =
             false;
 
-        updateBattleUI();
 
-        let winnerName =
-            "DRAW";
+        updateConnectionStatus(
+            false
+        );
+
 
         if (
-            winner === 1
+            !battleState.finished
         ) {
-
-            winnerName =
-                "PLAYER 1";
-
-        } else if (
-            winner === 2
-        ) {
-
-            winnerName =
-                "PLAYER 2";
-        }
-
-        logBattle(
-            `<strong>🏆 ${winnerName} WINS!</strong>`
-        );
-
-        logBattle(
-            `⚔️ Battle completed in ${battleStats.completedRounds} rounds.`
-        );
-
-        logBattle(
-            `💥 Total damage: ${Math.floor(
-                battleStats.totalDamage
-            )}`
-        );
-
-        logBattle(
-            `💀 Total KOs: ${battleStats.totalKOs}`
-        );
-
-        logBattle(
-            `🔥 Specials used: ${battleStats.totalSpecials}`
-        );
-
-        if (winner === 3) {
 
             setBattleStatus(
-                "🤝 Battle Draw!"
+                "Connection lost. Reconnecting..."
             );
+
+        }
+
+    }
+);
+
+
+battleSocket.on(
+    "connect_error",
+    () => {
+
+        updateConnectionStatus(
+            false
+        );
+
+    }
+);
+
+
+/* =========================================================
+   CONNECTION UI
+   ========================================================= */
+
+function updateConnectionStatus(
+    connected
+) {
+
+    if (!connectionStatus) {
+        return;
+    }
+
+
+    connectionStatus.classList.remove(
+        "connected",
+        "disconnected"
+    );
+
+
+    if (connected) {
+
+        connectionStatus.textContent =
+            "Connected";
+
+        connectionStatus.classList.add(
+            "connected"
+        );
+
+    } else {
+
+        connectionStatus.textContent =
+            "Disconnected";
+
+        connectionStatus.classList.add(
+            "disconnected"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SERVER — BATTLE STATE
+   ========================================================= */
+
+battleSocket.on(
+    "battle:state",
+    data => {
+
+        if (!data) {
+            return;
+        }
+
+
+        /*
+         * Unlike Draft/Role pages, both teams are allowed
+         * here because the server has entered the Battle
+         * phase.
+         */
+
+        if (
+            data.matchId
+        ) {
+
+            battleState.matchId =
+                data.matchId;
+
+            saveSession(
+                "adg_matchId",
+                data.matchId
+            );
+
+        }
+
+
+        if (
+            data.anime
+        ) {
+
+            battleState.anime =
+                data.anime;
+
+        }
+
+
+        if (
+            data.phase
+        ) {
+
+            battleState.phase =
+                data.phase;
+
+        }
+
+
+        if (
+            data.teams
+        ) {
+
+            battleState.teams =
+                normalizeTeams(
+                    data.teams
+                );
+
+        }
+
+
+        if (
+            data.active
+        ) {
+
+            battleState.active =
+                normalizeActive(
+                    data.active
+                );
+
+        }
+
+
+        if (
+            typeof data.winner ===
+            "number"
+        ) {
+
+            battleState.winner =
+                data.winner;
+
+        }
+
+
+        if (
+            typeof data.finished ===
+            "boolean"
+        ) {
+
+            battleState.finished =
+                data.finished;
+
+        }
+
+
+        updateBattleHeader();
+
+        renderBattleTeams();
+
+
+        if (
+            data.log
+        ) {
+
+            addBattleLog(
+                data.log,
+                "system"
+            );
+
+        }
+
+
+        if (
+            battleState.finished &&
+            battleState.winner
+        ) {
+
+            showBattleResult(
+                battleState.winner
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — BATTLE START
+   ========================================================= */
+
+battleSocket.on(
+    "battle:start",
+    data => {
+
+        battleState.phase =
+            "battle";
+
+        battleState.finished =
+            false;
+
+        battleState.winner =
+            null;
+
+
+        if (
+            data?.teams
+        ) {
+
+            battleState.teams =
+                normalizeTeams(
+                    data.teams
+                );
+
+        }
+
+
+        if (
+            data?.active
+        ) {
+
+            battleState.active =
+                normalizeActive(
+                    data.active
+                );
+
+        }
+
+
+        updateBattleHeader();
+
+        renderBattleTeams();
+
+        addBattleLog(
+            "⚔️ BATTLE STARTED!",
+            "system"
+        );
+
+
+        playSound(
+            "battle"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — BATTLE EVENT
+   ========================================================= */
+
+battleSocket.on(
+    "battle:event",
+    event => {
+
+        if (!event) {
+            return;
+        }
+
+
+        battleState.events.push(
+            event
+        );
+
+
+        processBattleEvent(
+            event
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — BATTLE UPDATE
+   ========================================================= */
+
+battleSocket.on(
+    "battle:update",
+    data => {
+
+        if (!data) {
+            return;
+        }
+
+
+        if (
+            data.teams
+        ) {
+
+            battleState.teams =
+                normalizeTeams(
+                    data.teams
+                );
+
+        }
+
+
+        if (
+            data.active
+        ) {
+
+            battleState.active =
+                normalizeActive(
+                    data.active
+                );
+
+        }
+
+
+        if (
+            typeof data.phase ===
+            "string"
+        ) {
+
+            battleState.phase =
+                data.phase;
+
+        }
+
+
+        if (
+            typeof data.winner ===
+            "number"
+        ) {
+
+            battleState.winner =
+                data.winner;
+
+        }
+
+
+        if (
+            typeof data.finished ===
+            "boolean"
+        ) {
+
+            battleState.finished =
+                data.finished;
+
+        }
+
+
+        renderBattleTeams();
+
+        updateBattleHeader();
+
+
+        if (
+            battleState.finished &&
+            battleState.winner
+        ) {
+
+            showBattleResult(
+                battleState.winner
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — CHARACTER DEFEATED
+   ========================================================= */
+
+battleSocket.on(
+    "battle:defeat",
+    data => {
+
+        if (!data) {
+            return;
+        }
+
+
+        const player =
+            Number(
+                data.playerNumber
+            );
+
+
+        const characterId =
+            data.characterId;
+
+
+        const character =
+            findCharacter(
+                player,
+                characterId,
+                data.characterName
+            );
+
+
+        if (character) {
+
+            character.defeated =
+                true;
+
+            character.hp =
+                0;
+
+        }
+
+
+        renderBattleTeams();
+
+
+        const name =
+            data.characterName ||
+            character?.name ||
+            "Character";
+
+
+        addBattleLog(
+            `💥 ${name} has been defeated!`,
+            "defeat"
+        );
+
+
+        playSound(
+            "defeat"
+        );
+
+
+        animateDefeat(
+            player,
+            characterId,
+            data.characterName
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — BATTLE FINISHED
+   ========================================================= */
+
+battleSocket.on(
+    "battle:finished",
+    data => {
+
+        battleState.finished =
+            true;
+
+
+        battleState.phase =
+            "finished";
+
+
+        battleState.winner =
+            Number(
+                data?.winner
+            );
+
+
+        renderBattleTeams();
+
+        updateBattleHeader();
+
+
+        if (
+            battleState.winner
+        ) {
+
+            showBattleResult(
+                battleState.winner
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — MATCH DETAILS
+   ========================================================= */
+
+battleSocket.on(
+    "battle:details",
+    data => {
+
+        if (!data) {
+            return;
+        }
+
+
+        renderMatchDetails(
+            data
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — REMATCH
+   ========================================================= */
+
+battleSocket.on(
+    "rematch:created",
+    data => {
+
+        if (
+            data?.matchId
+        ) {
+
+            battleState.matchId =
+                data.matchId;
+
+
+            saveSession(
+                "adg_matchId",
+                data.matchId
+            );
+
+        }
+
+
+        battleState.finished =
+            false;
+
+        battleState.winner =
+            null;
+
+
+        hideBattleResult();
+
+
+        window.location.href =
+            "draft.html";
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — BATTLE ERROR
+   ========================================================= */
+
+battleSocket.on(
+    "battle:error",
+    data => {
+
+        showMessage(
+            data?.message ||
+            "Battle action failed.",
+            "error"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   NORMALIZE TEAMS
+   ========================================================= */
+
+function normalizeTeams(
+    teams
+) {
+
+    return {
+
+        1:
+            normalizeTeam(
+                teams[1] ||
+                teams["1"] ||
+                []
+            ),
+
+        2:
+            normalizeTeam(
+                teams[2] ||
+                teams["2"] ||
+                []
+
+            )
+
+    };
+
+}
+
+
+function normalizeTeam(
+    team
+) {
+
+    if (
+        !Array.isArray(
+            team
+        )
+    ) {
+
+        return [];
+
+    }
+
+
+    return team.map(
+        character => {
+
+            if (
+                typeof character ===
+                "string"
+            ) {
+
+                return {
+                    name:
+                        character,
+
+                    hp:
+                        0,
+
+                    maxHp:
+                        0,
+
+                    defeated:
+                        false,
+
+                    role:
+                        null
+
+                };
+
+            }
+
+
+            return {
+                ...character
+            };
+
+        }
+    );
+
+}
+
+
+function normalizeActive(
+    active
+) {
+
+    return {
+
+        1:
+            active[1] ??
+            active["1"] ??
+            null,
+
+        2:
+            active[2] ??
+            active["2"] ??
+            null
+
+    };
+
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+function updateBattleHeader() {
+
+    if (battlePhase) {
+
+        if (
+            battleState.finished
+        ) {
+
+            battlePhase.textContent =
+                "🏁 BATTLE FINISHED";
+
+        } else if (
+            battleState.phase ===
+            "battle"
+        ) {
+
+            battlePhase.textContent =
+                "⚔️ BATTLE IN PROGRESS";
 
         } else {
 
-            setBattleStatus(
-                `🏆 ${winnerName} Wins!`
+            battlePhase.textContent =
+                "PREPARING BATTLE...";
+
+        }
+
+    }
+
+
+    if (battleStatus) {
+
+        if (
+            battleState.finished
+        ) {
+
+            battleStatus.textContent =
+                "The battle has ended.";
+
+        } else if (
+            battleState.phase ===
+            "battle"
+        ) {
+
+            battleStatus.textContent =
+                "The server is controlling the battle.";
+
+        } else {
+
+            battleStatus.textContent =
+                "Waiting for battle to start...";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER BOTH TEAMS
+   ========================================================= */
+
+function renderBattleTeams() {
+
+    if (player1Team) {
+
+        renderBattleTeam(
+            player1Team,
+            1
+        );
+
+    }
+
+
+    if (player2Team) {
+
+        renderBattleTeam(
+            player2Team,
+            2
+        );
+
+    }
+
+
+    updateActiveCards();
+
+}
+
+
+/* =========================================================
+   RENDER ONE TEAM
+   ========================================================= */
+
+function renderBattleTeam(
+    container,
+    playerNumber
+) {
+
+    if (!container) {
+        return;
+    }
+
+
+    const title =
+        playerNumber === 1
+            ? "PLAYER 1"
+            : "PLAYER 2";
+
+
+    const playerName =
+        playerNumber === 1
+            ? player1Name
+            : player2Name;
+
+
+    if (playerName) {
+
+        const serverName =
+            battleState.teams[
+                playerNumber
+            ]?.playerName;
+
+
+        playerName.textContent =
+            serverName ||
+            title;
+
+    }
+
+
+    /*
+     * Preserve the heading.
+     */
+
+    const heading =
+        playerName;
+
+
+    container.innerHTML =
+        "";
+
+
+    if (heading) {
+
+        container.appendChild(
+            heading
+        );
+
+    }
+
+
+    const team =
+        battleState.teams[
+            playerNumber
+        ] || [];
+
+
+    team.forEach(
+        (character, index) => {
+
+            const card =
+                createBattleCard(
+                    character,
+                    playerNumber,
+                    index
+                );
+
+
+            container.appendChild(
+                card
             );
-        }
 
-        if (startBattleBtn) {
-
-            startBattleBtn.disabled =
-                true;
         }
+    );
+
+}
+
+
+/* =========================================================
+   CREATE BATTLE CARD
+   ========================================================= */
+
+function createBattleCard(
+    character,
+    playerNumber,
+    index
+) {
+
+    const card =
+        document.createElement(
+            "article"
+        );
+
+
+    card.className =
+        "battle-character-card";
+
+
+    const characterId =
+        character.id ||
+        `${playerNumber}-${index}`;
+
+
+    card.dataset.player =
+        playerNumber;
+
+
+    card.dataset.characterId =
+        characterId;
+
+
+    if (
+        character.defeated ||
+        Number(
+            character.hp
+        ) <= 0
+    ) {
+
+        card.classList.add(
+            "defeated"
+        );
+
+    }
+
+
+    const imageWrapper =
+        document.createElement(
+            "div"
+        );
+
+
+    imageWrapper.className =
+        "battle-character-image";
+
+
+    const image =
+        document.createElement(
+            "img"
+        );
+
+
+    image.alt =
+        character.name ||
+        "Character";
+
+
+    image.loading =
+        "lazy";
+
+
+    const fallback =
+        document.createElement(
+            "div"
+        );
+
+
+    fallback.className =
+        "battle-image-fallback";
+
+
+    fallback.textContent =
+        (
+            character.name ||
+            "?"
+        )
+        .charAt(0)
+        .toUpperCase();
+
+
+    const candidates =
+        typeof getCharacterImageCandidates ===
+            "function"
+            ? getCharacterImageCandidates(
+                character.name,
+                battleState.anime
+            )
+            : [
+                `assist/characters/one-piece/${character.name}.jpg`
+            ];
+
+
+    let imageIndex =
+        0;
+
+
+    const tryImage =
+        () => {
+
+            if (
+                imageIndex >=
+                candidates.length
+            ) {
+
+                image.classList.add(
+                    "hidden"
+                );
+
+                fallback.classList.remove(
+                    "hidden"
+                );
+
+                return;
+
+            }
+
+
+            image.src =
+                candidates[
+                    imageIndex++
+                ];
+
+        };
+
+
+    image.onload =
+        () => {
+
+            image.classList.remove(
+                "hidden"
+            );
+
+            fallback.classList.add(
+                "hidden"
+            );
+
+        };
+
+
+    image.onerror =
+        tryImage;
+
+
+    tryImage();
+
+
+    imageWrapper.appendChild(
+        image
+    );
+
+    imageWrapper.appendChild(
+        fallback
+    );
+
+
+    card.appendChild(
+        imageWrapper
+    );
+
+
+    const info =
+        document.createElement(
+            "div"
+        );
+
+
+    info.className =
+        "battle-character-info";
+
+
+    const name =
+        document.createElement(
+            "h3"
+        );
+
+
+    name.textContent =
+        character.name ||
+        "Unknown";
+
+
+    info.appendChild(
+        name
+    );
+
+
+    const role =
+        document.createElement(
+            "div"
+        );
+
+
+    role.className =
+        "battle-role";
+
+
+    if (
+        character.role
+    ) {
+
+        const roleData =
+            typeof getRole ===
+                "function"
+                ? getRole(
+                    character.role
+                )
+                : null;
+
+
+        role.textContent =
+            roleData
+                ? `${roleData.icon} ${roleData.name}`
+                : character.role;
+
+    } else {
+
+        role.textContent =
+            "Role";
+
+    }
+
+
+    info.appendChild(
+        role
+    );
+
+
+    const hpContainer =
+        document.createElement(
+            "div"
+        );
+
+
+    hpContainer.className =
+        "battle-hp";
+
+
+    const hpHeader =
+        document.createElement(
+            "div"
+        );
+
+
+    hpHeader.className =
+        "battle-hp-header";
+
+
+    const hpLabel =
+        document.createElement(
+            "span"
+        );
+
+
+    hpLabel.textContent =
+        "HP";
+
+
+    const hpValue =
+        document.createElement(
+            "strong"
+        );
+
+
+    const hp =
+        Math.max(
+            0,
+            Number(
+                character.hp ||
+                0
+            )
+        );
+
+
+    const maxHp =
+        Math.max(
+            1,
+            Number(
+                character.maxHp ||
+                hp ||
+                1
+            )
+        );
+
+
+    hpValue.textContent =
+        `${hp} / ${maxHp}`;
+
+
+    hpHeader.appendChild(
+        hpLabel
+    );
+
+    hpHeader.appendChild(
+        hpValue
+    );
+
+
+    const hpBar =
+        document.createElement(
+            "div"
+        );
+
+
+    hpBar.className =
+        "battle-hp-bar";
+
+
+    const hpFill =
+        document.createElement(
+            "div"
+        );
+
+
+    hpFill.className =
+        "battle-hp-fill";
+
+
+    const percentage =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                (
+                    hp /
+                    maxHp
+                ) *
+                100
+            )
+        );
+
+
+    hpFill.style.width =
+        `${percentage}%`;
+
+
+    hpBar.appendChild(
+        hpFill
+    );
+
+
+    hpContainer.appendChild(
+        hpHeader
+    );
+
+    hpContainer.appendChild(
+        hpBar
+    );
+
+
+    info.appendChild(
+        hpContainer
+    );
+
+
+    const status =
+        document.createElement(
+            "div"
+        );
+
+
+    status.className =
+        "battle-character-status";
+
+
+    if (
+        character.defeated ||
+        hp <= 0
+    ) {
+
+        status.textContent =
+            "💀 DEFEATED";
+
+        status.classList.add(
+            "defeated"
+        );
+
+    } else {
+
+        status.textContent =
+            "● ACTIVE";
+
+    }
+
+
+    info.appendChild(
+        status
+    );
+
+
+    card.appendChild(
+        info
+    );
+
+
+    return card;
+
+}
+
+
+/* =========================================================
+   ACTIVE CARD
+   ========================================================= */
+
+function updateActiveCards() {
+
+    document
+        .querySelectorAll(
+            ".battle-character-card"
+        )
+        .forEach(
+            card => {
+
+                card.classList.remove(
+                    "active"
+                );
+
+
+                const player =
+                    Number(
+                        card.dataset.player
+                    );
+
+
+                const characterId =
+                    card.dataset.characterId;
+
+
+                const active =
+                    battleState.active[
+                        player
+                    ];
+
+
+                if (
+                    active !== null &&
+                    String(
+                        active
+                    ) ===
+                    String(
+                        characterId
+                    )
+                ) {
+
+                    card.classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   PROCESS BATTLE EVENT
+   ========================================================= */
+
+function processBattleEvent(
+    event
+) {
+
+    const type =
+        event.type ||
+        "system";
+
+
+    switch (type) {
+
+        case "attack":
+
+            handleAttackEvent(
+                event
+            );
+
+            break;
+
+
+        case "hit":
+
+        case "damage":
+
+            handleDamageEvent(
+                event
+            );
+
+            break;
+
+
+        case "special":
+
+            handleSpecialEvent(
+                event
+            );
+
+            break;
+
+
+        case "defeat":
+
+            handleDefeatEvent(
+                event
+            );
+
+            break;
+
+
+        case "victory":
+
+            handleVictoryEvent(
+                event
+            );
+
+            break;
+
+
+        default:
+
+            if (
+                event.message
+            ) {
+
+                addBattleLog(
+                    event.message,
+                    "system"
+                );
+
+            }
+
+            break;
+
+    }
+
+}
+
+
+/* =========================================================
+   ATTACK EVENT
+   ========================================================= */
+
+function handleAttackEvent(
+    event
+) {
+
+    const attacker =
+        event.attackerName ||
+        "Character";
+
+
+    const defender =
+        event.defenderName ||
+        "opponent";
+
+
+    addBattleLog(
+        `⚔️ ${attacker} attacks ${defender}!`,
+        "attack"
+    );
+
+
+    playSound(
+        "attack"
+    );
+
+
+    animateAttack(
+        event
+    );
+
+}
+
+
+/* =========================================================
+   DAMAGE EVENT
+   ========================================================= */
+
+function handleDamageEvent(
+    event
+) {
+
+    const attacker =
+        event.attackerName ||
+        "Attacker";
+
+
+    const damage =
+        Number(
+            event.damage ||
+            0
+        );
+
+
+    const critical =
+        event.critical
+            ? " 💥 CRITICAL!"
+            : "";
+
+
+    addBattleLog(
+        `💥 ${attacker} deals ${damage} damage!${critical}`,
+        event.critical
+            ? "critical"
+            : "damage"
+    );
+
+
+    playSound(
+        event.critical
+            ? "special"
+            : "hit"
+    );
+
+
+    if (
+        event.targetPlayer &&
+        (
+            event.targetCharacterId ||
+            event.targetCharacterName
+        )
+    ) {
+
+        animateDamage(
+            event.targetPlayer,
+            event.targetCharacterId,
+            event.targetCharacterName
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SPECIAL EVENT
+   ========================================================= */
+
+function handleSpecialEvent(
+    event
+) {
+
+    const name =
+        event.attackerName ||
+        "Character";
+
+
+    addBattleLog(
+        `⭐ ${name} uses a special action!`,
+        "special"
+    );
+
+
+    playSound(
+        "special"
+    );
+
+
+    animateSpecial(
+        event
+    );
+
+}
+
+
+/* =========================================================
+   DEFEAT EVENT
+   ========================================================= */
+
+function handleDefeatEvent(
+    event
+) {
+
+    const player =
+        Number(
+            event.playerNumber
+        );
+
+
+    const character =
+        event.characterName ||
+        "Character";
+
+
+    addBattleLog(
+        `💀 ${character} has been defeated!`,
+        "defeat"
+    );
+
+
+    playSound(
+        "defeat"
+    );
+
+
+    animateDefeat(
+        player,
+        event.characterId,
+        character
+    );
+
+}
+
+
+/* =========================================================
+   VICTORY EVENT
+   ========================================================= */
+
+function handleVictoryEvent(
+    event
+) {
+
+    const winner =
+        Number(
+            event.winner
+        );
+
+
+    if (
+        winner
+    ) {
+
+        battleState.winner =
+            winner;
+
+        battleState.finished =
+            true;
 
         showBattleResult(
             winner
         );
 
-        if (
-            winner === 1 ||
-            winner === 2
-        ) {
-
-            adgShowVictory(
-                winner
-            );
-        }
     }
 
-    /* =====================================================
-       MAXIMUM ROUNDS
-       ===================================================== */
+}
 
-    function handleMaximumRounds() {
 
-        battleStats.completedRounds =
-            MAX_ROUNDS;
+/* =========================================================
+   FIND CHARACTER
+   ========================================================= */
 
-        logBattle(
-            `⏱️ <strong>Maximum ${MAX_ROUNDS} rounds reached!</strong>`
-        );
+function findCharacter(
+    playerNumber,
+    characterId,
+    characterName
+) {
 
-        const p1HP =
-            Math.floor(
-                getRemainingHP(
-                    player1Fighters
-                )
-            );
+    const team =
+        battleState.teams[
+            playerNumber
+        ] || [];
 
-        const p2HP =
-            Math.floor(
-                getRemainingHP(
-                    player2Fighters
-                )
-            );
 
-        logBattle(
-            `❤️ Player 1 remaining HP: <strong>${p1HP}</strong>`
-        );
-
-        logBattle(
-            `❤️ Player 2 remaining HP: <strong>${p2HP}</strong>`
-        );
-
-        const winner =
-            finishByHP();
-
-        if (winner === 1) {
-
-            logBattle(
-                "🏆 Player 1 wins by remaining HP!"
-            );
-
-        } else if (
-            winner === 2
-        ) {
-
-            logBattle(
-                "🏆 Player 2 wins by remaining HP!"
-            );
-
-        } else {
-
-            logBattle(
-                "🤝 Battle ends in a draw!"
-            );
-        }
-
-        finishBattle(
-            winner
-        );
-    }
-
-    /* =====================================================
-       RUN ROUND
-       ===================================================== */
-
-    async function runRound() {
-
-        if (
-            !battleRunning
-        ) {
-            return;
-        }
-
-        if (
-            round > MAX_ROUNDS
-        ) {
-
-            handleMaximumRounds();
-
-            return;
-        }
-
-        updateRoundUI();
-
-        setBattleStatus(
-            `⚔️ Round ${round} / ${MAX_ROUNDS}`
-        );
-
-        logBattle(
-            `<strong>━━━━━━━━ ROUND ${round} ━━━━━━━━</strong>`
-        );
-
-        adgShowAnnouncement(
-            `⚔️ ROUND ${round}`
-        );
-
-        await wait(450);
-
-        if (
-            !battleRunning
-        ) {
-            return;
-        }
-
-        processRoundStatus();
-
-        const statusWinner =
-            checkBattleWinner();
-
-        if (
-            statusWinner !== 0
-        ) {
-
-            battleStats.completedRounds =
-                round;
-
-            finishBattle(
-                statusWinner
-            );
-
-            return;
-        }
-
-        const turnOrder =
-            getTurnOrder();
-
-        for (
-            const fighter
-            of turnOrder
-        ) {
+    return team.find(
+        character => {
 
             if (
-                !battleRunning
-            ) {
-                return;
-            }
-
-            if (
-                !fighter.alive
-            ) {
-                continue;
-            }
-
-            const winnerBefore =
-                checkBattleWinner();
-
-            if (
-                winnerBefore !== 0
+                characterId &&
+                character.id
             ) {
 
-                battleStats.completedRounds =
-                    round;
-
-                finishBattle(
-                    winnerBefore
+                return String(
+                    character.id
+                ) ===
+                String(
+                    characterId
                 );
 
-                return;
             }
 
-            await fighterTurn(
-                fighter
-            );
-
-            updateBattleUI();
-
-            const winnerAfter =
-                checkBattleWinner();
 
             if (
-                winnerAfter !== 0
+                characterName
             ) {
 
-                battleStats.completedRounds =
-                    round;
+                return character.name ===
+                    characterName;
 
-                finishBattle(
-                    winnerAfter
-                );
-
-                return;
             }
 
-            await wait(250);
+
+            return false;
+
         }
-
-        battleStats.completedRounds =
-            round;
-
-        updateBattleUI();
-
-        if (
-            round >= MAX_ROUNDS
-        ) {
-
-            handleMaximumRounds();
-
-            return;
-        }
-
-        round++;
-
-        await wait(450);
-
-        if (
-            battleRunning
-        ) {
-
-            await runRound();
-        }
-    }
-
-    /* =====================================================
-       RESET FIGHTERS
-       ===================================================== */
-
-    function resetFighter(
-        fighter
-    ) {
-
-        fighter.hp =
-            fighter.maxHp;
-
-        fighter.alive =
-            true;
-
-        fighter.abilityUsed =
-            false;
-
-        fighter.specialUsed =
-            false;
-
-        fighter.specialCount =
-            0;
-
-        fighter.protecting =
-            false;
-
-        fighter.protectedBy =
-            null;
-
-        fighter.burn =
-            0;
-
-        fighter.bleed =
-            0;
-
-        fighter.stun =
-            0;
-
-        fighter.freeze =
-            0;
-
-        fighter.shield =
-            0;
-
-        fighter.regeneration =
-            0;
-
-        fighter.attackBuff =
-            1;
-
-        fighter.defenseBuff =
-            1;
-
-        fighter.speedBuff =
-            1;
-
-        fighter.damageDealt =
-            0;
-
-        fighter.damageTaken =
-            0;
-
-        fighter.healingDone =
-            0;
-
-        fighter.koCount =
-            0;
-
-        fighter.criticalHits =
-            0;
-
-        fighter.attacks =
-            0;
-    }
-
-    function resetBattleState() {
-
-        [
-            ...player1Fighters,
-            ...player2Fighters
-        ].forEach(
-            resetFighter
-        );
-
-        round =
-            1;
-
-        battleRunning =
-            false;
-
-        battleFinished =
-            false;
-
-        battleStats = {
-
-            totalDamage: 0,
-
-            totalKOs: 0,
-
-            totalSpecials: 0,
-
-            completedRounds: 0
-        };
-
-        if (resultBox) {
-
-            resultBox.classList.add(
-                "hidden"
-            );
-        }
-
-        const victory =
-            document.querySelector(
-                ".adg-victory-overlay"
-            );
-
-        if (victory) {
-            victory.remove();
-        }
-
-        if (battleLog) {
-
-            battleLog.innerHTML = `
-                <p>
-                    🏴 Player 1 and Player 2 teams loaded.
-                </p>
-
-                <p>
-                    🎭 Six role system ready.
-                </p>
-
-                <p>
-                    🔥 Character special system ready.
-                </p>
-
-                <p>
-                    🎯 AI targeting ready.
-                </p>
-
-                <p>
-                    ⚡ Maximum ${MAX_ROUNDS} rounds.
-                </p>
-            `;
-        }
-
-        setBattleStatus(
-            "⚔️ Teams Ready!"
-        );
-
-        updateBattleUI();
-
-        if (startBattleBtn) {
-
-            startBattleBtn.disabled =
-                false;
-        }
-    }
-
-    /* =====================================================
-       START BATTLE
-       ===================================================== */
-
-    async function startBattle() {
-
-        if (
-            battleRunning
-        ) {
-            return;
-        }
-
-        if (
-            player1Fighters.length !==
-            TEAM_SIZE ||
-            player2Fighters.length !==
-            TEAM_SIZE
-        ) {
-
-            setBattleStatus(
-                "❌ Teams are incomplete!"
-            );
-
-            logBattle(
-                "❌ Both players need exactly 6 characters!"
-            );
-
-            return;
-        }
-
-        resetBattleState();
-
-        battleRunning =
-            true;
-
-        battleFinished =
-            false;
-
-        if (startBattleBtn) {
-
-            startBattleBtn.disabled =
-                true;
-        }
-
-        if (battleLog) {
-
-            battleLog.innerHTML =
-                "";
-        }
-
-        setBattleStatus(
-            "⚔️ BATTLE STARTING..."
-        );
-
-        logBattle(
-            "⚔️ <strong>BATTLE START!</strong>"
-        );
-
-        logBattle(
-            "🎭 Role abilities activated."
-        );
-
-        logBattle(
-            "🔥 Character specials are automatic."
-        );
-
-        logBattle(
-            `⚡ Maximum battle length: ${MAX_ROUNDS} rounds.`
-        );
-
-        updateBattleUI();
-
-        await wait(700);
-
-        if (
-            battleRunning
-        ) {
-
-            await runRound();
-        }
-    }
-
-    /* =====================================================
-       EVENT LISTENERS
-       ===================================================== */
-
-    if (startBattleBtn) {
-
-        startBattleBtn.addEventListener(
-            "click",
-            startBattle
-        );
-    }
-
-    if (rematchBtn) {
-
-        rematchBtn.addEventListener(
-            "click",
-            () => {
-
-                resetBattleState();
-
-                if (characterDetailsOverlay) {
-
-                    characterDetailsOverlay.classList.remove(
-                        "show"
-                    );
-                }
-            }
-        );
-    }
-
-    if (characterDetailsBtn) {
-
-        characterDetailsBtn.addEventListener(
-            "click",
-            showCharacterDetails
-        );
-    }
-
-    if (closeCharacterDetails) {
-
-        closeCharacterDetails.addEventListener(
-            "click",
-            hideCharacterDetails
-        );
-    }
-
-    if (characterDetailsOverlay) {
-
-        characterDetailsOverlay.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    characterDetailsOverlay
-                ) {
-
-                    hideCharacterDetails();
-                }
-            }
-        );
-    }
-
-    /* =====================================================
-       INITIALIZE
-       ===================================================== */
-
-    updateBattleUI();
-
-    setBattleStatus(
-        "⚔️ Teams Ready!"
     );
 
-    if (battleLog) {
+}
 
-        battleLog.innerHTML = `
-            <p>
-                🏴 Player 1 team loaded.
-            </p>
 
-            <p>
-                🏴 Player 2 team loaded.
-            </p>
+/* =========================================================
+   ATTACK ANIMATION
+   ========================================================= */
 
-            <p>
-                🎭 Six role system ready.
-            </p>
+function animateAttack(
+    event
+) {
 
-            <p>
-                🔥 Character special system ready.
-            </p>
+    const player =
+        Number(
+            event.attackerPlayer
+        );
 
-            <p>
-                🎯 AI targeting ready.
-            </p>
 
-            <p>
-                ⚡ Maximum ${MAX_ROUNDS} rounds.
-            </p>
-        `;
+    const id =
+        event.attackerCharacterId;
+
+
+    const name =
+        event.attackerName;
+
+
+    const card =
+        findCard(
+            player,
+            id,
+            name
+        );
+
+
+    if (!card) {
+        return;
     }
 
-});
+
+    card.classList.remove(
+        "attack-animation"
+    );
+
+
+    void card.offsetWidth;
+
+
+    card.classList.add(
+        "attack-animation"
+    );
+
+
+    setTimeout(
+        () => {
+
+            card.classList.remove(
+                "attack-animation"
+            );
+
+        },
+        800
+    );
+
+}
+
+
+/* =========================================================
+   DAMAGE ANIMATION
+   ========================================================= */
+
+function animateDamage(
+    player,
+    characterId,
+    characterName
+) {
+
+    const card =
+        findCard(
+            player,
+            characterId,
+            characterName
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    card.classList.remove(
+        "hit-animation"
+    );
+
+
+    void card.offsetWidth;
+
+
+    card.classList.add(
+        "hit-animation"
+    );
+
+
+    setTimeout(
+        () => {
+
+            card.classList.remove(
+                "hit-animation"
+            );
+
+        },
+        700
+    );
+
+}
+
+
+/* =========================================================
+   SPECIAL ANIMATION
+   ========================================================= */
+
+function animateSpecial(
+    event
+) {
+
+    const player =
+        Number(
+            event.attackerPlayer
+        );
+
+
+    const card =
+        findCard(
+            player,
+            event.attackerCharacterId,
+            event.attackerName
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    card.classList.remove(
+        "special-animation"
+    );
+
+
+    void card.offsetWidth;
+
+
+    card.classList.add(
+        "special-animation"
+    );
+
+
+    setTimeout(
+        () => {
+
+            card.classList.remove(
+                "special-animation"
+            );
+
+        },
+        1000
+    );
+
+}
+
+
+/* =========================================================
+   DEFEAT ANIMATION
+   =========================================================
+
+   Sequence:
+
+   1. defeated
+   2. broken/shattered
+   3. remain approximately 3 seconds
+   4. fade away
+   5. remove from active battlefield
+
+   The server remains authoritative about the actual
+   defeated state.
+   ========================================================= */
+
+function animateDefeat(
+    player,
+    characterId,
+    characterName
+) {
+
+    const card =
+        findCard(
+            player,
+            characterId,
+            characterName
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    if (
+        card.dataset.defeatAnimation ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    card.dataset.defeatAnimation =
+        "true";
+
+
+    card.classList.add(
+        "defeat-state"
+    );
+
+
+    /*
+     * Create the visual broken-piece effect.
+     */
+
+    createShatterEffect(
+        card
+    );
+
+
+    /*
+     * Approximately 3-second defeated state.
+     */
+
+    setTimeout(
+        () => {
+
+            card.classList.add(
+                "defeat-fade"
+            );
+
+        },
+        3000
+    );
+
+
+    /*
+     * Remove after fade.
+
+     * We do not change the server state here.
+     * This is purely presentation.
+     */
+
+    setTimeout(
+        () => {
+
+            card.classList.add(
+                "removed-from-battle"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    if (
+                        card.parentNode
+                    ) {
+
+                        card.parentNode.removeChild(
+                            card
+                        );
+
+                    }
+
+                },
+                500
+            );
+
+        },
+        3800
+    );
+
+}
+
+
+/* =========================================================
+   SHATTER EFFECT
+   ========================================================= */
+
+function createShatterEffect(
+    card
+) {
+
+    const existing =
+        card.querySelector(
+            ".battle-shatter"
+        );
+
+
+    if (existing) {
+        return;
+    }
+
+
+    const effect =
+        document.createElement(
+            "div"
+        );
+
+
+    effect.className =
+        "battle-shatter";
+
+
+    const symbols = [
+        "◆",
+        "◇",
+        "✦",
+        "✧",
+        "•",
+        "╳",
+        "⬟",
+        "△"
+    ];
+
+
+    symbols.forEach(
+        (symbol, index) => {
+
+            const piece =
+                document.createElement(
+                    "span"
+                );
+
+
+            piece.className =
+                "shatter-piece";
+
+
+            piece.textContent =
+                symbol;
+
+
+            piece.style.setProperty(
+                "--piece-index",
+                String(index)
+            );
+
+
+            effect.appendChild(
+                piece
+            );
+
+        }
+    );
+
+
+    card.appendChild(
+        effect
+    );
+
+}
+
+
+/* =========================================================
+   FIND DOM CARD
+   ========================================================= */
+
+function findCard(
+    player,
+    characterId,
+    characterName
+) {
+
+    const cards =
+        document.querySelectorAll(
+            ".battle-character-card"
+        );
+
+
+    for (
+        const card of cards
+    ) {
+
+        if (
+            Number(
+                card.dataset.player
+            ) !==
+            Number(
+                player
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        if (
+            characterId &&
+            String(
+                card.dataset.characterId
+            ) ===
+            String(
+                characterId
+            )
+        ) {
+
+            return card;
+
+        }
+
+
+        if (
+            characterName
+        ) {
+
+            const nameElement =
+                card.querySelector(
+                    ".battle-character-info h3"
+                );
+
+
+            if (
+                nameElement &&
+                nameElement.textContent ===
+                    characterName
+            ) {
+
+                return card;
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   BATTLE LOG
+   ========================================================= */
+
+function addBattleLog(
+    message,
+    type = "system"
+) {
+
+    if (!battleLog) {
+        return;
+    }
+
+
+    const entry =
+        document.createElement(
+            "div"
+        );
+
+
+    entry.className =
+        "battle-log-entry";
+
+
+    if (type) {
+
+        entry.classList.add(
+            type
+        );
+
+    }
+
+
+    entry.textContent =
+        message;
+
+
+    battleLog.appendChild(
+        entry
+    );
+
+
+    while (
+        battleLog.children.length >
+        100
+    ) {
+
+        battleLog.removeChild(
+            battleLog.firstChild
+        );
+
+    }
+
+
+    battleLog.scrollTop =
+        battleLog.scrollHeight;
+
+}
+
+
+/* =========================================================
+   BATTLE RESULT
+   ========================================================= */
+
+function showBattleResult(
+    winner
+) {
+
+    if (!battleResult) {
+        return;
+    }
+
+
+    const playerWon =
+        Number(
+            winner
+        ) ===
+        Number(
+            battleState.playerNumber
+        );
+
+
+    battleResult.classList.remove(
+        "hidden",
+        "victory",
+        "defeat"
+    );
+
+
+    if (playerWon) {
+
+        battleResult.classList.add(
+            "victory"
+        );
+
+
+        if (battleResultIcon) {
+
+            battleResultIcon.textContent =
+                "🏆";
+
+        }
+
+
+        if (battleResultTitle) {
+
+            battleResultTitle.textContent =
+                "VICTORY";
+
+        }
+
+
+        if (battleResultWinner) {
+
+            battleResultWinner.textContent =
+                `PLAYER ${winner} WINS`;
+
+        }
+
+
+        if (battleResultMessage) {
+
+            battleResultMessage.textContent =
+                "Congratulations! Your team won the battle.";
+
+        }
+
+
+        playSound(
+            "victory"
+        );
+
+    } else {
+
+        battleResult.classList.add(
+            "defeat"
+        );
+
+
+        if (battleResultIcon) {
+
+            battleResultIcon.textContent =
+                "💀";
+
+        }
+
+
+        if (battleResultTitle) {
+
+            battleResultTitle.textContent =
+                "DEFEAT";
+
+        }
+
+
+        if (battleResultWinner) {
+
+            battleResultWinner.textContent =
+                `PLAYER ${winner} WINS`;
+
+        }
+
+
+        if (battleResultMessage) {
+
+            battleResultMessage.textContent =
+                "Your team has been defeated.";
+
+        }
+
+
+        playSound(
+            "defeat"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   HIDE RESULT
+   ========================================================= */
+
+function hideBattleResult() {
+
+    if (!battleResult) {
+        return;
+    }
+
+
+    battleResult.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   MATCH DETAILS
+   ========================================================= */
+
+function renderMatchDetails(
+    data
+) {
+
+    if (
+        !matchDetailsSection ||
+        !matchDetailsContainer
+    ) {
+
+        return;
+
+    }
+
+
+    const details =
+        data.characters ||
+        data.teams ||
+        [];
+
+
+    matchDetailsContainer.innerHTML =
+        "";
+
+
+    if (
+        Array.isArray(
+            details
+        )
+    ) {
+
+        details.forEach(
+            character => {
+
+                matchDetailsContainer.appendChild(
+                    createDetailCard(
+                        character
+                    )
+                );
+
+            }
+        );
+
+    } else {
+
+        Object.values(
+            details
+        )
+        .flat()
+        .forEach(
+            character => {
+
+                matchDetailsContainer.appendChild(
+                    createDetailCard(
+                        character
+                    )
+                );
+
+            }
+        );
+
+    }
+
+
+    matchDetailsSection.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   DETAIL CARD
+   ========================================================= */
+
+function createDetailCard(
+    character
+) {
+
+    const card =
+        document.createElement(
+            "article"
+        );
+
+
+    card.className =
+        "match-detail-card";
+
+
+    const name =
+        document.createElement(
+            "h3"
+        );
+
+
+    name.textContent =
+        character?.name ||
+        "Unknown";
+
+
+    card.appendChild(
+        name
+    );
+
+
+    const stats = [
+        [
+            "Role",
+            character?.role ||
+            "-"
+        ],
+
+        [
+            "HP",
+            character?.maxHp ??
+            character?.hp ??
+            "-"
+        ],
+
+        [
+            "Damage Dealt",
+            character?.damageDealt ??
+            0
+        ],
+
+        [
+            "Damage Received",
+            character?.damageReceived ??
+            0
+        ],
+
+        [
+            "Attacks",
+            character?.attacks ??
+            0
+        ],
+
+        [
+            "Specials",
+            character?.specials ??
+            0
+        ],
+
+        [
+            "KOs",
+            character?.kos ??
+            0
+        ]
+
+    ];
+
+
+    stats.forEach(
+        ([label, value]) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "match-detail-row";
+
+
+            const labelElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            labelElement.textContent =
+                label;
+
+
+            const valueElement =
+                document.createElement(
+                    "strong"
+                );
+
+
+            valueElement.textContent =
+                value;
+
+
+            row.appendChild(
+                labelElement
+            );
+
+            row.appendChild(
+                valueElement
+            );
+
+
+            card.appendChild(
+                row
+            );
+
+        }
+    );
+
+
+    return card;
+
+}
+
+
+/* =========================================================
+   REMATCH
+   ========================================================= */
+
+if (rematchButton) {
+
+    rematchButton.addEventListener(
+        "click",
+        () => {
+
+            if (
+                !battleState.finished
+            ) {
+
+                return;
+
+            }
+
+
+            rematchButton.disabled =
+                true;
+
+
+            battleSocket.emit(
+                "rematch:request",
+                {
+                    matchId:
+                        battleState.matchId
+                }
+            );
+
+
+            addBattleLog(
+                "🔄 Rematch requested...",
+                "system"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+if (profileButton) {
+
+    profileButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "profile.html";
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   HOME
+   ========================================================= */
+
+if (homeButton) {
+
+    homeButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+function showMessage(
+    message,
+    type = ""
+) {
+
+    if (!globalMessage) {
+        return;
+    }
+
+
+    globalMessage.textContent =
+        message;
+
+
+    globalMessage.className =
+        "adg-message";
+
+
+    if (type) {
+
+        globalMessage.classList.add(
+            type
+        );
+
+    }
+
+
+    clearTimeout(
+        showMessage.timer
+    );
+
+
+    showMessage.timer =
+        setTimeout(
+            () => {
+
+                globalMessage.classList.add(
+                    "hidden"
+                );
+
+            },
+            4000
+        );
+
+}
+
+
+/* =========================================================
+   SOUND
+   ========================================================= */
+
+function playSound(
+    soundName
+) {
+
+    if (
+        window.ADG_SOUND &&
+        typeof window.ADG_SOUND.play ===
+            "function"
+    ) {
+
+        window.ADG_SOUND.play(
+            soundName
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SESSION SAVE
+   ========================================================= */
+
+function saveSession(
+    key,
+    value
+) {
+
+    try {
+
+        sessionStorage.setItem(
+            key,
+            value
+        );
+
+    } catch (error) {
+
+        console.warn(
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+updateConnectionStatus(
+    false
+);
+
+updateBattleHeader();
+
+
+/* =========================================================
+   GLOBAL ACCESS
+   ========================================================= */
+
+window.ADG_BATTLE_STATE =
+    battleState;
+
+
+/* =========================================================
+   END OF BATTLE.JS
+   ========================================================= */
+```
