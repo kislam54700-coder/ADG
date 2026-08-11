@@ -1,284 +1,294 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <meta
-        name="theme-color"
-        content="#080b12"
-    >
+<meta
+    name="theme-color"
+    content="#080b12"
+>
 
-    <meta
-        name="description"
-        content="ADG — Anime Draft Game"
-    >
+<meta
+    name="description"
+    content="ADG — Anime Draft Game"
+>
 
-    <title>⚔️ ADG — Anime Draft Game</title>
+<title>⚔️ ADG — Anime Draft Game</title>
 
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+```
 
 </head>
 
-
 <body>
 
-    <main class="container">
+```
+<main class="container">
 
-        <!-- =================================================
-             HEADER
-             ================================================= -->
+    <!-- =================================================
+         HEADER
+         ================================================= -->
 
-        <header class="header">
+    <header class="header">
 
-            <div>
+        <div>
 
-                <div class="logo">
-                    ⚔️ ADG
-                </div>
-
-                <p class="subtitle">
-                    Anime Draft Game
-                </p>
-
+            <div class="logo">
+                ⚔️ ADG
             </div>
 
-
-            <div
-                id="connectionStatus"
-                class="disconnected"
-            >
-                Disconnected
-            </div>
-
-        </header>
-
-
-        <!-- =================================================
-             LOBBY
-             ================================================= -->
-
-        <section class="lobby-card">
-
-            <h1>
-                Enter the Arena
-            </h1>
-
-            <p>
-                Build your team, assign roles,
-                and battle your opponent.
+            <p class="subtitle">
+                Anime Draft Game
             </p>
 
+        </div>
 
-            <!-- =============================================
-                 PLAYER NAME
-                 ============================================= -->
 
-            <div class="form-group">
+        <div
+            id="connectionStatus"
+            class="disconnected"
+        >
+            Disconnected
+        </div>
 
-                <label for="playerName">
-                    Player Name
-                </label>
+    </header>
+
+
+    <!-- =================================================
+         LOBBY
+         ================================================= -->
+
+    <section class="lobby-card">
+
+        <h1>
+            Enter the Arena
+        </h1>
+
+        <p>
+            Build your team, assign roles,
+            and battle your opponent.
+        </p>
+
+
+        <!-- =============================================
+             PLAYER NAME
+             ============================================= -->
+
+        <div class="form-group">
+
+            <label for="playerName">
+                Player Name
+            </label>
+
+            <input
+                id="playerName"
+                type="text"
+                maxlength="24"
+                autocomplete="nickname"
+                placeholder="Enter your name"
+            >
+
+        </div>
+
+
+        <!-- =============================================
+             ANIME SELECTION
+             ============================================= -->
+
+        <div class="form-group">
+
+            <label>
+                Select Anime
+            </label>
+
+            <div class="anime-grid">
+
+                <button
+                    type="button"
+                    class="animeBtn"
+                    data-anime="One Piece"
+                >
+                    ☠️ One Piece
+                </button>
+
+
+                <button
+                    type="button"
+                    class="animeBtn"
+                    data-anime="Naruto"
+                    disabled
+                >
+                    🍥 Naruto
+                    <small>
+                        Coming Soon
+                    </small>
+                </button>
+
+
+                <button
+                    type="button"
+                    class="animeBtn"
+                    data-anime="Dragon Ball"
+                    disabled
+                >
+                    🐉 Dragon Ball
+                    <small>
+                        Coming Soon
+                    </small>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =============================================
+             SELECTED ANIME
+             ============================================= -->
+
+        <div class="form-group">
+
+            <label>
+                Selected Anime
+            </label>
+
+            <div
+                id="selectedAnime"
+                class="selected-anime"
+            >
+                One Piece
+            </div>
+
+        </div>
+
+
+        <!-- =============================================
+             MATCH ACTIONS
+             ============================================= -->
+
+        <div class="lobby-actions">
+
+            <button
+                id="createMatchButton"
+                type="button"
+                class="primary-btn"
+                disabled
+            >
+                ⚔️ Create Match
+            </button>
+
+
+            <button
+                id="findMatchButton"
+                type="button"
+                class="success-btn"
+                disabled
+            >
+                🔎 Find Match
+            </button>
+
+        </div>
+
+
+        <!-- =============================================
+             JOIN EXISTING MATCH
+             ============================================= -->
+
+        <div class="form-group">
+
+            <label for="matchId">
+                Join Existing Match
+            </label>
+
+            <div class="match-join">
 
                 <input
-                    id="playerName"
+                    id="matchId"
                     type="text"
-                    maxlength="24"
-                    autocomplete="nickname"
-                    placeholder="Enter your name"
+                    maxlength="64"
+                    autocomplete="off"
+                    placeholder="Enter Match ID"
                 >
-
-            </div>
-
-
-            <!-- =============================================
-                 ANIME SELECTION
-                 ============================================= -->
-
-            <div class="form-group">
-
-                <label>
-                    Select Anime
-                </label>
-
-                <div class="anime-grid">
-
-                    <button
-                        type="button"
-                        class="animeBtn"
-                        data-anime="One Piece"
-                    >
-                        ☠️ One Piece
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="animeBtn"
-                        data-anime="Naruto"
-                        disabled
-                    >
-                        🍥 Naruto
-                        <small>
-                            Coming Soon
-                        </small>
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="animeBtn"
-                        data-anime="Dragon Ball"
-                        disabled
-                    >
-                        🐉 Dragon Ball
-                        <small>
-                            Coming Soon
-                        </small>
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- =============================================
-                 SELECTED ANIME
-                 ============================================= -->
-
-            <div class="form-group">
-
-                <label>
-                    Selected Anime
-                </label>
-
-                <div
-                    id="selectedAnime"
-                    class="selected-anime"
-                >
-                    One Piece
-                </div>
-
-            </div>
-
-
-            <!-- =============================================
-                 MATCH ACTIONS
-                 ============================================= -->
-
-            <div class="lobby-actions">
-
-                <button
-                    id="createMatchButton"
-                    type="button"
-                    class="primary-btn"
-                    disabled
-                >
-                    ⚔️ Create Match
-                </button>
 
 
                 <button
-                    id="findMatchButton"
+                    id="joinMatchButton"
                     type="button"
-                    class="success-btn"
+                    class="secondary-btn"
                     disabled
                 >
-                    🔎 Find Match
+                    Join
                 </button>
 
             </div>
 
-
-            <!-- =============================================
-                 JOIN EXISTING MATCH
-                 ============================================= -->
-
-            <div class="form-group">
-
-                <label for="matchId">
-                    Join Existing Match
-                </label>
-
-                <div class="match-join">
-
-                    <input
-                        id="matchId"
-                        type="text"
-                        maxlength="64"
-                        autocomplete="off"
-                        placeholder="Enter Match ID"
-                    >
+        </div>
 
 
-                    <button
-                        id="joinMatchButton"
-                        type="button"
-                        class="secondary-btn"
-                        disabled
-                    >
-                        Join
-                    </button>
+        <!-- =============================================
+             STATUS
+             ============================================= -->
 
-                </div>
-
-            </div>
+        <div
+            id="lobbyStatus"
+            class="hidden"
+            role="status"
+            aria-live="polite"
+        ></div>
 
 
-            <!-- =============================================
-                 STATUS
-                 ============================================= -->
+        <div
+            id="adgMessage"
+            class="hidden"
+            role="alert"
+            aria-live="assertive"
+        ></div>
 
-            <div
-                id="lobbyStatus"
-                class="hidden"
-                role="status"
-                aria-live="polite"
-            ></div>
+    </section>
 
-
-            <div
-                id="adgMessage"
-                class="hidden"
-                role="alert"
-                aria-live="assertive"
-            ></div>
-
-        </section>
-
-    </main>
+</main>
 
 
-    <!-- =====================================================
-         SOCKET.IO CLIENT
-         ===================================================== -->
+<!-- =====================================================
+     SOCKET.IO CLIENT
+     ===================================================== -->
 
-<<script src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"></script>
+<script src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"></script>
+
+
+<!-- =====================================================
+     ADG DATABASE
+     ===================================================== -->
 
 <script src="js/database.js"></script>
 
+
+<!-- =====================================================
+     ADG SOUND
+     ===================================================== -->
+
 <script src="js/sound.js"></script>
+
+
+<!-- =====================================================
+     ADG APPLICATION
+     ===================================================== -->
 
 <script src="js/app.js"></script>
 
-    <!-- =====================================================
-         APPLICATION
-         ===================================================== -->
-
-    <script
-        src="js/app.js"
-    ></script>
 
 </body>
 
 </html>
-
