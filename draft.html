@@ -251,29 +251,26 @@
 
 
             <input
-                type="range"
-                min="0"
-                max="100"
-                value="65"
-                aria-label="Master volume"
-                data-master-volume
-            >
+    type="range"
+    min="0"
+    max="100"
+    value="65"
+    aria-label="Master volume"
+    data-adg-volume
+>
 
+<span data-adg-volume-label>
+    65%
+</span>
 
-            <span data-volume-value>
-                65%
-            </span>
-
-
-            <button
-                type="button"
-                aria-label="Mute"
-                aria-pressed="false"
-                data-mute-button
-            >
-                🔊
-            </button>
-
+<button
+    type="button"
+    aria-label="Mute"
+    aria-pressed="false"
+    data-adg-mute
+>
+    🔊 Mute
+</button>
         </div>
 
     </main>
@@ -283,8 +280,7 @@
          SOCKET.IO
          ===================================================== -->
 
-   <script src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"></script>
-
+  <script src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"></script>
 
     <!-- =====================================================
          CHARACTER DATABASE / IMAGE HELPERS
@@ -315,4 +311,4 @@
 </body>
 
 </html>
-```
+
