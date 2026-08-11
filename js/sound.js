@@ -243,15 +243,19 @@ function playSound(
 
     if (!source) {
 
+        console.warn(
+            `Unknown ADG sound: ${soundName}`
+        );
+
         return;
 
     }
 
 
     /*
-     * Create a new Audio instance for effects so the same
-     * sound can be triggered repeatedly without interrupting
-     * an already-playing copy.
+     * Create a new Audio instance for effects so
+     * the same sound can be triggered repeatedly
+     * without interrupting an already-playing copy.
      */
 
     const audio =
@@ -315,8 +319,8 @@ function playSound(
             () => {
 
                 /*
-                 * Browsers may block audio until the user
-                 * interacts with the page. This is normal.
+                 * Browsers may block audio until
+                 * the user interacts with the page.
                  */
 
                 cleanup();
@@ -668,9 +672,11 @@ function unlockSound() {
 
 
     /*
-     * Browser autoplay policies generally allow audio
-     * after a user interaction. We only unlock the audio
-     * system; we do not play an unwanted sound.
+     * Browser autoplay policies generally allow
+     * audio after a user interaction.
+     *
+     * We only unlock the audio system;
+     * we do not play an unwanted sound.
      */
 
 }
@@ -748,6 +754,7 @@ window.ADG_SOUND = {
 window.playADGSound =
     playSound;
 
+
 window.setADGVolume =
     setMasterVolume;
 
@@ -755,4 +762,4 @@ window.setADGVolume =
 /* =========================================================
    END OF SOUND.JS
    ========================================================= */
-```
+
