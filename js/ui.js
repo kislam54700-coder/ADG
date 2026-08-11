@@ -1,4 +1,3 @@
-```javascript id="n6f8q2"
 /* =========================================================
    ADG — UI.JS
    Shared User Interface Utilities

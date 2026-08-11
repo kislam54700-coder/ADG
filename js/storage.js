@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — STORAGE.JS
    Centralized Local & Session Storage Manager

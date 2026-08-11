@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — SOUND.JS
    Master Sound / Volume Controller

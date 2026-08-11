@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — SERVER.JS
    Multiplayer Match + Draft Server
@@ -43,7 +42,10 @@ const io = new Server(server, {
    ========================================================= */
 
 const PORT =
-    process.env.PORT || 3000;
+    Number(process.env.PORT) || 3000;
+
+const HOST =
+    "0.0.0.0";
 
 const TEAM_SIZE =
     6;
@@ -69,37 +71,51 @@ app.use(
    BASIC ROUTES
    ========================================================= */
 
+/*
+ * Health check.
+ *
+ * Render can use this to verify that the server
+ * is alive.
+ */
+
 app.get(
     "/health",
     (req, res) => {
 
-        res.json({
+        res.status(200).json({
+
             ok: true,
-            service: "ADG Server",
-            time: new Date().toISOString()
+
+            service:
+                "ADG Server",
+
+            time:
+                new Date().toISOString()
+
         });
 
     }
 );
 
 /*
- * IMPORTANT:
- *
- * Do NOT use:
+ * Express 5 does not accept:
  *
  *     app.get("*", ...)
  *
- * with the newer Express/router version.
+ * Therefore we use middleware instead of a
+ * wildcard route.
  *
- * A middleware catch-all works with Express 5
- * and does not interfere with Socket.IO.
+ * Static files are already handled by express.static().
+ *
+ * If a browser requests a route without a file
+ * extension, serve index.html.
  */
 
 app.use(
     (req, res, next) => {
 
         /*
-         * Never intercept Socket.IO requests.
+         * Never interfere with Socket.IO.
          */
 
         if (
@@ -113,13 +129,12 @@ app.use(
         }
 
         /*
-         * Only serve index.html for normal
-         * browser/page requests.
+         * Only handle normal GET page requests.
          */
 
         if (
             req.method === "GET" &&
-            req.accepts("html")
+            !req.path.includes(".")
         ) {
 
             return res.sendFile(
@@ -130,10 +145,6 @@ app.use(
             );
 
         }
-
-        /*
-         * Everything else continues normally.
-         */
 
         next();
 
@@ -149,16 +160,17 @@ app.use(
  *
  * This is an in-memory server.
  *
- * If the server restarts, active matches disappear.
+ * If Render restarts/redeploys the service,
+ * active matches disappear.
  *
- * For the current ADG prototype this is intentional.
+ * This is intentional for the current prototype.
  */
 
 const matches =
     new Map();
 
 /*
- * Socket -> Match
+ * Socket -> Match ID
  */
 
 const socketMatches =
@@ -177,6 +189,7 @@ function createMatchId() {
 
 }
 
+
 function normalizeName(
     name
 ) {
@@ -188,6 +201,7 @@ function normalizeName(
         .slice(0, 24);
 
 }
+
 
 function normalizeAnime(
     anime
@@ -202,6 +216,7 @@ function normalizeAnime(
 
 }
 
+
 function findPlayer(
     match,
     socketId
@@ -213,6 +228,7 @@ function findPlayer(
     );
 
 }
+
 
 function getPlayer(
     match,
@@ -226,6 +242,7 @@ function getPlayer(
 
 }
 
+
 function otherPlayer(
     match,
     playerNumber
@@ -237,6 +254,26 @@ function otherPlayer(
     );
 
 }
+
+
+/*
+ * Determine whether a socket currently
+ * belongs to a connected client.
+ */
+
+function isSocketConnected(
+    socketId
+) {
+
+    return io.sockets.sockets.has(
+        socketId
+    );
+
+}
+
+/* =========================================================
+   PUBLIC MATCH DATA
+   ========================================================= */
 
 function getPublicMatchData(
     match,
@@ -303,10 +340,9 @@ function getPrivateDraftState(
 
         team:
             player.team.map(
-                character =>
-                    ({
-                        ...character
-                    })
+                character => ({
+                    ...character
+                })
             ),
 
         dropToken:
@@ -349,7 +385,7 @@ function sendDraftState(
 }
 
 /* =========================================================
-   SEND TURN
+   SEND DRAFT TURN
    ========================================================= */
 
 function sendDraftTurn(
@@ -381,7 +417,7 @@ function sendDraftTurn(
 }
 
 /* =========================================================
-   SEND COMPLETE
+   SEND DRAFT COMPLETE
    ========================================================= */
 
 function sendDraftComplete(
@@ -402,10 +438,9 @@ function sendDraftComplete(
 
                     team:
                         player.team.map(
-                            character =>
-                                ({
-                                    ...character
-                                })
+                            character => ({
+                                ...character
+                            })
                         )
 
                 }
@@ -425,10 +460,10 @@ function getCharacterDatabase(
 ) {
 
     /*
-     * The server intentionally does NOT trust
-     * the client-side database.
+     * The server does NOT trust the client-side
+     * character database.
      *
-     * The server has its own character list.
+     * The server owns the valid character list.
      */
 
     if (
@@ -588,7 +623,9 @@ function createMatch(
         createMatchId();
 
     while (
-        matches.has(matchId)
+        matches.has(
+            matchId
+        )
     ) {
 
         matchId =
@@ -661,8 +698,7 @@ function createMatch(
                 playerName
             ),
 
-        team:
-            [],
+        team: [],
 
         dropToken:
             true
@@ -688,7 +724,7 @@ function createMatch(
 }
 
 /* =========================================================
-   JOIN MATCH
+   JOIN EXISTING MATCH
    ========================================================= */
 
 function joinExistingMatch(
@@ -726,8 +762,7 @@ function joinExistingMatch(
                 playerName
             ),
 
-        team:
-            [],
+        team: [],
 
         dropToken:
             true
@@ -872,6 +907,22 @@ function handleDraftDraw(
     }
 
     if (
+        !match.draft.started
+    ) {
+
+        socket.emit(
+            "draft:error",
+            {
+                message:
+                    "The draft has not started yet."
+            }
+        );
+
+        return;
+
+    }
+
+    if (
         match.draft.complete
     ) {
 
@@ -956,10 +1007,9 @@ function handleDraftDraw(
 
             team:
                 player.team.map(
-                    item =>
-                        ({
-                            ...item
-                        })
+                    item => ({
+                        ...item
+                    })
                 ),
 
             dropToken:
@@ -972,7 +1022,7 @@ function handleDraftDraw(
     );
 
     /*
-     * Check if both players have six.
+     * Check whether both teams are complete.
      */
 
     const allComplete =
@@ -995,41 +1045,13 @@ function handleDraftDraw(
     }
 
     /*
-     * If this player already has six,
-     * skip their next turn and let the
-     * other player continue.
+     * Pass the turn to the other player.
      */
 
-    if (
-        player.team.length >=
-        TEAM_SIZE
-    ) {
-
-        const other =
-            otherPlayer(
-                match,
-                player.number
-            );
-
-        if (
-            other &&
-            other.team.length <
-            TEAM_SIZE
-        ) {
-
-            match.draft.currentPlayer =
-                other.number;
-
-        }
-
-    } else {
-
-        match.draft.currentPlayer =
-            match.draft.currentPlayer === 1
-                ? 2
-                : 1;
-
-    }
+    match.draft.currentPlayer =
+        match.draft.currentPlayer === 1
+            ? 2
+            : 1;
 
     sendDraftTurn(
         match
@@ -1100,6 +1122,22 @@ function handleDraftDrop(
     }
 
     if (
+        match.draft.complete
+    ) {
+
+        socket.emit(
+            "draft:error",
+            {
+                message:
+                    "The draft is already complete."
+            }
+        );
+
+        return;
+
+    }
+
+    if (
         !player.dropToken
     ) {
 
@@ -1150,7 +1188,9 @@ function handleDraftDrop(
     }
 
     /*
-     * Find requested character.
+     * The client can request a character by name,
+     * but the server verifies that the character
+     * actually belongs to this player.
      */
 
     let characterIndex =
@@ -1171,7 +1211,7 @@ function handleDraftDrop(
 
     /*
      * If no valid character was supplied,
-     * drop the last character.
+     * use the last character.
      */
 
     if (
@@ -1188,8 +1228,22 @@ function handleDraftDrop(
             characterIndex
         ];
 
+    if (!droppedCharacter) {
+
+        socket.emit(
+            "draft:error",
+            {
+                message:
+                    "Invalid character."
+            }
+        );
+
+        return;
+
+    }
+
     /*
-     * Remove from team.
+     * Remove character.
      */
 
     player.team.splice(
@@ -1205,6 +1259,10 @@ function handleDraftDrop(
         droppedCharacter.name
     );
 
+    /*
+     * Consume Drop Token.
+     */
+
     player.dropToken =
         false;
 
@@ -1218,6 +1276,21 @@ function handleDraftDrop(
         );
 
     if (!replacement) {
+
+        /*
+         * Safety rollback.
+         */
+
+        player.team.push(
+            droppedCharacter
+        );
+
+        match.usedCharacters.add(
+            droppedCharacter.name
+        );
+
+        player.dropToken =
+            true;
 
         socket.emit(
             "draft:error",
@@ -1241,10 +1314,9 @@ function handleDraftDrop(
 
             team:
                 player.team.map(
-                    item =>
-                        ({
-                            ...item
-                        })
+                    item => ({
+                        ...item
+                    })
                 ),
 
             dropped:
@@ -1265,10 +1337,9 @@ function handleDraftDrop(
 
             team:
                 player.team.map(
-                    item =>
-                        ({
-                            ...item
-                        })
+                    item => ({
+                        ...item
+                    })
                 ),
 
             dropToken:
@@ -1307,27 +1378,10 @@ function handleDraftDrop(
      * Continue alternating turns.
      */
 
-    const other =
-        otherPlayer(
-            match,
-            player.number
-        );
-
-    if (
-        other &&
-        other.team.length <
-        TEAM_SIZE
-    ) {
-
-        match.draft.currentPlayer =
-            other.number;
-
-    } else {
-
-        match.draft.currentPlayer =
-            player.number;
-
-    }
+    match.draft.currentPlayer =
+        match.draft.currentPlayer === 1
+            ? 2
+            : 1;
 
     sendDraftTurn(
         match
@@ -1353,6 +1407,14 @@ function handleDraftDrop(
 function completeDraft(
     match
 ) {
+
+    if (
+        match.draft.complete
+    ) {
+
+        return;
+
+    }
 
     match.draft.complete =
         true;
@@ -1386,8 +1448,31 @@ function completeDraft(
     setTimeout(
         () => {
 
+            /*
+             * Match may have been removed
+             * while waiting.
+             */
+
+            if (
+                !matches.has(
+                    match.id
+                )
+            ) {
+
+                return;
+
+            }
+
             match.players.forEach(
                 player => {
+
+                    if (
+                        !player.socketId
+                    ) {
+
+                        return;
+
+                    }
 
                     io.to(
                         player.socketId
@@ -1400,7 +1485,6 @@ function completeDraft(
                     );
 
                 }
-
             );
 
         },
@@ -1438,8 +1522,12 @@ function reconnectPlayer(
     }
 
     /*
-     * The current prototype uses the stored player
-     * number from the client's session.
+     * Current prototype:
+     *
+     * The client sends its player number.
+     *
+     * Production version should use a signed
+     * authentication/session token.
      */
 
     const playerNumber =
@@ -1459,19 +1547,28 @@ function reconnectPlayer(
     /*
      * Development fallback:
      *
-     * If exactly one player has a disconnected
-     * socket, allow reconnection to that slot.
+     * If exactly one player slot is currently
+     * disconnected, allow reconnection.
      */
 
     if (!player) {
 
-        player =
-            match.players.find(
+        const disconnectedPlayers =
+            match.players.filter(
                 item =>
-                    !io.sockets.sockets.has(
+                    !isSocketConnected(
                         item.socketId
                     )
             );
+
+        if (
+            disconnectedPlayers.length === 1
+        ) {
+
+            player =
+                disconnectedPlayers[0];
+
+        }
 
     }
 
@@ -1482,6 +1579,30 @@ function reconnectPlayer(
             {
                 message:
                     "Unable to identify your player slot."
+            }
+        );
+
+        return;
+
+    }
+
+    /*
+     * If the selected slot is already occupied
+     * by another active socket, reject it.
+     */
+
+    if (
+        isSocketConnected(
+            player.socketId
+        ) &&
+        player.socketId !== socket.id
+    ) {
+
+        socket.emit(
+            "match:error",
+            {
+                message:
+                    "That player slot is already connected."
             }
         );
 
@@ -1586,13 +1707,35 @@ function handleRoleAssignment(
 
     }
 
+    /*
+     * Make sure the player actually has 6 characters.
+     */
+
+    if (
+        player.team.length !==
+        TEAM_SIZE
+    ) {
+
+        socket.emit(
+            "role:error",
+            {
+                message:
+                    "Your team must contain 6 characters."
+            }
+        );
+
+        return;
+
+    }
+
     const assignments =
-        data.assignments;
+        data?.assignments;
 
     if (
         !assignments ||
         typeof assignments !==
-        "object"
+        "object" ||
+        Array.isArray(assignments)
     ) {
 
         socket.emit(
@@ -1608,8 +1751,8 @@ function handleRoleAssignment(
     }
 
     /*
-     * Only the player's own six characters
-     * can receive roles.
+     * Only accept assignments for the player's
+     * actual six characters.
      */
 
     const teamNames =
@@ -1625,9 +1768,25 @@ function handleRoleAssignment(
             assignments
         );
 
+    if (
+        assignmentNames.length !==
+        TEAM_SIZE
+    ) {
+
+        socket.emit(
+            "role:error",
+            {
+                message:
+                    "You must assign roles to all 6 characters."
+            }
+        );
+
+        return;
+
+    }
+
     for (
-        const characterName
-        of assignmentNames
+        const characterName of assignmentNames
     ) {
 
         if (
@@ -1671,8 +1830,6 @@ function handleRoleAssignment(
         ]);
 
     if (
-        assignmentNames.length !==
-        TEAM_SIZE ||
         roles.length !==
         TEAM_SIZE ||
         uniqueRoles.size !==
@@ -1692,8 +1849,7 @@ function handleRoleAssignment(
     }
 
     for (
-        const role
-        of roles
+        const role of roles
     ) {
 
         if (
@@ -1715,6 +1871,10 @@ function handleRoleAssignment(
         }
 
     }
+
+    /*
+     * Store server-validated assignments.
+     */
 
     match.roles.assignments[
         player.number
@@ -1745,6 +1905,10 @@ function handleRoleAssignment(
 
         }
     );
+
+    /*
+     * Check whether both players are ready.
+     */
 
     const bothReady =
         match.roles.complete[1] &&
@@ -1875,15 +2039,15 @@ io.on(
                     null;
 
                 for (
-                    const match
-                    of matches.values()
+                    const match of matches.values()
                 ) {
 
                     if (
                         match.players.length ===
                         1 &&
                         match.anime ===
-                        anime
+                        anime &&
+                        !match.draft.started
                     ) {
 
                         found =
@@ -1930,7 +2094,9 @@ io.on(
                         playerName
                     );
 
-                if (!result.success) {
+                if (
+                    !result.success
+                ) {
 
                     socket.emit(
                         "match:error",
@@ -1992,6 +2158,22 @@ io.on(
                         data?.playerName
                     );
 
+                if (
+                    playerName.length < 2
+                ) {
+
+                    socket.emit(
+                        "match:error",
+                        {
+                            message:
+                                "Invalid player name."
+                        }
+                    );
+
+                    return;
+
+                }
+
                 const match =
                     matches.get(
                         matchId
@@ -2018,7 +2200,9 @@ io.on(
                         playerName
                     );
 
-                if (!result.success) {
+                if (
+                    !result.success
+                ) {
 
                     socket.emit(
                         "match:error",
@@ -2089,11 +2273,16 @@ io.on(
                     return;
                 }
 
+                /*
+                 * Only remove a waiting one-player
+                 * match.
+                 */
+
                 if (
-                    match.players.length ===
-                    1 &&
+                    match.players.length === 1 &&
                     match.players[0].socketId ===
-                    socket.id
+                    socket.id &&
+                    !match.draft.started
                 ) {
 
                     matches.delete(
@@ -2101,6 +2290,10 @@ io.on(
                     );
 
                 }
+
+                socketMatches.delete(
+                    socket.id
+                );
 
             }
         );
@@ -2169,6 +2362,10 @@ io.on(
             }
         );
 
+        /*
+         * Backwards-compatible event names.
+         */
+
         socket.on(
             "role:assign",
             data => {
@@ -2226,7 +2423,13 @@ io.on(
                     );
 
                 if (!match) {
+
+                    socketMatches.delete(
+                        socket.id
+                    );
+
                     return;
+
                 }
 
                 const player =
@@ -2275,6 +2478,7 @@ server.on(
 
 server.listen(
     PORT,
+    HOST,
     () => {
 
         console.log(
@@ -2290,15 +2494,19 @@ server.listen(
         );
 
         console.log(
-            `Server running on port ${PORT}`
+            `Server running on ${HOST}:${PORT}`
         );
 
         console.log(
-            `Local: http://localhost:${PORT}`
+            `PORT: ${PORT}`
         );
 
         console.log(
             "Socket.IO: ENABLED"
+        );
+
+        console.log(
+            "Health: /health"
         );
 
         console.log(

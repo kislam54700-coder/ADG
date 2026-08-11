@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — SETTINGS.JS
    Game Settings Manager

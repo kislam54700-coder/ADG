@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — SHARED SOCKET CLIENT
    js/socket.js

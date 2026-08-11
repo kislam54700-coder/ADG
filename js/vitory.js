@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    ADG — VICTORY.JS
    Victory / Defeat / Post-Match Client
