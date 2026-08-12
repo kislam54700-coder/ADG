@@ -1,20 +1,26 @@
 /* =========================================================
    ADG — DRAFT.JS
-   Anime Battle — Face to Face
-   Private Online Multiplayer Draft Client
+   Face to Face — Private Multiplayer Draft Client
    ========================================================= */
 
 "use strict";
 
 /* =========================================================
+   CONFIGURATION
+   ========================================================= */
+
+const ADG_SERVER_URL =
+    "https://adg-server-t6y1.onrender.com";
+
+const TEAM_SIZE = 6;
+
+
+/* =========================================================
    SOCKET
    ========================================================= */
 
-const ADG_DRAFT_SERVER_URL =
-    "https://adg-server-t6y1.onrender.com";
-
 const draftSocket = io(
-    ADG_DRAFT_SERVER_URL,
+    ADG_SERVER_URL,
     {
         transports: [
             "websocket",
@@ -29,34 +35,10 @@ const draftSocket = io(
 
 
 /* =========================================================
-   CONFIGURATION
-   ========================================================= */
-
-const ADG_DRAFT_CONFIG = {
-
-    battleName:
-        "Face to Face",
-
-    teamSize:
-        6,
-
-    imageDirectory:
-        "assets/characters/",
-
-    rolesPage:
-        "roles.html"
-
-};
-
-
-/* =========================================================
    STATE
    ========================================================= */
 
 const draftState = {
-
-    battleName:
-        ADG_DRAFT_CONFIG.battleName,
 
     matchId:
         null,
@@ -66,6 +48,12 @@ const draftState = {
 
     playerName:
         "",
+
+    battleName:
+        "Face to Face",
+
+    anime:
+        "Face to Face",
 
     team:
         [],
@@ -86,28 +74,28 @@ const draftState = {
         false,
 
     connected:
-        false,
-
-    reconnecting:
         false
 
 };
 
 
 /* =========================================================
-   SESSION HELPERS
+   SESSION / STORAGE HELPERS
    ========================================================= */
 
-function getSession(key) {
+function getStorage(key) {
 
     try {
 
-        return sessionStorage.getItem(key);
+        return (
+            sessionStorage.getItem(key) ||
+            localStorage.getItem(key)
+        );
 
     } catch (error) {
 
         console.warn(
-            "ADG session read failed:",
+            "[ADG] Storage read failed:",
             error
         );
 
@@ -118,7 +106,7 @@ function getSession(key) {
 }
 
 
-function setSession(key, value) {
+function saveStorage(key, value) {
 
     try {
 
@@ -127,10 +115,15 @@ function setSession(key, value) {
             String(value)
         );
 
+        localStorage.setItem(
+            key,
+            String(value)
+        );
+
     } catch (error) {
 
         console.warn(
-            "ADG session write failed:",
+            "[ADG] Storage write failed:",
             error
         );
 
@@ -139,16 +132,17 @@ function setSession(key, value) {
 }
 
 
-function removeSession(key) {
+function removeStorage(key) {
 
     try {
 
         sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
 
     } catch (error) {
 
         console.warn(
-            "ADG session remove failed:",
+            "[ADG] Storage remove failed:",
             error
         );
 
@@ -162,31 +156,31 @@ function removeSession(key) {
    ========================================================= */
 
 draftState.matchId =
-    getSession(
+    getStorage(
         "adg_matchId"
     );
 
 draftState.playerNumber =
     Number(
-        getSession(
+        getStorage(
             "adg_playerNumber"
         )
     ) || null;
 
 draftState.playerName =
-    getSession(
+    getStorage(
         "adg_playerName"
     ) || "";
 
-
-/*
- * Battle name is always Face to Face.
- *
- * The client does not allow the player to change it.
- */
-
 draftState.battleName =
-    ADG_DRAFT_CONFIG.battleName;
+    getStorage(
+        "adg_battleName"
+    ) ||
+    "Face to Face";
+
+
+draftState.anime =
+    "Face to Face";
 
 
 /* =========================================================
@@ -263,37 +257,159 @@ const globalMessage =
         "adgMessage"
     );
 
+const draftMatchId =
+    document.getElementById(
+        "draftMatchId"
+    );
+
+const copyDraftMatchId =
+    document.getElementById(
+        "copyDraftMatchId"
+    );
+
 
 /* =========================================================
    INITIAL UI
    ========================================================= */
 
-/*
- * The existing HTML uses #animeTitle.
- *
- * We reuse that element as the Battle Name display.
- * No anime-selection logic exists here.
- */
-
 if (animeTitle) {
 
     animeTitle.textContent =
-        draftState.battleName;
+        "Face to Face";
 
 }
 
 
-updateConnectionUI(
-    false
-);
+updateMatchCodeUI();
 
 updateDropTokenUI();
 
+updateConnectionUI(false);
+
 renderTeam();
 
-clearCurrentCharacter();
-
 setDraftWaitingUI();
+
+
+/* =========================================================
+   MATCH ID
+   ========================================================= */
+
+function saveMatchId(matchId) {
+
+    if (!matchId) {
+        return;
+    }
+
+    const id =
+        String(matchId)
+            .trim()
+            .toUpperCase();
+
+    if (!id) {
+        return;
+    }
+
+    draftState.matchId =
+        id;
+
+    saveStorage(
+        "adg_matchId",
+        id
+    );
+
+    updateMatchCodeUI();
+
+    console.log(
+        "[ADG] Match ID:",
+        id
+    );
+
+}
+
+
+function updateMatchCodeUI() {
+
+    if (!draftMatchId) {
+        return;
+    }
+
+    if (draftState.matchId) {
+
+        draftMatchId.textContent =
+            draftState.matchId;
+
+    } else {
+
+        draftMatchId.textContent =
+            "Waiting...";
+
+    }
+
+}
+
+
+/* =========================================================
+   COPY MATCH ID
+   ========================================================= */
+
+if (copyDraftMatchId) {
+
+    copyDraftMatchId.addEventListener(
+        "click",
+        async () => {
+
+            const matchId =
+                draftState.matchId;
+
+            if (!matchId) {
+
+                showMessage(
+                    "Match code is not available yet.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+            try {
+
+                await navigator.clipboard.writeText(
+                    matchId
+                );
+
+                copyDraftMatchId.textContent =
+                    "✓ Copied";
+
+                setTimeout(
+                    () => {
+
+                        copyDraftMatchId.textContent =
+                            "📋 Copy";
+
+                    },
+                    1500
+                );
+
+            } catch (error) {
+
+                console.warn(
+                    "[ADG] Clipboard failed:",
+                    error
+                );
+
+                showMessage(
+                    `Match Code: ${matchId}`,
+                    "info"
+                );
+
+            }
+
+        }
+    );
+
+}
 
 
 /* =========================================================
@@ -310,15 +426,11 @@ function showMessage(
         draftStatus;
 
     if (!element) {
-
         return;
-
     }
-
 
     element.textContent =
         message;
-
 
     element.classList.remove(
         "hidden",
@@ -328,7 +440,6 @@ function showMessage(
         "info"
     );
 
-
     if (type) {
 
         element.classList.add(
@@ -337,11 +448,9 @@ function showMessage(
 
     }
 
-
     clearTimeout(
         showMessage.timer
     );
-
 
     showMessage.timer =
         setTimeout(
@@ -352,7 +461,7 @@ function showMessage(
                 );
 
             },
-            5000
+            4000
         );
 
 }
@@ -369,19 +478,14 @@ function updateConnectionUI(
     draftState.connected =
         connected;
 
-
     if (!connectionStatus) {
-
         return;
-
     }
-
 
     connectionStatus.classList.remove(
         "connected",
         "disconnected"
     );
-
 
     if (connected) {
 
@@ -407,39 +511,6 @@ function updateConnectionUI(
 
 
 /* =========================================================
-   RECONNECT TO MATCH
-   ========================================================= */
-
-function reconnectToMatch() {
-
-    if (!draftState.matchId) {
-
-        showMessage(
-            "Match information is missing.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    draftState.reconnecting =
-        true;
-
-
-    draftSocket.emit(
-        "match:reconnect",
-        {
-            matchId:
-                draftState.matchId
-        }
-    );
-
-}
-
-
-/* =========================================================
    SOCKET CONNECT
    ========================================================= */
 
@@ -447,21 +518,101 @@ draftSocket.on(
     "connect",
     () => {
 
+        console.log(
+            "[ADG] Draft socket connected:",
+            draftSocket.id
+        );
+
         updateConnectionUI(
             true
         );
 
-
-        draftState.reconnecting =
-            false;
-
-
         /*
-         * Every connection/reconnection attempts
-         * to restore the existing match.
+         * NEVER create a new match here.
+         *
+         * If a Match ID already exists,
+         * reconnect to that exact match.
          */
 
-        reconnectToMatch();
+        const matchId =
+            draftState.matchId ||
+            getStorage(
+                "adg_matchId"
+            );
+
+        if (matchId) {
+
+            saveMatchId(
+                matchId
+            );
+
+            draftSocket.emit(
+                "match:reconnect",
+                {
+                    matchId:
+                        matchId
+                }
+            );
+
+        } else {
+
+            showMessage(
+                "Waiting for match information...",
+                "warning"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SOCKET RECONNECTING
+   ========================================================= */
+
+draftSocket.io.on(
+    "reconnect_attempt",
+    () => {
+
+        if (connectionStatus) {
+
+            connectionStatus.textContent =
+                "Reconnecting...";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SOCKET RECONNECTED
+   ========================================================= */
+
+draftSocket.io.on(
+    "reconnect",
+    () => {
+
+        console.log(
+            "[ADG] Socket reconnected."
+        );
+
+        updateConnectionUI(
+            true
+        );
+
+        if (draftState.matchId) {
+
+            draftSocket.emit(
+                "match:reconnect",
+                {
+                    matchId:
+                        draftState.matchId
+                }
+            );
+
+        }
 
     }
 );
@@ -473,23 +624,18 @@ draftSocket.on(
 
 draftSocket.on(
     "disconnect",
-    () => {
+    reason => {
+
+        console.log(
+            "[ADG] Draft disconnected:",
+            reason
+        );
 
         updateConnectionUI(
             false
         );
 
-
-        draftState.reconnecting =
-            true;
-
-
-        draftState.drawing =
-            false;
-
-
         setDraftWaitingUI();
-
 
         showMessage(
             "Connection lost. Reconnecting...",
@@ -501,55 +647,53 @@ draftSocket.on(
 
 
 /* =========================================================
-   SOCKET CONNECTION ERROR
-   ========================================================= */
-
-draftSocket.on(
-    "connect_error",
-    error => {
-
-        updateConnectionUI(
-            false
-        );
-
-
-        console.warn(
-            "ADG draft socket connection error:",
-            error
-        );
-
-    }
-);
-
-
-/* =========================================================
-   MATCH RECONNECTED
+   SERVER — MATCH RECONNECTED
    ========================================================= */
 
 draftSocket.on(
     "match:reconnected",
     data => {
 
-        draftState.reconnecting =
-            false;
-
-
-        applyMatchData(
+        console.log(
+            "[ADG] Match reconnected:",
             data
         );
 
+        if (!data) {
+            return;
+        }
 
-        showMessage(
-            "Match reconnected.",
-            "success"
-        );
+        if (data.matchId) {
+
+            saveMatchId(
+                data.matchId
+            );
+
+        }
+
+        if (
+            typeof data.playerNumber ===
+            "number"
+        ) {
+
+            draftState.playerNumber =
+                data.playerNumber;
+
+            saveStorage(
+                "adg_playerNumber",
+                data.playerNumber
+            );
+
+        }
+
+        updateMatchCodeUI();
 
     }
 );
 
 
 /* =========================================================
-   PRIVATE DRAFT STATE
+   SERVER — DRAFT STATE
    ========================================================= */
 
 draftSocket.on(
@@ -557,389 +701,54 @@ draftSocket.on(
     data => {
 
         if (!data) {
-
             return;
-
         }
 
+        if (data.matchId) {
 
-        applyDraftState(
-            data
-        );
-
-    }
-);
-
-
-/* =========================================================
-   APPLY MATCH DATA
-   ========================================================= */
-
-function applyMatchData(
-    data
-) {
-
-    if (!data) {
-
-        return;
-
-    }
-
-
-    if (data.matchId) {
-
-        draftState.matchId =
-            String(
+            saveMatchId(
                 data.matchId
             );
 
+        }
 
-        setSession(
-            "adg_matchId",
-            draftState.matchId
-        );
+        if (
+            typeof data.playerNumber ===
+            "number"
+        ) {
 
-    }
+            draftState.playerNumber =
+                data.playerNumber;
 
-
-    if (
-        data.playerNumber !==
-        undefined &&
-        data.playerNumber !==
-        null
-    ) {
-
-        draftState.playerNumber =
-            Number(
+            saveStorage(
+                "adg_playerNumber",
                 data.playerNumber
             );
 
+        }
 
-        setSession(
-            "adg_playerNumber",
-            draftState.playerNumber
-        );
-
-    }
-
-
-    if (data.playerName) {
-
-        draftState.playerName =
-            String(
-                data.playerName
-            );
-
-
-        setSession(
-            "adg_playerName",
-            draftState.playerName
-        );
-
-    }
-
-
-    /*
-     * Battle name is intentionally fixed.
-     */
-
-    draftState.battleName =
-        ADG_DRAFT_CONFIG.battleName;
-
-
-    if (animeTitle) {
-
-        animeTitle.textContent =
-            draftState.battleName;
-
-    }
-
-
-    /*
-     * Some server implementations may send the
-     * current draft state together with reconnect data.
-     */
-
-    if (
-        data.draft &&
-        typeof data.draft ===
-        "object"
-    ) {
-
-        applyDraftState(
-            data.draft
-        );
-
-    } else if (
-        Array.isArray(
-            data.team
-        ) ||
-        data.myTurn !== undefined ||
-        data.draftComplete !== undefined
-    ) {
-
-        applyDraftState(
-            data
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   APPLY DRAFT STATE
-   ========================================================= */
-
-function applyDraftState(
-    data
-) {
-
-    if (!data) {
-
-        return;
-
-    }
-
-
-    if (
-        Array.isArray(
-            data.team
-        )
-    ) {
-
-        draftState.team =
-            normalizeTeam(
+        if (
+            Array.isArray(
                 data.team
-            );
-
-    }
-
-
-    if (
-        typeof data.dropToken ===
-        "boolean"
-    ) {
-
-        draftState.dropToken =
-            data.dropToken;
-
-    }
-
-
-    if (
-        typeof data.myTurn ===
-        "boolean"
-    ) {
-
-        draftState.myTurn =
-            data.myTurn;
-
-    }
-
-
-    if (
-        typeof data.draftComplete ===
-        "boolean"
-    ) {
-
-        draftState.draftComplete =
-            data.draftComplete;
-
-    }
-
-
-    if (
-        data.playerNumber !==
-        undefined &&
-        data.playerNumber !==
-        null
-    ) {
-
-        draftState.playerNumber =
-            Number(
-                data.playerNumber
-            );
-
-
-        setSession(
-            "adg_playerNumber",
-            draftState.playerNumber
-        );
-
-    }
-
-
-    if (data.matchId) {
-
-        draftState.matchId =
-            String(
-                data.matchId
-            );
-
-
-        setSession(
-            "adg_matchId",
-            draftState.matchId
-        );
-
-    }
-
-
-    renderTeam();
-
-    updateDropTokenUI();
-
-    updateTurnUI();
-
-
-    if (
-        draftState.draftComplete
-    ) {
-
-        finishDraftUI();
-
-    }
-
-}
-
-
-/* =========================================================
-   NORMALIZE TEAM
-   ========================================================= */
-
-function normalizeTeam(
-    team
-) {
-
-    if (!Array.isArray(team)) {
-
-        return [];
-
-    }
-
-
-    const seen =
-        new Set();
-
-    const normalized =
-        [];
-
-
-    for (
-        const character
-        of team
-    ) {
-
-        const normalizedCharacter =
-            typeof character ===
-            "string"
-
-                ? {
-                    name:
-                        character
-                }
-
-                : {
-                    ...character
-                };
-
-
-        const name =
-            String(
-                normalizedCharacter.name ||
-                ""
-            ).trim();
-
-
-        if (!name) {
-
-            continue;
-
-        }
-
-
-        /*
-         * Prevent duplicate characters on the
-         * client even if bad duplicate data is sent.
-         */
-
-        const key =
-            name.toLowerCase();
-
-
-        if (
-            seen.has(key)
+            )
         ) {
 
-            continue;
-
-        }
-
-
-        seen.add(
-            key
-        );
-
-
-        normalizedCharacter.name =
-            name;
-
-
-        normalized.push(
-            normalizedCharacter
-        );
-
-
-        if (
-            normalized.length >=
-            ADG_DRAFT_CONFIG.teamSize
-        ) {
-
-            break;
-
-        }
-
-    }
-
-
-    return normalized;
-
-}
-
-
-/* =========================================================
-   SERVER — TURN UPDATE
-   ========================================================= */
-
-draftSocket.on(
-    "draft:turn",
-    data => {
-
-        if (!data) {
-
-            return;
-
-        }
-
-
-        if (
-            data.playerNumber !==
-            undefined &&
-            data.playerNumber !==
-            null
-        ) {
-
-            draftState.myTurn =
-                Number(
-                    data.playerNumber
-                ) ===
-                Number(
-                    draftState.playerNumber
+            draftState.team =
+                normalizeTeam(
+                    data.team
                 );
 
         }
 
+        if (
+            typeof data.dropToken ===
+            "boolean"
+        ) {
+
+            draftState.dropToken =
+                data.dropToken;
+
+        }
 
         if (
             typeof data.myTurn ===
@@ -951,6 +760,66 @@ draftSocket.on(
 
         }
 
+        if (
+            typeof data.draftComplete ===
+            "boolean"
+        ) {
+
+            draftState.draftComplete =
+                data.draftComplete;
+
+        }
+
+        renderTeam();
+
+        updateDropTokenUI();
+
+        updateTurnUI();
+
+        if (
+            draftState.draftComplete
+        ) {
+
+            finishDraftUI();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — TURN
+   ========================================================= */
+
+draftSocket.on(
+    "draft:turn",
+    data => {
+
+        if (!data) {
+            return;
+        }
+
+        if (
+            typeof data.playerNumber ===
+            "number"
+        ) {
+
+            draftState.myTurn =
+                data.playerNumber ===
+                draftState.playerNumber;
+
+        }
+
+        if (
+            typeof data.myTurn ===
+            "boolean"
+        ) {
+
+            draftState.myTurn =
+                data.myTurn;
+
+        }
 
         updateTurnUI();
 
@@ -967,15 +836,11 @@ draftSocket.on(
     data => {
 
         if (!data) {
-
             return;
-
         }
-
 
         draftState.drawing =
             false;
-
 
         if (data.character) {
 
@@ -985,7 +850,6 @@ draftSocket.on(
                 );
 
         }
-
 
         if (
             Array.isArray(
@@ -1000,7 +864,6 @@ draftSocket.on(
 
         }
 
-
         if (
             typeof data.dropToken ===
             "boolean"
@@ -1011,7 +874,6 @@ draftSocket.on(
 
         }
 
-
         renderCurrentCharacter();
 
         renderTeam();
@@ -1019,7 +881,6 @@ draftSocket.on(
         updateDropTokenUI();
 
         updateTurnUI();
-
 
         if (data.message) {
 
@@ -1030,60 +891,12 @@ draftSocket.on(
 
         }
 
-
         playSound(
             "draft"
         );
 
     }
 );
-
-
-/* =========================================================
-   NORMALIZE CHARACTER
-   ========================================================= */
-
-function normalizeCharacter(
-    character
-) {
-
-    if (
-        typeof character ===
-        "string"
-    ) {
-
-        return {
-            name:
-                character
-        };
-
-    }
-
-
-    if (
-        character &&
-        typeof character ===
-        "object"
-    ) {
-
-        return {
-            ...character,
-            name:
-                String(
-                    character.name ||
-                    "Unknown"
-                ).trim()
-        };
-
-    }
-
-
-    return {
-        name:
-            "Unknown"
-    };
-
-}
 
 
 /* =========================================================
@@ -1097,10 +910,8 @@ draftSocket.on(
         draftState.drawing =
             false;
 
-
         draftState.currentCharacter =
             null;
-
 
         if (
             Array.isArray(
@@ -1115,10 +926,8 @@ draftSocket.on(
 
         }
 
-
         draftState.dropToken =
             false;
-
 
         clearCurrentCharacter();
 
@@ -1128,12 +937,10 @@ draftSocket.on(
 
         updateTurnUI();
 
-
         showMessage(
             "Character dropped. Draw your replacement.",
             "warning"
         );
-
 
         playSound(
             "button"
@@ -1154,14 +961,11 @@ draftSocket.on(
         draftState.draftComplete =
             true;
 
-
         draftState.myTurn =
             false;
 
-
         draftState.drawing =
             false;
-
 
         if (
             Array.isArray(
@@ -1176,11 +980,9 @@ draftSocket.on(
 
         }
 
-
         renderTeam();
 
         finishDraftUI();
-
 
         showMessage(
             "Draft complete. Preparing Role Assignment...",
@@ -1192,7 +994,7 @@ draftSocket.on(
 
 
 /* =========================================================
-   SERVER — ROLES PHASE
+   SERVER — ROLES
    ========================================================= */
 
 draftSocket.on(
@@ -1203,22 +1005,18 @@ draftSocket.on(
             data?.matchId
         ) {
 
-            draftState.matchId =
-                String(
-                    data.matchId
-                );
-
-
-            setSession(
-                "adg_matchId",
-                draftState.matchId
+            saveMatchId(
+                data.matchId
             );
 
         }
 
+        /*
+         * Match ID remains stored.
+         */
 
         window.location.href =
-            ADG_DRAFT_CONFIG.rolesPage;
+            "roles.html";
 
     }
 );
@@ -1235,13 +1033,11 @@ draftSocket.on(
         draftState.drawing =
             false;
 
-
         showMessage(
             data?.message ||
             "Draft action was rejected.",
             "error"
         );
-
 
         updateTurnUI();
 
@@ -1257,18 +1053,11 @@ draftSocket.on(
     "match:error",
     data => {
 
-        draftState.drawing =
-            false;
-
-
         showMessage(
             data?.message ||
             "Match error.",
             "error"
         );
-
-
-        updateTurnUI();
 
     }
 );
@@ -1302,7 +1091,6 @@ function drawCharacter() {
 
     }
 
-
     if (
         !draftState.connected
     ) {
@@ -1316,6 +1104,18 @@ function drawCharacter() {
 
     }
 
+    if (
+        !draftState.matchId
+    ) {
+
+        showMessage(
+            "Match ID is missing.",
+            "error"
+        );
+
+        return;
+
+    }
 
     if (
         !draftState.myTurn
@@ -1330,10 +1130,9 @@ function drawCharacter() {
 
     }
 
-
     if (
         draftState.team.length >=
-        ADG_DRAFT_CONFIG.teamSize
+        TEAM_SIZE
     ) {
 
         showMessage(
@@ -1345,7 +1144,6 @@ function drawCharacter() {
 
     }
 
-
     if (
         draftState.drawing
     ) {
@@ -1354,13 +1152,10 @@ function drawCharacter() {
 
     }
 
-
     draftState.drawing =
         true;
 
-
     updateTurnUI();
-
 
     draftSocket.emit(
         "draft:draw",
@@ -1394,29 +1189,6 @@ if (dropButton) {
 function dropCharacter() {
 
     if (
-        !draftState.connected
-    ) {
-
-        showMessage(
-            "You are not connected to the server.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        draftState.draftComplete
-    ) {
-
-        return;
-
-    }
-
-
-    if (
         !draftState.dropToken
     ) {
 
@@ -1429,10 +1201,9 @@ function dropCharacter() {
 
     }
 
-
     if (
         draftState.team.length !==
-        ADG_DRAFT_CONFIG.teamSize
+        TEAM_SIZE
     ) {
 
         showMessage(
@@ -1443,7 +1214,6 @@ function dropCharacter() {
         return;
 
     }
-
 
     if (
         !draftState.myTurn
@@ -1458,7 +1228,6 @@ function dropCharacter() {
 
     }
 
-
     if (
         draftState.drawing
     ) {
@@ -1467,30 +1236,27 @@ function dropCharacter() {
 
     }
 
-
-    const characterName =
-        draftState.currentCharacter?.name ||
-        null;
-
-
-    if (!characterName) {
+    if (
+        !draftState.connected
+    ) {
 
         showMessage(
-            "There is no character to drop.",
-            "warning"
+            "You are not connected to the server.",
+            "error"
         );
 
         return;
 
     }
 
+    const name =
+        draftState.currentCharacter?.name ||
+        null;
 
     draftState.drawing =
         true;
 
-
     updateTurnUI();
-
 
     draftSocket.emit(
         "draft:drop",
@@ -1499,7 +1265,7 @@ function dropCharacter() {
                 draftState.matchId,
 
             character:
-                characterName
+                name
         }
     );
 
@@ -1513,11 +1279,8 @@ function dropCharacter() {
 function updateTurnUI() {
 
     if (!draftTurn) {
-
         return;
-
     }
-
 
     if (
         draftState.draftComplete
@@ -1529,43 +1292,16 @@ function updateTurnUI() {
         draftTurn.className =
             "draft-turn complete";
 
-
         setButtonEnabled(
             drawButton,
             false
         );
-
 
         updateDropButton();
 
         return;
 
     }
-
-
-    if (
-        draftState.reconnecting
-    ) {
-
-        draftTurn.textContent =
-            "Reconnecting...";
-
-        draftTurn.className =
-            "draft-turn waiting";
-
-
-        setButtonEnabled(
-            drawButton,
-            false
-        );
-
-
-        updateDropButton();
-
-        return;
-
-    }
-
 
     if (
         draftState.drawing
@@ -1577,12 +1313,10 @@ function updateTurnUI() {
         draftTurn.className =
             "draft-turn waiting";
 
-
         setButtonEnabled(
             drawButton,
             false
         );
-
 
         updateDropButton();
 
@@ -1590,6 +1324,26 @@ function updateTurnUI() {
 
     }
 
+    if (
+        !draftState.connected
+    ) {
+
+        draftTurn.textContent =
+            "Reconnecting...";
+
+        draftTurn.className =
+            "draft-turn waiting";
+
+        setButtonEnabled(
+            drawButton,
+            false
+        );
+
+        updateDropButton();
+
+        return;
+
+    }
 
     if (
         draftState.myTurn
@@ -1601,11 +1355,10 @@ function updateTurnUI() {
         draftTurn.className =
             "draft-turn your-turn";
 
-
         setButtonEnabled(
             drawButton,
             draftState.team.length <
-            ADG_DRAFT_CONFIG.teamSize
+                TEAM_SIZE
         );
 
     } else {
@@ -1616,14 +1369,12 @@ function updateTurnUI() {
         draftTurn.className =
             "draft-turn opponent-turn";
 
-
         setButtonEnabled(
             drawButton,
             false
         );
 
     }
-
 
     updateDropButton();
 
@@ -1637,29 +1388,23 @@ function updateTurnUI() {
 function updateDropButton() {
 
     if (!dropButton) {
-
         return;
-
     }
-
 
     const canDrop =
         draftState.dropToken &&
-        draftState.team.length ===
-            ADG_DRAFT_CONFIG.teamSize &&
+        draftState.team.length === TEAM_SIZE &&
         draftState.myTurn &&
         !draftState.drawing &&
         !draftState.draftComplete &&
-        !!draftState.currentCharacter;
-
+        draftState.connected;
 
     dropButton.disabled =
         !canDrop;
 
-
     if (
         draftState.team.length !==
-        ADG_DRAFT_CONFIG.teamSize
+        TEAM_SIZE
     ) {
 
         dropButton.title =
@@ -1679,13 +1424,6 @@ function updateDropButton() {
         dropButton.title =
             "You can only drop during your turn.";
 
-    } else if (
-        !draftState.currentCharacter
-    ) {
-
-        dropButton.title =
-            "Draw a character before using Drop Token.";
-
     } else {
 
         dropButton.title =
@@ -1703,23 +1441,29 @@ function updateDropButton() {
 function updateDropTokenUI() {
 
     if (!dropTokenCount) {
-
         return;
-
     }
-
 
     dropTokenCount.textContent =
         draftState.dropToken
             ? "1"
             : "0";
 
+    if (
+        draftState.dropToken
+    ) {
 
-    dropTokenCount.classList.toggle(
-        "used",
-        !draftState.dropToken
-    );
+        dropTokenCount.classList.remove(
+            "used"
+        );
 
+    } else {
+
+        dropTokenCount.classList.add(
+            "used"
+        );
+
+    }
 
     updateDropButton();
 
@@ -1727,166 +1471,13 @@ function updateDropTokenUI() {
 
 
 /* =========================================================
-   CHARACTER IMAGE PATH
-   ========================================================= */
-
-function getCharacterImagePath(
-    name
-) {
-
-    /*
-     * Character filenames are expected to match
-     * the character name.
-     *
-     * Example:
-     *
-     * assets/characters/Goku.jpg
-     * assets/characters/Naruto Uzumaki.jpg
-     */
-
-    return (
-        ADG_DRAFT_CONFIG.imageDirectory +
-        name +
-        ".jpg"
-    );
-
-}
-
-
-/* =========================================================
-   CHARACTER IMAGE FALLBACK
-   ========================================================= */
-
-function showCharacterFallback(
-    name
-) {
-
-    if (
-        characterImage
-    ) {
-
-        characterImage.src =
-            "";
-
-        characterImage.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (
-        characterImageFallback
-    ) {
-
-        characterImageFallback.classList.remove(
-            "hidden"
-        );
-
-
-        const letter =
-            characterImageFallback.querySelector(
-                "span"
-            );
-
-
-        if (letter) {
-
-            letter.textContent =
-                name
-                    .charAt(0)
-                    .toUpperCase();
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   SET CURRENT CHARACTER IMAGE
-   ========================================================= */
-
-function setCharacterImage(
-    name
-) {
-
-    if (!characterImage) {
-
-        return;
-
-    }
-
-
-    const imagePath =
-        getCharacterImagePath(
-            name
-        );
-
-
-    characterImage.classList.add(
-        "hidden"
-    );
-
-
-    if (
-        characterImageFallback
-    ) {
-
-        characterImageFallback.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    characterImage.onload =
-        () => {
-
-            characterImage.classList.remove(
-                "hidden"
-            );
-
-
-            if (
-                characterImageFallback
-            ) {
-
-                characterImageFallback.classList.add(
-                    "hidden"
-                );
-
-            }
-
-        };
-
-
-    characterImage.onerror =
-        () => {
-
-            showCharacterFallback(
-                name
-            );
-
-        };
-
-
-    characterImage.src =
-        imagePath;
-
-}
-
-
-/* =========================================================
-   RENDER CURRENT CHARACTER
+   CURRENT CHARACTER
    ========================================================= */
 
 function renderCurrentCharacter() {
 
     const character =
         draftState.currentCharacter;
-
 
     if (!character) {
 
@@ -1896,11 +1487,9 @@ function renderCurrentCharacter() {
 
     }
 
-
     const name =
         character.name ||
         "Unknown";
-
 
     if (characterName) {
 
@@ -1909,19 +1498,16 @@ function renderCurrentCharacter() {
 
     }
 
-
     if (draftMessage) {
 
         draftMessage.textContent =
-            "Character drawn. Waiting for the next draft action.";
+            "Character drawn. Waiting for the draft action.";
 
     }
-
 
     setCharacterImage(
         name
     );
-
 
     if (characterCard) {
 
@@ -1943,14 +1529,12 @@ function clearCurrentCharacter() {
     draftState.currentCharacter =
         null;
 
-
     if (characterName) {
 
         characterName.textContent =
             "Waiting for draw...";
 
     }
-
 
     if (draftMessage) {
 
@@ -1959,11 +1543,36 @@ function clearCurrentCharacter() {
 
     }
 
+    if (characterImage) {
 
-    showCharacterFallback(
-        "?"
-    );
+        characterImage.src =
+            "";
 
+        characterImage.classList.add(
+            "hidden"
+        );
+
+    }
+
+    if (characterImageFallback) {
+
+        characterImageFallback.classList.remove(
+            "hidden"
+        );
+
+        const letter =
+            characterImageFallback.querySelector(
+                "span"
+            );
+
+        if (letter) {
+
+            letter.textContent =
+                "?";
+
+        }
+
+    }
 
     if (characterCard) {
 
@@ -1977,45 +1586,168 @@ function clearCurrentCharacter() {
 
 
 /* =========================================================
-   RENDER PRIVATE TEAM
+   CHARACTER IMAGE
+   ========================================================= */
+
+function setCharacterImage(
+    name
+) {
+
+    if (!characterImage) {
+        return;
+    }
+
+    const candidates =
+        getImageCandidates(
+            name
+        );
+
+    let index =
+        0;
+
+    const tryImage =
+        () => {
+
+            if (
+                index >=
+                candidates.length
+            ) {
+
+                characterImage.src =
+                    "";
+
+                characterImage.classList.add(
+                    "hidden"
+                );
+
+                if (
+                    characterImageFallback
+                ) {
+
+                    characterImageFallback.classList.remove(
+                        "hidden"
+                    );
+
+                    const letter =
+                        characterImageFallback.querySelector(
+                            "span"
+                        );
+
+                    if (letter) {
+
+                        letter.textContent =
+                            name
+                                .charAt(0)
+                                .toUpperCase();
+
+                    }
+
+                }
+
+                return;
+
+            }
+
+            characterImage.src =
+                candidates[index++];
+
+        };
+
+    characterImage.onload =
+        () => {
+
+            characterImage.classList.remove(
+                "hidden"
+            );
+
+            if (
+                characterImageFallback
+            ) {
+
+                characterImageFallback.classList.add(
+                    "hidden"
+                );
+
+            }
+
+        };
+
+    characterImage.onerror =
+        tryImage;
+
+    characterImage.classList.add(
+        "hidden"
+    );
+
+    if (
+        characterImageFallback
+    ) {
+
+        characterImageFallback.classList.remove(
+            "hidden"
+        );
+
+    }
+
+    tryImage();
+
+}
+
+
+/* =========================================================
+   IMAGE CANDIDATES
+   ========================================================= */
+
+function getImageCandidates(
+    name
+) {
+
+    const encoded =
+        encodeURIComponent(
+            name
+        );
+
+    return [
+
+        `assets/characters/${encoded}.jpg`,
+
+        `assets/characters/${encoded}.jpeg`,
+
+        `assets/characters/${encoded}.png`,
+
+        `assets/characters/${encoded}.webp`
+
+    ];
+
+}
+
+
+/* =========================================================
+   PRIVATE TEAM
    ========================================================= */
 
 function renderTeam() {
 
     if (!draftTeam) {
-
         return;
-
     }
-
 
     draftTeam.innerHTML =
         "";
 
-
-    const team =
-        normalizeTeam(
-            draftState.team
-        );
-
-
-    draftState.team =
-        team;
-
-
     for (
         let i = 0;
-        i < ADG_DRAFT_CONFIG.teamSize;
+        i < TEAM_SIZE;
         i++
     ) {
 
         if (
-            team[i]
+            draftState.team[i]
         ) {
 
             draftTeam.appendChild(
                 createTeamCard(
-                    team[i],
+                    draftState.team[i],
                     i
                 )
             );
@@ -2036,7 +1768,7 @@ function renderTeam() {
 
 
 /* =========================================================
-   CREATE EMPTY TEAM SLOT
+   EMPTY SLOT
    ========================================================= */
 
 function createEmptySlot(
@@ -2048,10 +1780,8 @@ function createEmptySlot(
             "div"
         );
 
-
     slot.className =
         "draft-team-slot empty";
-
 
     slot.innerHTML = `
         <div class="draft-slot-number">
@@ -2067,14 +1797,13 @@ function createEmptySlot(
         </span>
     `;
 
-
     return slot;
 
 }
 
 
 /* =========================================================
-   CREATE TEAM CARD
+   TEAM CARD
    ========================================================= */
 
 function createTeamCard(
@@ -2082,26 +1811,22 @@ function createTeamCard(
     index
 ) {
 
-    const normalized =
-        normalizeCharacter(
-            character
-        );
-
-
     const name =
-        normalized.name ||
-        "Unknown";
+        typeof character ===
+        "string"
 
+            ? character
+
+            : character?.name ||
+              "Unknown";
 
     const card =
         document.createElement(
             "div"
         );
 
-
     card.className =
         "draft-team-slot filled";
-
 
     card.dataset.character =
         name;
@@ -2112,17 +1837,20 @@ function createTeamCard(
             "img"
         );
 
-
     image.alt =
         name;
-
 
     image.loading =
         "lazy";
 
 
-    image.className =
-        "hidden";
+    const candidates =
+        getImageCandidates(
+            name
+        );
+
+    let imageIndex =
+        0;
 
 
     const fallback =
@@ -2130,10 +1858,8 @@ function createTeamCard(
             "div"
         );
 
-
     fallback.className =
         "draft-card-fallback";
-
 
     fallback.textContent =
         name
@@ -2141,10 +1867,32 @@ function createTeamCard(
             .toUpperCase();
 
 
-    const imagePath =
-        getCharacterImagePath(
-            name
-        );
+    const tryImage =
+        () => {
+
+            if (
+                imageIndex >=
+                candidates.length
+            ) {
+
+                image.classList.add(
+                    "hidden"
+                );
+
+                fallback.classList.remove(
+                    "hidden"
+                );
+
+                return;
+
+            }
+
+            image.src =
+                candidates[
+                    imageIndex++
+                ];
+
+        };
 
 
     image.onload =
@@ -2162,21 +1910,18 @@ function createTeamCard(
 
 
     image.onerror =
-        () => {
-
-            image.classList.add(
-                "hidden"
-            );
-
-            fallback.classList.remove(
-                "hidden"
-            );
-
-        };
+        tryImage;
 
 
-    image.src =
-        imagePath;
+    image.classList.add(
+        "hidden"
+    );
+
+    fallback.classList.remove(
+        "hidden"
+    );
+
+    tryImage();
 
 
     const number =
@@ -2184,10 +1929,8 @@ function createTeamCard(
             "span"
         );
 
-
     number.className =
         "draft-slot-number";
-
 
     number.textContent =
         String(
@@ -2200,10 +1943,8 @@ function createTeamCard(
             "span"
         );
 
-
     nameElement.className =
         "draft-character-name";
-
 
     nameElement.textContent =
         name;
@@ -2239,22 +1980,30 @@ function setDraftWaitingUI() {
 
     if (draftTurn) {
 
-        draftTurn.textContent =
-            draftState.reconnecting
-                ? "Reconnecting..."
-                : "Waiting for match...";
+        if (
+            draftState.connected &&
+            draftState.matchId
+        ) {
+
+            draftTurn.textContent =
+                "Waiting for match...";
+
+        } else {
+
+            draftTurn.textContent =
+                "Reconnecting...";
+
+        }
 
         draftTurn.className =
             "draft-turn waiting";
 
     }
 
-
     setButtonEnabled(
         drawButton,
         false
     );
-
 
     updateDropButton();
 
@@ -2270,14 +2019,11 @@ function finishDraftUI() {
     draftState.draftComplete =
         true;
 
-
     draftState.myTurn =
         false;
 
-
     draftState.drawing =
         false;
-
 
     if (draftTurn) {
 
@@ -2289,12 +2035,10 @@ function finishDraftUI() {
 
     }
 
-
     setButtonEnabled(
         drawButton,
         false
     );
-
 
     if (dropButton) {
 
@@ -2302,7 +2046,6 @@ function finishDraftUI() {
             true;
 
     }
-
 
     if (draftMessage) {
 
@@ -2324,14 +2067,49 @@ function setButtonEnabled(
 ) {
 
     if (!button) {
-
         return;
-
     }
-
 
     button.disabled =
         !enabled;
+
+}
+
+
+/* =========================================================
+   CHARACTER NORMALIZATION
+   ========================================================= */
+
+function normalizeCharacter(
+    character
+) {
+
+    if (
+        typeof character ===
+        "string"
+    ) {
+
+        return {
+            name:
+                character
+        };
+
+    }
+
+    return {
+        ...character
+    };
+
+}
+
+
+function normalizeTeam(
+    team
+) {
+
+    return team.map(
+        normalizeCharacter
+    );
 
 }
 
@@ -2370,17 +2148,10 @@ draftSocket.on(
         draftState.drawing =
             false;
 
-
         draftState.myTurn =
             false;
 
-
-        draftState.reconnecting =
-            false;
-
-
         setDraftWaitingUI();
-
 
         showMessage(
             data?.message ||
@@ -2409,6 +2180,22 @@ document.addEventListener(
 
         }
 
+        if (
+            !document.hidden &&
+            draftSocket.connected &&
+            draftState.matchId
+        ) {
+
+            draftSocket.emit(
+                "match:reconnect",
+                {
+                    matchId:
+                        draftState.matchId
+                }
+            );
+
+        }
+
     }
 );
 
@@ -2420,26 +2207,7 @@ document.addEventListener(
 window.ADG_DRAFT_STATE =
     draftState;
 
-window.ADG_DRAFT = {
-
-    state:
-        draftState,
-
-    socket:
-        draftSocket,
-
-    draw:
-        drawCharacter,
-
-    drop:
-        dropCharacter,
-
-    reconnect:
-        reconnectToMatch
-
-};
-
 
 /* =========================================================
-   END OF DRAFT.JS
+   END OF ADG DRAFT.JS
    ========================================================= */
