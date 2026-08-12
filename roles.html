@@ -5,24 +5,32 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <meta name="theme-color"
-          content="#080a12">
+    <meta
+        name="theme-color"
+        content="#080b12"
+    >
 
-    <meta name="description"
-          content="ADG — Role Assignment">
+    <meta
+        name="description"
+        content="ADG — Face to Face"
+    >
 
     <title>⚔️ ADG — Role Assignment</title>
 
-    <link rel="stylesheet"
-          href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
 
-<body class="roles-page">
+<body class="draft-page">
 
 
     <!-- =====================================================
@@ -38,10 +46,9 @@
 
         <div
             id="connectionStatus"
-            class="connection-status">
-
+            class="connection-status"
+        >
             Connecting...
-
         </div>
 
     </header>
@@ -55,30 +62,94 @@
 
 
         <!-- =================================================
-             ROLE HEADER
+             MATCH INFORMATION
              ================================================= -->
 
-        <section class="roles-header">
+        <section class="draft-header">
 
             <h1>
                 🎭 ROLE ASSIGNMENT
             </h1>
 
 
-            <p
-                id="roleAnimeTitle"
-                class="role-status">
-
-                One Piece
-
+            <p>
+                <span id="animeTitle">
+                    Face to Face
+                </span>
             </p>
 
 
-            <div
-                id="roleCounter"
-                class="role-counter">
+            <!-- MATCH CODE -->
 
+            <div
+                id="matchCodeBox"
+                class="match-code-box"
+            >
+
+                <span class="match-code-label">
+                    MATCH CODE
+                </span>
+
+
+                <strong
+                    id="matchCode"
+                    class="match-code"
+                >
+                    Loading...
+                </strong>
+
+
+                <button
+                    id="copyMatchCodeButton"
+                    type="button"
+                    class="secondary-btn"
+                >
+                    📋 Copy
+                </button>
+
+            </div>
+
+
+            <div
+                id="roleProgress"
+                class="draft-turn waiting"
+            >
                 0 / 6 Roles Assigned
+            </div>
+
+
+            <p id="roleInstruction">
+                Assign all six unique roles to continue.
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             ROLE ASSIGNMENT
+             ================================================= -->
+
+        <section class="draft-panel">
+
+            <div class="draft-header">
+
+                <h2>
+                    🏴 Your Team
+                </h2>
+
+                <p>
+                    Assign one unique role to each character.
+                </p>
+
+            </div>
+
+
+            <div
+                id="rolesTeam"
+                class="draft-team"
+            >
+
+                <!-- roles.js creates the cards -->
 
             </div>
 
@@ -86,81 +157,64 @@
 
 
         <!-- =================================================
-             PRIVATE TEAM
-             ================================================= -->
-
-        <section
-            id="roleContainer"
-            data-role-container>
-
-            <!--
-
-                roles.js generates the six character cards.
-
-                IMPORTANT:
-
-                Only the current player's six characters
-                are sent to this page.
-
-                The opponent's team and roles are never
-                rendered here.
-
-            -->
-
-        </section>
-
-
-        <!-- =================================================
-             VALIDATION
-             ================================================= -->
-
-        <div
-            id="roleValidation"
-            data-role-validation
-            class="invalid">
-
-            Assign all six unique roles to continue.
-
-        </div>
-
-
-        <!-- =================================================
              ACTIONS
              ================================================= -->
 
-        <section class="roles-actions">
+        <section class="draft-panel">
+
+            <div class="lobby-actions">
+
+                <button
+                    id="backButton"
+                    type="button"
+                    class="secondary-btn"
+                >
+                    ← Back
+                </button>
 
 
-            <button
-                id="backToDraftButton"
-                class="adg-button secondary"
-                type="button">
+                <button
+                    id="continueButton"
+                    type="button"
+                    class="primary-btn"
+                    disabled
+                >
+                    Continue → Battle Arena
+                </button>
 
-                ← Back
-
-            </button>
-
-
-            <button
-                id="continueBattleButton"
-                class="adg-button"
-                type="button"
-                disabled>
-
-                Continue → Battle Arena
-
-            </button>
+            </div>
 
         </section>
 
 
         <!-- =================================================
-             SOUND CONTROL
+             STATUS
+             ================================================= -->
+
+        <div
+            id="rolesStatus"
+            class="hidden"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <div
+            id="adgMessage"
+            class="hidden"
+            role="alert"
+            aria-live="assertive"
+        ></div>
+
+
+        <!-- =================================================
+             SOUND
              ================================================= -->
 
         <div
             class="sound-control"
-            style="width:max-content;margin:25px auto 0;">
+            style="width:max-content;margin:25px auto 0;"
+        >
 
             <span data-volume-icon>
                 🔊
@@ -173,10 +227,11 @@
                 max="100"
                 value="65"
                 aria-label="Master volume"
-                data-master-volume>
+                data-adg-volume
+            >
 
 
-            <span data-volume-value>
+            <span data-adg-volume-label>
                 65%
             </span>
 
@@ -185,10 +240,9 @@
                 type="button"
                 aria-label="Mute"
                 aria-pressed="false"
-                data-mute-button>
-
-                🔊
-
+                data-adg-mute
+            >
+                🔊 Mute
             </button>
 
         </div>
@@ -197,32 +251,21 @@
 
 
     <!-- =====================================================
-         GLOBAL MESSAGE
-         ===================================================== -->
-
-    <div
-        id="adgMessage"
-        class="adg-message hidden"
-        role="status"
-        aria-live="polite">
-
-    </div>
-
-
-    <!-- =====================================================
          SOCKET.IO
          ===================================================== -->
 
-   <script src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"></script>
+    <script
+        src="https://adg-server-t6y1.onrender.com/socket.io/socket.io.js"
+    ></script>
 
 
     <!-- =====================================================
-         GAME DATABASE
+         DATABASE
          ===================================================== -->
 
     <script
-        src="js/database.js">
-    </script>
+        src="js/database.js"
+    ></script>
 
 
     <!-- =====================================================
@@ -230,19 +273,19 @@
          ===================================================== -->
 
     <script
-        src="js/sound.js">
-    </script>
+        src="js/sound.js"
+    ></script>
 
 
     <!-- =====================================================
-         ROLE ENGINE
+         ROLES ENGINE
          ===================================================== -->
 
     <script
-        src="js/roles.js">
-    </script>
+        src="js/roles.js"
+    ></script>
+
 
 </body>
 
 </html>
-```
