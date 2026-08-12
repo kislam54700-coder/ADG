@@ -1,54 +1,112 @@
 /* =========================================================
    ADG — ROLES.JS
-   Face to Face — Private Role Assignment Client
+   Clean Online Multiplayer Role Assignment Client
+
+   RULES
+   - Battle name: Face to Face
+   - No anime selection
+   - Match ID persists across reload/reconnect
+   - Player number persists across reload/reconnect
+   - Private team only
+   - Exactly 6 characters
+   - Exactly 6 unique roles
+   - Server role values are lowercase
+   - Character images: assets/characters/
    ========================================================= */
 
 "use strict";
 
-
 /* =========================================================
-   CONSTANTS
+   CONFIGURATION
    ========================================================= */
 
 const ADG_SERVER_URL =
     "https://adg-server-t6y1.onrender.com";
 
-
-const ADG_ANIME_NAME =
+const DEFAULT_BATTLE_NAME =
     "Face to Face";
 
+const TEAM_SIZE = 6;
+
+
+/* =========================================================
+   ROLES
+   ========================================================= */
 
 const ADG_ROLES = [
-    "Captain",
-    "Vice Captain",
-    "Tank",
-    "Healer",
-    "Support",
-    "Traitor"
+    {
+        value: "captain",
+        label: "Captain"
+    },
+    {
+        value: "vice-captain",
+        label: "Vice-Captain"
+    },
+    {
+        value: "tank",
+        label: "Tank"
+    },
+    {
+        value: "healer",
+        label: "Healer"
+    },
+    {
+        value: "support",
+        label: "Support"
+    },
+    {
+        value: "traitor",
+        label: "Traitor"
+    }
 ];
 
 
 /* =========================================================
-   SOCKET
+   SESSION HELPERS
    ========================================================= */
 
-const rolesSocket = io(
-    ADG_SERVER_URL,
-    {
-        transports: [
-            "websocket",
-            "polling"
-        ],
-
-        reconnection: true,
-
-        reconnectionAttempts: Infinity,
-
-        reconnectionDelay: 1000,
-
-        reconnectionDelayMax: 5000
+function getSession(key) {
+    try {
+        return sessionStorage.getItem(key);
+    } catch (error) {
+        console.warn("[ADG] Session read error:", error);
+        return null;
     }
-);
+}
+
+
+function setSession(key, value) {
+    try {
+        sessionStorage.setItem(key, String(value));
+    } catch (error) {
+        console.warn("[ADG] Session write error:", error);
+    }
+}
+
+
+function removeSession(key) {
+    try {
+        sessionStorage.removeItem(key);
+    } catch (error) {
+        console.warn("[ADG] Session remove error:", error);
+    }
+}
+
+
+/* =========================================================
+   RESTORE SESSION FIRST
+   ========================================================= */
+
+const storedMatchId =
+    getSession("adg_matchId");
+
+const storedPlayerNumber =
+    Number(
+        getSession("adg_playerNumber")
+    ) || null;
+
+const storedPlayerName =
+    getSession("adg_playerName") || "";
 
 
 /* =========================================================
@@ -58,108 +116,90 @@ const rolesSocket = io(
 const rolesState = {
 
     matchId:
-        null,
+        storedMatchId
+            ? String(storedMatchId).trim().toUpperCase()
+            : null,
 
     playerNumber:
-        null,
+        storedPlayerNumber,
 
     playerName:
-        "",
+        storedPlayerName,
 
-    anime:
-        ADG_ANIME_NAME,
+    battleName:
+        DEFAULT_BATTLE_NAME,
 
     team:
         [],
 
-    roles:
+    assignments:
         {},
+
+    submitted:
+        false,
+
+    locked:
+        false,
 
     connected:
         false,
 
-    complete:
+    reconnecting:
         false
+
 };
 
 
 /* =========================================================
-   SESSION HELPERS
+   SOCKET.IO
    ========================================================= */
 
-function getSession(key) {
+if (
+    typeof io !== "function"
+) {
 
-    try {
-
-        return sessionStorage.getItem(key);
-
-    } catch (error) {
-
-        console.warn(
-            "Session read error:",
-            error
-        );
-
-        return null;
-    }
-}
-
-
-function setSession(key, value) {
-
-    try {
-
-        sessionStorage.setItem(
-            key,
-            String(value)
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Session write error:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   RESTORE SESSION
-   ========================================================= */
-
-rolesState.matchId =
-    getSession("adg_matchId");
-
-
-rolesState.playerNumber =
-    Number(
-        getSession("adg_playerNumber")
+    console.error(
+        "[ADG] Socket.IO was not loaded."
     );
 
+    throw new Error(
+        "Socket.IO is required before roles.js."
+    );
 
-rolesState.playerName =
-    getSession("adg_playerName") ||
-    "";
+}
 
 
 /*
  * IMPORTANT:
- *
- * ADG no longer has anime selection.
- *
- * The game is always:
- *
- * FACE TO FACE
+ * playerNumber is placed inside auth BEFORE connecting.
+ * This allows the server to identify the player immediately.
  */
 
-rolesState.anime =
-    ADG_ANIME_NAME;
+const rolesSocket = io(
+    ADG_SERVER_URL,
+    {
+        transports: [
+            "websocket",
+            "polling"
+        ],
 
+        autoConnect: true,
 
-setSession(
-    "adg_anime",
-    ADG_ANIME_NAME
+        reconnection: true,
+
+        reconnectionAttempts: Infinity,
+
+        reconnectionDelay: 1000,
+
+        reconnectionDelayMax: 5000,
+
+        timeout: 10000,
+
+        auth: {
+            playerNumber:
+                rolesState.playerNumber
+        }
+    }
 );
 
 
@@ -167,161 +207,273 @@ setSession(
    DOM
    ========================================================= */
 
-const animeTitle =
-    document.getElementById(
-        "animeTitle"
-    );
+const battleTitleElement =
+    document.getElementById("animeTitle") ||
+    document.getElementById("battleName") ||
+    document.getElementById("battleTitle");
 
+const rolesTeamElement =
+    document.getElementById("rolesTeam");
 
-const matchCode =
-    document.getElementById(
-        "matchCode"
-    );
+const rolesMessageElement =
+    document.getElementById("rolesMessage");
 
+const rolesStatusElement =
+    document.getElementById("rolesStatus");
 
-const copyMatchCodeButton =
-    document.getElementById(
-        "copyMatchCodeButton"
-    );
+const submitRolesButton =
+    document.getElementById("submitRolesButton");
 
+const connectionStatusElement =
+    document.getElementById("connectionStatus");
 
-const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
+const rolesProgressElement =
+    document.getElementById("rolesProgress");
 
-
-const roleProgress =
-    document.getElementById(
-        "roleProgress"
-    );
-
-
-const roleInstruction =
-    document.getElementById(
-        "roleInstruction"
-    );
-
-
-const rolesTeam =
-    document.getElementById(
-        "rolesTeam"
-    );
-
-
-const continueButton =
-    document.getElementById(
-        "continueButton"
-    );
-
-
-const backButton =
-    document.getElementById(
-        "backButton"
-    );
-
-
-const rolesStatus =
-    document.getElementById(
-        "rolesStatus"
-    );
-
-
-const globalMessage =
-    document.getElementById(
-        "adgMessage"
-    );
+const rolesProgressTextElement =
+    document.getElementById("rolesProgressText");
 
 
 /* =========================================================
-   INITIAL UI
+   SESSION SAVE
    ========================================================= */
 
-if (animeTitle) {
+function saveSession() {
 
-    animeTitle.textContent =
-        ADG_ANIME_NAME;
+    if (rolesState.matchId) {
+
+        setSession(
+            "adg_matchId",
+            rolesState.matchId
+        );
+
+    }
+
+    if (
+        rolesState.playerNumber === 1 ||
+        rolesState.playerNumber === 2
+    ) {
+
+        setSession(
+            "adg_playerNumber",
+            rolesState.playerNumber
+        );
+
+    }
+
+    if (rolesState.playerName) {
+
+        setSession(
+            "adg_playerName",
+            rolesState.playerName
+        );
+
+    }
+
+    setSession(
+        "adg_battleName",
+        DEFAULT_BATTLE_NAME
+    );
+
 }
 
 
-showMatchCode();
-
-
-renderTeam();
-
-updateProgress();
-
-updateConnectionUI(
-    false
-);
-
-
 /* =========================================================
-   MATCH CODE
+   MATCH CODE DISPLAY
    ========================================================= */
 
-function showMatchCode() {
+function getMatchCodeElement() {
 
-    if (!matchCode) {
+    return (
+        document.getElementById("matchCode") ||
+        document.getElementById("matchCodeValue") ||
+        document.getElementById("createdMatchId")
+    );
+
+}
+
+
+function ensureMatchCodeDisplay() {
+
+    let codeElement =
+        getMatchCodeElement();
+
+    if (codeElement) {
+
+        updateMatchCodeDisplay();
+
+        return;
+
+    }
+
+
+    const parent =
+        battleTitleElement?.parentElement ||
+        document.querySelector(".draft-header") ||
+        document.querySelector("main") ||
+        document.body;
+
+
+    if (!parent) {
         return;
     }
 
 
-    if (rolesState.matchId) {
+    const wrapper =
+        document.createElement("div");
 
-        matchCode.textContent =
+    wrapper.id =
+        "adgMatchCodeWrapper";
+
+    wrapper.className =
+        "adg-match-code";
+
+
+    const label =
+        document.createElement("span");
+
+    label.textContent =
+        "MATCH CODE: ";
+
+
+    codeElement =
+        document.createElement("strong");
+
+    codeElement.id =
+        "matchCodeValue";
+
+
+    const copyButton =
+        document.createElement("button");
+
+    copyButton.type =
+        "button";
+
+    copyButton.id =
+        "copyMatchCodeButton";
+
+    copyButton.textContent =
+        "📋 Copy";
+
+    copyButton.addEventListener(
+        "click",
+        copyMatchCode
+    );
+
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(codeElement);
+    wrapper.appendChild(copyButton);
+
+    parent.appendChild(wrapper);
+
+    updateMatchCodeDisplay();
+
+}
+
+
+function updateMatchCodeDisplay() {
+
+    const codeElement =
+        getMatchCodeElement();
+
+    if (!codeElement) {
+        return;
+    }
+
+
+    codeElement.textContent =
+        rolesState.matchId ||
+        "------";
+
+}
+
+
+async function copyMatchCode() {
+
+    if (!rolesState.matchId) {
+
+        showMessage(
+            "Match code is not available yet.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            rolesState.matchId
+        );
+
+        showMessage(
+            "Match code copied.",
+            "success"
+        );
+
+    } catch (error) {
+
+        const input =
+            document.createElement("input");
+
+        input.value =
             rolesState.matchId;
 
-    } else {
+        document.body.appendChild(input);
 
-        matchCode.textContent =
-            "Unavailable";
+        input.select();
+
+        try {
+
+            document.execCommand("copy");
+
+            showMessage(
+                "Match code copied.",
+                "success"
+            );
+
+        } catch (copyError) {
+
+            showMessage(
+                `Match Code: ${rolesState.matchId}`,
+                "info"
+            );
+
+        }
+
+        input.remove();
+
     }
+
 }
 
 
 /* =========================================================
-   COPY MATCH CODE
+   BATTLE NAME
    ========================================================= */
 
-if (copyMatchCodeButton) {
+function setBattleName() {
 
-    copyMatchCodeButton.addEventListener(
-        "click",
-        async () => {
-
-            if (!rolesState.matchId) {
-
-                showMessage(
-                    "Match code is unavailable.",
-                    "error"
-                );
-
-                return;
-            }
+    rolesState.battleName =
+        DEFAULT_BATTLE_NAME;
 
 
-            try {
+    if (battleTitleElement) {
 
-                await navigator.clipboard.writeText(
-                    rolesState.matchId
-                );
+        battleTitleElement.textContent =
+            DEFAULT_BATTLE_NAME;
+
+    }
 
 
-                showMessage(
-                    "Match code copied.",
-                    "success"
-                );
-
-            } catch (error) {
-
-                showMessage(
-                    "Could not copy match code.",
-                    "error"
-                );
-            }
-        }
+    setSession(
+        "adg_battleName",
+        DEFAULT_BATTLE_NAME
     );
+
 }
 
 
@@ -335,9 +487,8 @@ function showMessage(
 ) {
 
     const element =
-        globalMessage ||
-        rolesStatus;
-
+        rolesMessageElement ||
+        rolesStatusElement;
 
     if (!element) {
         return;
@@ -346,7 +497,6 @@ function showMessage(
 
     element.textContent =
         message;
-
 
     element.classList.remove(
         "hidden",
@@ -362,6 +512,7 @@ function showMessage(
         element.classList.add(
             type
         );
+
     }
 
 
@@ -379,52 +530,76 @@ function showMessage(
                 );
 
             },
-            4000
+            5000
         );
+
 }
 
 
 /* =========================================================
-   CONNECTION UI
+   CONNECTION STATUS
    ========================================================= */
 
-function updateConnectionUI(
-    connected
+function updateConnectionStatus(
+    connected,
+    reconnecting = false
 ) {
 
     rolesState.connected =
-        connected;
+        Boolean(connected);
+
+    rolesState.reconnecting =
+        Boolean(reconnecting);
 
 
-    if (!connectionStatus) {
+    if (!connectionStatusElement) {
+
+        updateSubmitButton();
+
         return;
+
     }
 
 
-    connectionStatus.classList.remove(
+    connectionStatusElement.classList.remove(
         "connected",
-        "disconnected"
+        "disconnected",
+        "reconnecting"
     );
 
 
     if (connected) {
 
-        connectionStatus.textContent =
+        connectionStatusElement.textContent =
             "Connected";
 
-        connectionStatus.classList.add(
+        connectionStatusElement.classList.add(
             "connected"
+        );
+
+    } else if (reconnecting) {
+
+        connectionStatusElement.textContent =
+            "Reconnecting...";
+
+        connectionStatusElement.classList.add(
+            "reconnecting"
         );
 
     } else {
 
-        connectionStatus.textContent =
-            "Connecting...";
+        connectionStatusElement.textContent =
+            "Disconnected";
 
-        connectionStatus.classList.add(
+        connectionStatusElement.classList.add(
             "disconnected"
         );
+
     }
+
+
+    updateSubmitButton();
+
 }
 
 
@@ -436,60 +611,121 @@ rolesSocket.on(
     "connect",
     () => {
 
-        updateConnectionUI(
-            true
+        console.log(
+            "[ADG] Socket connected:",
+            rolesSocket.id
         );
 
 
-        showMatchCode();
+        updateConnectionStatus(
+            true,
+            false
+        );
 
 
         /*
-         * Reconnect to the existing match.
+         * IMPORTANT:
+         * Socket.IO may reconnect with a new socket ID.
          *
-         * Match ID is taken from sessionStorage.
+         * Send the persistent match ID and player number
+         * again so the server can restore the player.
          */
 
-        if (!rolesState.matchId) {
+        if (
+            rolesState.matchId &&
+            (
+                rolesState.playerNumber === 1 ||
+                rolesState.playerNumber === 2
+            )
+        ) {
 
-            updateConnectionUI(
-                true
-            );
+            reconnectToMatch();
 
+        } else {
 
             showMessage(
-                "Match code is missing.",
-                "error"
+                "Connected. Waiting for match information...",
+                "info"
             );
 
-            return;
         }
 
-
-        rolesSocket.emit(
-            "match:reconnect",
-            {
-                matchId:
-                    rolesState.matchId
-            }
-        );
     }
 );
 
 
 /* =========================================================
-   SOCKET RECONNECTING
+   SOCKET CONNECT ERROR
+   ========================================================= */
+
+rolesSocket.on(
+    "connect_error",
+    error => {
+
+        console.warn(
+            "[ADG] Connection error:",
+            error?.message || error
+        );
+
+
+        updateConnectionStatus(
+            false,
+            true
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SOCKET RECONNECT ATTEMPT
    ========================================================= */
 
 rolesSocket.io.on(
     "reconnect_attempt",
     () => {
 
-        if (connectionStatus) {
+        updateConnectionStatus(
+            false,
+            true
+        );
 
-            connectionStatus.textContent =
-                "Reconnecting...";
+    }
+);
+
+
+/* =========================================================
+   SOCKET RECONNECT
+   ========================================================= */
+
+rolesSocket.io.on(
+    "reconnect",
+    () => {
+
+        updateConnectionStatus(
+            true,
+            false
+        );
+
+
+        /*
+         * connect event normally handles restoration.
+         * This additional call is harmless and ensures
+         * persistent match restoration.
+         */
+
+        if (
+            rolesState.matchId &&
+            (
+                rolesState.playerNumber === 1 ||
+                rolesState.playerNumber === 2
+            )
+        ) {
+
+            reconnectToMatch();
+
         }
+
     }
 );
 
@@ -500,335 +736,416 @@ rolesSocket.io.on(
 
 rolesSocket.on(
     "disconnect",
-    () => {
+    reason => {
 
-        updateConnectionUI(
-            false
+        console.warn(
+            "[ADG] Disconnected:",
+            reason
         );
 
 
-        showMessage(
-            "Connection lost. Reconnecting...",
-            "error"
+        updateConnectionStatus(
+            false,
+            true
         );
+
+
+        if (
+            reason !== "io client disconnect"
+        ) {
+
+            showMessage(
+                "Connection lost. Reconnecting...",
+                "warning"
+            );
+
+        }
+
     }
 );
 
 
 /* =========================================================
-   SERVER — MATCH RECONNECTED
+   RECONNECT TO EXISTING MATCH
+   ========================================================= */
+
+function reconnectToMatch() {
+
+    if (!rolesState.matchId) {
+
+        console.warn(
+            "[ADG] No match ID available for reconnect."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        rolesState.playerNumber !== 1 &&
+        rolesState.playerNumber !== 2
+    ) {
+
+        console.warn(
+            "[ADG] No valid player number available."
+        );
+
+        return;
+
+    }
+
+
+    rolesState.reconnecting =
+        true;
+
+
+    console.log(
+        "[ADG] Restoring match:",
+        rolesState.matchId,
+        "Player:",
+        rolesState.playerNumber
+    );
+
+
+    /*
+     * Send BOTH values.
+     *
+     * This is the important part for your server.
+     */
+
+    rolesSocket.emit(
+        "match:reconnect",
+        {
+            matchId:
+                rolesState.matchId,
+
+            playerNumber:
+                rolesState.playerNumber
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MATCH RECONNECTED
    ========================================================= */
 
 rolesSocket.on(
     "match:reconnected",
     data => {
 
+        console.log(
+            "[ADG] Match restored:",
+            data
+        );
+
+
         if (!data) {
             return;
         }
 
 
-        if (data.matchId) {
-
-            rolesState.matchId =
-                data.matchId;
-
-            setSession(
-                "adg_matchId",
-                data.matchId
-            );
-        }
+        applyServerMatchData(
+            data
+        );
 
 
-        if (data.playerNumber) {
-
-            rolesState.playerNumber =
-                Number(
-                    data.playerNumber
-                );
-
-            setSession(
-                "adg_playerNumber",
-                String(
-                    data.playerNumber
-                )
-            );
-        }
+        rolesState.reconnecting =
+            false;
 
 
-        if (Array.isArray(data.team)) {
-
-            rolesState.team =
-                normalizeTeam(
-                    data.team
-                );
-        }
+        updateConnectionStatus(
+            true,
+            false
+        );
 
 
-        if (data.roles) {
+        showMessage(
+            "Match restored.",
+            "success"
+        );
 
-            rolesState.roles =
-                normalizeRoles(
-                    data.roles
-                );
-        }
-
-
-        showMatchCode();
-
-        renderTeam();
-
-        updateProgress();
     }
 );
 
 
 /* =========================================================
-   SERVER — ROLES STATE
+   APPLY SERVER MATCH DATA
+   ========================================================= */
+
+function applyServerMatchData(
+    data
+) {
+
+    if (
+        data.matchId
+    ) {
+
+        rolesState.matchId =
+            String(
+                data.matchId
+            )
+            .trim()
+            .toUpperCase();
+
+    }
+
+
+    if (
+        data.playerNumber === 1 ||
+        data.playerNumber === 2
+    ) {
+
+        rolesState.playerNumber =
+            Number(
+                data.playerNumber
+            );
+
+    }
+
+
+    if (
+        data.playerName
+    ) {
+
+        rolesState.playerName =
+            String(
+                data.playerName
+            );
+
+    }
+
+
+    /*
+     * NEVER restore an anime name.
+     */
+
+    setBattleName();
+
+
+    if (
+        Array.isArray(data.team)
+    ) {
+
+        rolesState.team =
+            normalizeTeam(
+                data.team
+            );
+
+    }
+
+
+    if (
+        data.assignments &&
+        typeof data.assignments === "object" &&
+        !Array.isArray(data.assignments)
+    ) {
+
+        rolesState.assignments =
+            {
+                ...data.assignments
+            };
+
+    }
+
+
+    if (
+        typeof data.submitted === "boolean"
+    ) {
+
+        rolesState.submitted =
+            data.submitted;
+
+    }
+
+
+    if (
+        typeof data.locked === "boolean"
+    ) {
+
+        rolesState.locked =
+            data.locked;
+
+    }
+
+
+    if (
+        typeof data.complete === "boolean" &&
+        data.complete
+    ) {
+
+        rolesState.submitted =
+            true;
+
+        rolesState.locked =
+            true;
+
+    }
+
+
+    saveSession();
+
+    ensureMatchCodeDisplay();
+
+    renderRolesTeam();
+
+    updateRolesProgress();
+
+    updateSubmitButton();
+
+}
+
+
+/* =========================================================
+   DRAFT STATE
+   ========================================================= */
+
+rolesSocket.on(
+    "draft:state",
+    data => {
+
+        console.log(
+            "[ADG] Draft state received:",
+            data
+        );
+
+
+        if (!data) {
+            return;
+        }
+
+
+        applyServerMatchData(
+            data
+        );
+
+    }
+);
+
+
+/* =========================================================
+   ROLES STATE
    ========================================================= */
 
 rolesSocket.on(
     "roles:state",
     data => {
 
+        console.log(
+            "[ADG] Roles state received:",
+            data
+        );
+
+
         if (!data) {
             return;
         }
 
 
-        if (data.matchId) {
-
-            rolesState.matchId =
-                data.matchId;
-
-            setSession(
-                "adg_matchId",
-                data.matchId
-            );
-        }
-
-
-        if (data.playerNumber) {
-
-            rolesState.playerNumber =
-                Number(
-                    data.playerNumber
-                );
-
-            setSession(
-                "adg_playerNumber",
-                String(
-                    data.playerNumber
-                )
-            );
-        }
-
-
-        if (Array.isArray(data.team)) {
-
-            rolesState.team =
-                normalizeTeam(
-                    data.team
-                );
-        }
-
-
-        if (data.roles) {
-
-            rolesState.roles =
-                normalizeRoles(
-                    data.roles
-                );
-        }
+        applyServerMatchData(
+            data
+        );
 
 
         if (
-            typeof data.complete ===
-            "boolean"
+            rolesState.submitted
         ) {
 
-            rolesState.complete =
-                data.complete;
+            showMessage(
+                "Your roles are submitted. Waiting for the other player.",
+                "success"
+            );
+
         }
 
-
-        showMatchCode();
-
-        renderTeam();
-
-        updateProgress();
     }
 );
 
 
 /* =========================================================
-   SERVER — MATCH ROLES
+   MATCH ROLES
    ========================================================= */
 
 rolesSocket.on(
     "match:roles",
     data => {
 
-        if (!data) {
-            return;
-        }
+        console.log(
+            "[ADG] Match roles:",
+            data
+        );
 
 
-        if (data.matchId) {
+        if (
+            data?.matchId
+        ) {
 
             rolesState.matchId =
-                data.matchId;
+                String(
+                    data.matchId
+                )
+                .trim()
+                .toUpperCase();
 
-            setSession(
-                "adg_matchId",
-                data.matchId
-            );
+            saveSession();
+
         }
-
-
-        if (Array.isArray(data.team)) {
-
-            rolesState.team =
-                normalizeTeam(
-                    data.team
-                );
-        }
-
-
-        if (data.roles) {
-
-            rolesState.roles =
-                normalizeRoles(
-                    data.roles
-                );
-        }
-
-
-        showMatchCode();
-
-        renderTeam();
-
-        updateProgress();
-    }
-);
-
-
-/* =========================================================
-   SERVER — ROLE ASSIGNED
-   ========================================================= */
-
-rolesSocket.on(
-    "roles:assigned",
-    data => {
-
-        if (!data) {
-            return;
-        }
-
-
-        if (data.roles) {
-
-            rolesState.roles =
-                normalizeRoles(
-                    data.roles
-                );
-        }
-
-
-        if (Array.isArray(data.team)) {
-
-            rolesState.team =
-                normalizeTeam(
-                    data.team
-                );
-        }
-
-
-        renderTeam();
-
-        updateProgress();
-    }
-);
-
-
-/* =========================================================
-   SERVER — ROLES COMPLETE
-   ========================================================= */
-
-rolesSocket.on(
-    "roles:complete",
-    data => {
-
-        rolesState.complete =
-            true;
-
-
-        if (data?.roles) {
-
-            rolesState.roles =
-                normalizeRoles(
-                    data.roles
-                );
-        }
-
-
-        if (Array.isArray(data?.team)) {
-
-            rolesState.team =
-                normalizeTeam(
-                    data.team
-                );
-        }
-
-
-        renderTeam();
-
-        updateProgress();
-
-
-        showMessage(
-            "Roles complete. Preparing Battle Arena...",
-            "success"
-        );
 
 
         /*
-         * Give the server a moment to update
-         * both players before moving.
+         * Always Face to Face.
          */
 
-        setTimeout(
-            () => {
+        setBattleName();
 
-                window.location.href =
-                    "game.html";
+        ensureMatchCodeDisplay();
 
-            },
-            700
-        );
     }
 );
 
 
 /* =========================================================
-   SERVER — ROLE ERROR
+   ROLE ERRORS
    ========================================================= */
+
+function handleRoleError(
+    data
+) {
+
+    rolesState.submitted =
+        false;
+
+    rolesState.locked =
+        false;
+
+
+    updateSubmitButton();
+
+
+    showMessage(
+        data?.message ||
+        "Role assignment was rejected.",
+        "error"
+    );
+
+}
+
+
+rolesSocket.on(
+    "role:error",
+    handleRoleError
+);
 
 rolesSocket.on(
     "roles:error",
-    data => {
-
-        showMessage(
-            data?.message ||
-            "Role assignment failed.",
-            "error"
-        );
-    }
+    handleRoleError
 );
 
 
 /* =========================================================
-   SERVER — MATCH ERROR
+   MATCH ERROR
    ========================================================= */
 
 rolesSocket.on(
@@ -840,8 +1157,102 @@ rolesSocket.on(
             "Match error.",
             "error"
         );
+
+
+        updateSubmitButton();
+
     }
 );
+
+
+/* =========================================================
+   BATTLE READY
+   ========================================================= */
+
+rolesSocket.on(
+    "match:battle",
+    data => {
+
+        console.log(
+            "[ADG] Battle ready:",
+            data
+        );
+
+
+        if (
+            data?.matchId
+        ) {
+
+            rolesState.matchId =
+                String(
+                    data.matchId
+                )
+                .trim()
+                .toUpperCase();
+
+        }
+
+
+        saveSession();
+
+
+        /*
+         * Keep match ID in session.
+         * game.js can use the same ID.
+         */
+
+        window.location.href =
+            "game.html";
+
+    }
+);
+
+
+/* =========================================================
+   NORMALIZE CHARACTER
+   ========================================================= */
+
+function normalizeCharacter(
+    character
+) {
+
+    if (
+        typeof character === "string"
+    ) {
+
+        return {
+            name:
+                character.trim()
+        };
+
+    }
+
+
+    if (
+        character &&
+        typeof character === "object"
+    ) {
+
+        return {
+            ...character,
+
+            name:
+                String(
+                    character.name ||
+                    "Unknown"
+                ).trim()
+
+        };
+
+    }
+
+
+    return {
+        name:
+            "Unknown"
+    };
+
+}
 
 
 /* =========================================================
@@ -853,122 +1264,270 @@ function normalizeTeam(
 ) {
 
     if (!Array.isArray(team)) {
+
         return [];
+
     }
 
 
-    return team.map(
-        character => {
+    return team
+        .slice(0, TEAM_SIZE)
+        .map(normalizeCharacter)
+        .filter(
+            character =>
+                character.name &&
+                character.name !== "Unknown"
+        );
 
-            if (
-                typeof character ===
-                "string"
-            ) {
-
-                return {
-                    name:
-                        character
-                };
-            }
-
-
-            return {
-                ...character
-            };
-        }
-    );
 }
 
 
 /* =========================================================
-   NORMALIZE ROLES
+   CHARACTER KEY
    ========================================================= */
 
-function normalizeRoles(
-    roles
+function getCharacterKey(
+    character
 ) {
 
-    if (!roles) {
-        return {};
+    return String(
+        character?.name ||
+        ""
+    ).trim();
+
+}
+
+
+/* =========================================================
+   GET ROLE
+   ========================================================= */
+
+function getAssignedRole(
+    character
+) {
+
+    const key =
+        getCharacterKey(
+            character
+        );
+
+
+    return (
+        rolesState.assignments[key] ||
+        ""
+    );
+
+}
+
+
+/* =========================================================
+   DUPLICATE ROLE CHECK
+   ========================================================= */
+
+function isRoleAlreadyAssigned(
+    role,
+    exceptKey
+) {
+
+    return Object.entries(
+        rolesState.assignments
+    ).some(
+        (
+            [key, assignedRole]
+        ) =>
+            key !== exceptKey &&
+            assignedRole === role
+    );
+
+}
+
+
+/* =========================================================
+   VALIDATE ROLES
+   ========================================================= */
+
+function validateAssignments() {
+
+    if (
+        rolesState.team.length !== TEAM_SIZE
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "You must have exactly 6 characters."
+        };
+
+    }
+
+
+    const assignedRoles =
+        rolesState.team.map(
+            character =>
+                getAssignedRole(
+                    character
+                )
+        );
+
+
+    if (
+        assignedRoles.some(
+            role => !role
+        )
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Assign one role to every character."
+        };
+
+    }
+
+
+    const uniqueRoles =
+        new Set(
+            assignedRoles
+        );
+
+
+    if (
+        uniqueRoles.size !== TEAM_SIZE
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Each role can only be used once."
+        };
+
+    }
+
+
+    for (
+        const role of ADG_ROLES
+    ) {
+
+        if (
+            !assignedRoles.includes(
+                role.value
+            )
+        ) {
+
+            return {
+                valid: false,
+                message:
+                    `Missing role: ${role.label}.`
+            };
+
+        }
+
+    }
+
+
+    return {
+        valid: true,
+        message:
+            "All roles assigned."
+    };
+
+}
+
+
+/* =========================================================
+   CREATE IMAGE PATHS
+   ========================================================= */
+
+function getImageCandidates(
+    name
+) {
+
+    const candidates = [];
+
+    /*
+     * Use database helper if available.
+     */
+
+    if (
+        typeof getCharacterImageCandidates ===
+        "function"
+    ) {
+
+        try {
+
+            const result =
+                getCharacterImageCandidates(
+                    name
+                );
+
+            if (
+                Array.isArray(result)
+            ) {
+
+                result.forEach(
+                    path => {
+
+                        if (
+                            path &&
+                            !candidates.includes(path)
+                        ) {
+
+                            candidates.push(path);
+
+                        }
+
+                    }
+                );
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "[ADG] Database image helper failed:",
+                error
+            );
+
+        }
+
     }
 
 
     /*
-     * Object format:
-     *
-     * {
-     *     "Luffy": "Captain",
-     *     "Zoro": "Tank"
-     * }
+     * Required location.
      */
 
-
-    if (
-        typeof roles ===
-        "object" &&
-        !Array.isArray(roles)
-    ) {
-
-        return {
-            ...roles
-        };
-    }
+    const safeName =
+        encodeURIComponent(
+            name
+        );
 
 
-    return {};
-}
+    [
+        `.jpg`,
+        `.jpeg`,
+        `.png`,
+        `.webp`
+    ].forEach(
+        extension => {
 
+            const path =
+                `assets/characters/${safeName}${extension}`;
 
-/* =========================================================
-   RENDER TEAM
-   ========================================================= */
+            if (
+                !candidates.includes(path)
+            ) {
 
-function renderTeam() {
+                candidates.push(path);
 
-    if (!rolesTeam) {
-        return;
-    }
+            }
 
-
-    rolesTeam.innerHTML =
-        "";
-
-
-    if (
-        rolesState.team.length ===
-        0
-    ) {
-
-        rolesTeam.innerHTML = `
-            <div class="draft-team-slot empty">
-                <div class="draft-slot-question">
-                    ?
-                </div>
-
-                <span>
-                    Waiting for team...
-                </span>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    rolesState.team.forEach(
-        (
-            character,
-            index
-        ) => {
-
-            rolesTeam.appendChild(
-                createRoleCard(
-                    character,
-                    index
-                )
-            );
         }
     );
+
+
+    return candidates;
+
 }
 
 
@@ -977,113 +1536,143 @@ function renderTeam() {
    ========================================================= */
 
 function createRoleCard(
-    character,
-    index
+    character
 ) {
 
     const name =
-        typeof character ===
-        "string"
-            ? character
-            : character?.name ||
-              "Unknown";
+        character.name;
 
 
-    const currentRole =
-        rolesState.roles[name] ||
-        "";
+    const key =
+        getCharacterKey(
+            character
+        );
 
 
     const card =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     card.className =
-        "draft-team-slot filled";
-
+        "roles-card";
 
     card.dataset.character =
+        key;
+
+
+    /* IMAGE */
+
+    const image =
+        document.createElement("img");
+
+    image.className =
+        "roles-character-image";
+
+    image.alt =
         name;
 
+    image.loading =
+        "lazy";
 
-    const number =
-        document.createElement(
-            "span"
+
+    const fallback =
+        document.createElement("div");
+
+    fallback.className =
+        "roles-image-fallback";
+
+    fallback.textContent =
+        name.charAt(0).toUpperCase();
+
+
+    let imageIndex = 0;
+
+    const candidates =
+        getImageCandidates(
+            name
         );
 
 
-    number.className =
-        "draft-slot-number";
+    function tryNextImage() {
+
+        if (
+            imageIndex >= candidates.length
+        ) {
+
+            image.classList.add("hidden");
+
+            fallback.classList.remove("hidden");
+
+            return;
+
+        }
 
 
-    number.textContent =
-        String(index + 1);
+        image.src =
+            candidates[imageIndex++];
+
+    }
 
 
-    const content =
-        document.createElement(
-            "div"
-        );
+    image.onload =
+        () => {
+
+            image.classList.remove(
+                "hidden"
+            );
+
+            fallback.classList.add(
+                "hidden"
+            );
+
+        };
 
 
-    content.style.width =
-        "100%";
+    image.onerror =
+        tryNextImage;
 
+
+    image.classList.add(
+        "hidden"
+    );
+
+
+    tryNextImage();
+
+
+    /* NAME */
 
     const nameElement =
-        document.createElement(
-            "strong"
-        );
+        document.createElement("h3");
 
+    nameElement.className =
+        "roles-character-name";
 
     nameElement.textContent =
         name;
 
 
-    nameElement.style.display =
-        "block";
+    /* ROLE SELECT */
 
+    const roleSelect =
+        document.createElement("select");
 
-    nameElement.style.marginBottom =
-        "10px";
-
-
-    content.appendChild(
-        nameElement
-    );
-
-
-    const select =
-        document.createElement(
-            "select"
-        );
-
-
-    select.className =
+    roleSelect.className =
         "role-select";
 
-
-    select.dataset.character =
-        name;
+    roleSelect.dataset.character =
+        key;
 
 
     const emptyOption =
-        document.createElement(
-            "option"
-        );
-
+        document.createElement("option");
 
     emptyOption.value =
         "";
 
-
     emptyOption.textContent =
         "Select Role";
 
-
-    select.appendChild(
+    roleSelect.appendChild(
         emptyOption
     );
 
@@ -1092,275 +1681,386 @@ function createRoleCard(
         role => {
 
             const option =
-                document.createElement(
-                    "option"
-                );
-
+                document.createElement("option");
 
             option.value =
-                role;
-
+                role.value;
 
             option.textContent =
-                role;
+                role.label;
 
-
-            if (
-                role ===
-                currentRole
-            ) {
-
-                option.selected =
-                    true;
-            }
-
-
-            select.appendChild(
+            roleSelect.appendChild(
                 option
             );
+
         }
     );
 
 
-    select.addEventListener(
+    const currentRole =
+        getAssignedRole(
+            character
+        );
+
+
+    roleSelect.value =
+        currentRole || "";
+
+
+    roleSelect.disabled =
+        rolesState.locked ||
+        rolesState.submitted;
+
+
+    /* ROLE CHANGE */
+
+    roleSelect.addEventListener(
         "change",
         () => {
 
-            assignRole(
-                name,
-                select.value
-            );
-        }
-    );
+            if (
+                rolesState.locked ||
+                rolesState.submitted
+            ) {
+
+                return;
+
+            }
 
 
-    content.appendChild(
-        select
-    );
+            const previousRole =
+                rolesState.assignments[key] ||
+                "";
 
 
-    card.appendChild(
-        number
-    );
+            const selectedRole =
+                roleSelect.value;
 
 
-    card.appendChild(
-        content
-    );
+            if (!selectedRole) {
 
+                delete rolesState.assignments[
+                    key
+                ];
 
-    return card;
-}
+                updateRolesProgress();
 
+                updateSubmitButton();
 
-/* =========================================================
-   ASSIGN ROLE
-   ========================================================= */
+                return;
 
-function assignRole(
-    character,
-    role
-) {
-
-    if (!role) {
-        return;
-    }
-
-
-    /*
-     * Prevent duplicate roles locally.
-     */
-
-    for (
-        const [
-            existingCharacter,
-            existingRole
-        ] of Object.entries(
-            rolesState.roles
-        )
-    ) {
-
-        if (
-            existingCharacter !==
-                character &&
-            existingRole ===
-                role
-        ) {
-
-            showMessage(
-                `${role} is already assigned.`,
-                "warning"
-            );
-
-
-            renderTeam();
-
-            return;
-        }
-    }
-
-
-    rolesState.roles[
-        character
-    ] = role;
-
-
-    renderTeam();
-
-    updateProgress();
-
-
-    rolesSocket.emit(
-        "roles:assign",
-        {
-            matchId:
-                rolesState.matchId,
-
-            character:
-                character,
-
-            role:
-                role
-        }
-    );
-}
-
-
-/* =========================================================
-   UPDATE PROGRESS
-   ========================================================= */
-
-function updateProgress() {
-
-    const assigned =
-        Object.keys(
-            rolesState.roles
-        ).filter(
-            character =>
-                rolesState.roles[
-                    character
-                ]
-        ).length;
-
-
-    if (roleProgress) {
-
-        roleProgress.textContent =
-            `${assigned} / 6 Roles Assigned`;
-
-
-        roleProgress.className =
-            assigned === 6
-                ? "draft-turn your-turn"
-                : "draft-turn waiting";
-    }
-
-
-    const allAssigned =
-        rolesState.team.length === 6 &&
-        assigned === 6;
-
-
-    if (continueButton) {
-
-        continueButton.disabled =
-            !allAssigned;
-    }
-
-
-    if (roleInstruction) {
-
-        if (allAssigned) {
-
-            roleInstruction.textContent =
-                "✓ All six roles assigned. You can continue.";
-
-        } else {
-
-            roleInstruction.textContent =
-                "Assign all six unique roles to continue.";
-        }
-    }
-}
-
-
-/* =========================================================
-   CONTINUE TO BATTLE
-   ========================================================= */
-
-if (continueButton) {
-
-    continueButton.addEventListener(
-        "click",
-        () => {
-
-            const assigned =
-                Object.keys(
-                    rolesState.roles
-                ).length;
+            }
 
 
             if (
-                rolesState.team.length !==
-                6 ||
-                assigned !==
-                6
+                isRoleAlreadyAssigned(
+                    selectedRole,
+                    key
+                )
             ) {
 
+                roleSelect.value =
+                    previousRole;
+
+
+                const duplicateRole =
+                    ADG_ROLES.find(
+                        role =>
+                            role.value ===
+                            selectedRole
+                    );
+
+
                 showMessage(
-                    "Assign all six roles first.",
+                    `${duplicateRole?.label || selectedRole} is already assigned.`,
                     "warning"
                 );
 
                 return;
+
             }
 
 
-            rolesState.complete =
-                true;
+            rolesState.assignments[key] =
+                selectedRole;
 
 
-            rolesSocket.emit(
-                "roles:complete",
-                {
-                    matchId:
-                        rolesState.matchId,
+            updateRolesProgress();
 
-                    roles:
-                        rolesState.roles
-                }
-            );
+            updateSubmitButton();
 
-
-            showMessage(
-                "Waiting for opponent...",
-                "info"
-            );
         }
     );
+
+
+    card.appendChild(image);
+
+    card.appendChild(fallback);
+
+    card.appendChild(nameElement);
+
+    card.appendChild(roleSelect);
+
+
+    return card;
+
 }
 
 
 /* =========================================================
-   BACK BUTTON
+   RENDER TEAM
    ========================================================= */
 
-if (backButton) {
+function renderRolesTeam() {
 
-    backButton.addEventListener(
-        "click",
-        () => {
+    if (!rolesTeamElement) {
+        return;
+    }
 
-            /*
-             * Do NOT delete match ID.
-             *
-             * The match code must survive navigation.
-             */
 
-            window.location.href =
-                "draft.html";
+    rolesTeamElement.innerHTML =
+        "";
+
+
+    if (
+        rolesState.team.length === 0
+    ) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "roles-empty";
+
+        empty.textContent =
+            rolesState.reconnecting
+                ? "Restoring your team..."
+                : "Waiting for your drafted team...";
+
+        rolesTeamElement.appendChild(
+            empty
+        );
+
+        return;
+
+    }
+
+
+    rolesState.team.forEach(
+        character => {
+
+            rolesTeamElement.appendChild(
+                createRoleCard(
+                    character
+                )
+            );
+
         }
     );
+
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+function updateRolesProgress() {
+
+    const assigned =
+        rolesState.team.filter(
+            character =>
+                Boolean(
+                    getAssignedRole(
+                        character
+                    )
+                )
+        ).length;
+
+
+    if (
+        rolesProgressTextElement
+    ) {
+
+        rolesProgressTextElement.textContent =
+            `${assigned}/${TEAM_SIZE} Roles Assigned`;
+
+    }
+
+
+    if (
+        rolesProgressElement
+    ) {
+
+        const percentage =
+            (
+                assigned /
+                TEAM_SIZE
+            ) * 100;
+
+
+        rolesProgressElement.style.width =
+            `${Math.min(
+                100,
+                percentage
+            )}%`;
+
+    }
+
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+   ========================================================= */
+
+function updateSubmitButton() {
+
+    if (!submitRolesButton) {
+        return;
+    }
+
+
+    const validation =
+        validateAssignments();
+
+
+    submitRolesButton.disabled =
+        rolesState.locked ||
+        rolesState.submitted ||
+        !rolesState.connected ||
+        !validation.valid;
+
+}
+
+
+/* =========================================================
+   SUBMIT ROLES
+   ========================================================= */
+
+function submitRoles() {
+
+    if (
+        rolesState.locked ||
+        rolesState.submitted
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !rolesState.connected
+    ) {
+
+        showMessage(
+            "You are not connected to the server.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!rolesState.matchId) {
+
+        showMessage(
+            "Match Code is missing.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        rolesState.playerNumber !== 1 &&
+        rolesState.playerNumber !== 2
+    ) {
+
+        showMessage(
+            "Player information is missing.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const validation =
+        validateAssignments();
+
+
+    if (!validation.valid) {
+
+        showMessage(
+            validation.message,
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    rolesState.submitted =
+        true;
+
+
+    updateSubmitButton();
+
+
+    const payload = {
+
+        matchId:
+            rolesState.matchId,
+
+        playerNumber:
+            rolesState.playerNumber,
+
+        assignments:
+            {
+                ...rolesState.assignments
+            }
+
+    };
+
+
+    console.log(
+        "[ADG] Submitting roles:",
+        payload
+    );
+
+
+    rolesSocket.emit(
+        "roles:assign",
+        payload
+    );
+
+
+    showMessage(
+        "Roles submitted. Waiting for the other player.",
+        "info"
+    );
+
+}
+
+
+/* =========================================================
+   SUBMIT EVENT
+   ========================================================= */
+
+if (submitRolesButton) {
+
+    submitRolesButton.addEventListener(
+        "click",
+        submitRoles
+    );
+
 }
 
 
@@ -1377,18 +2077,82 @@ document.addEventListener(
             !rolesSocket.connected
         ) {
 
+            updateConnectionStatus(
+                false,
+                true
+            );
+
             rolesSocket.connect();
+
         }
+
     }
 );
 
 
 /* =========================================================
-   GLOBAL ACCESS
+   INITIALIZE UI
+   ========================================================= */
+
+setBattleName();
+
+ensureMatchCodeDisplay();
+
+renderRolesTeam();
+
+updateRolesProgress();
+
+updateSubmitButton();
+
+
+/*
+ * If Socket.IO has already connected before this code
+ * finishes, make sure the UI reflects it.
+ */
+
+if (rolesSocket.connected) {
+
+    updateConnectionStatus(
+        true,
+        false
+    );
+
+}
+
+
+/* =========================================================
+   GLOBAL ADG ACCESS
    ========================================================= */
 
 window.ADG_ROLES_STATE =
     rolesState;
+
+
+window.ADG_ROLES =
+    {
+
+        list:
+            ADG_ROLES,
+
+        state:
+            rolesState,
+
+        socket:
+            rolesSocket,
+
+        validate:
+            validateAssignments,
+
+        submit:
+            submitRoles,
+
+        reconnect:
+            reconnectToMatch,
+
+        copyMatchCode:
+            copyMatchCode
+
+    };
 
 
 /* =========================================================

@@ -1,47 +1,103 @@
 /* =========================================================
    ADG — SOUND.JS
-   Master Sound / Volume Controller
+   Global Music & Sound System
+
+   Features:
+   - Master volume
+   - Mute / unmute
+   - Background music
+   - Sound effects
+   - Settings saved in localStorage
+   - Works across all ADG pages
+   - Safe if audio files are missing
    ========================================================= */
 
 "use strict";
 
 
 /* =========================================================
-   CONFIG
+   CONFIGURATION
    ========================================================= */
 
-const ADG_SOUND_CONFIG = {
+const ADG_SOUND_STORAGE_KEY = "adg_sound_settings";
 
-    defaultVolume: 0.7,
 
-    storageKey:
-        "adg_master_volume",
+const ADG_SOUND_DEFAULTS = {
 
-    sounds: {
+    volume: 65,
 
-        button:
-            "assets/sounds/button.mp3",
+    muted: false
+
+};
+
+
+/*
+ * =========================================================
+ * AUDIO FILE LOCATIONS
+ * =========================================================
+ *
+ * Put your files inside:
+ *
+ * assets/audio/
+ *
+ * Example:
+ *
+ * assets/
+ * └── audio/
+ *     ├── lobby.mp3
+ *     ├── draft.mp3
+ *     ├── roles.mp3
+ *     ├── battle.mp3
+ *     ├── click.mp3
+ *     ├── draw.mp3
+ *     ├── drop.mp3
+ *     ├── success.mp3
+ *     └── error.mp3
+ *
+ */
+
+
+const ADG_SOUND_FILES = {
+
+    music: {
+
+        lobby:
+            "assets/audio/lobby.mp3",
 
         draft:
-            "assets/sounds/draft.mp3",
+            "assets/audio/draft.mp3",
+
+        roles:
+            "assets/audio/roles.mp3",
+
+        battle:
+            "assets/audio/battle.mp3"
+
+    },
+
+
+    effects: {
+
+        click:
+            "assets/audio/click.mp3",
+
+        draw:
+            "assets/audio/draw.mp3",
+
+        drop:
+            "assets/audio/drop.mp3",
+
+        success:
+            "assets/audio/success.mp3",
+
+        error:
+            "assets/audio/error.mp3",
 
         role:
-            "assets/sounds/role.mp3",
+            "assets/audio/role.mp3",
 
-        attack:
-            "assets/sounds/attack.mp3",
-
-        hit:
-            "assets/sounds/hit.mp3",
-
-        special:
-            "assets/sounds/special.mp3",
-
-        defeat:
-            "assets/sounds/defeat.mp3",
-
-        victory:
-            "assets/sounds/victory.mp3"
+        battle:
+            "assets/audio/battle-start.mp3"
 
     }
 
@@ -55,25 +111,25 @@ const ADG_SOUND_CONFIG = {
 const ADG_SOUND_STATE = {
 
     volume:
-        ADG_SOUND_CONFIG.defaultVolume,
+        ADG_SOUND_DEFAULTS.volume,
 
     muted:
-        false,
+        ADG_SOUND_DEFAULTS.muted,
 
-    enabled:
-        true,
+    music:
+        null,
 
-    audio:
-        {},
+    musicName:
+        null,
 
-    currentSounds:
-        new Set()
+    initialized:
+        false
 
 };
 
 
 /* =========================================================
-   LOAD SETTINGS
+   STORAGE
    ========================================================= */
 
 function loadSoundSettings() {
@@ -82,43 +138,58 @@ function loadSoundSettings() {
 
         const saved =
             localStorage.getItem(
-                ADG_SOUND_CONFIG.storageKey
+                ADG_SOUND_STORAGE_KEY
             );
 
 
         if (
-            saved !== null
+            !saved
         ) {
 
-            const volume =
-                Number(
-                    saved
-                );
-
-
-            if (
-                Number.isFinite(
-                    volume
-                )
-            ) {
-
-                ADG_SOUND_STATE.volume =
-                    Math.max(
-                        0,
-                        Math.min(
-                            1,
-                            volume
-                        )
-                    );
-
-            }
+            return;
 
         }
 
-    } catch (error) {
+
+        const settings =
+            JSON.parse(
+                saved
+            );
+
+
+        if (
+            typeof settings.volume ===
+            "number"
+        ) {
+
+            ADG_SOUND_STATE.volume =
+                Math.max(
+                    0,
+                    Math.min(
+                        100,
+                        settings.volume
+                    )
+                );
+
+        }
+
+
+        if (
+            typeof settings.muted ===
+            "boolean"
+        ) {
+
+            ADG_SOUND_STATE.muted =
+                settings.muted;
+
+        }
+
+    } catch (
+        error
+    ) {
 
         console.warn(
-            "Unable to load sound settings.",
+            "[ADG SOUND] Could not load sound settings:",
             error
         );
 
@@ -126,26 +197,33 @@ function loadSoundSettings() {
 
 }
 
-
-/* =========================================================
-   SAVE SETTINGS
-   ========================================================= */
 
 function saveSoundSettings() {
 
     try {
 
         localStorage.setItem(
-            ADG_SOUND_CONFIG.storageKey,
-            String(
-                ADG_SOUND_STATE.volume
+            ADG_SOUND_STORAGE_KEY,
+
+            JSON.stringify(
+                {
+
+                    volume:
+                        ADG_SOUND_STATE.volume,
+
+                    muted:
+                        ADG_SOUND_STATE.muted
+
+                }
             )
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.warn(
-            "Unable to save sound settings.",
+            "[ADG SOUND] Could not save sound settings:",
             error
         );
 
@@ -155,78 +233,332 @@ function saveSoundSettings() {
 
 
 /* =========================================================
-   CREATE AUDIO
+   GET ACTUAL VOLUME
    ========================================================= */
 
-function createAudio(
-    soundName
-) {
+function getActualVolume() {
 
     if (
-        ADG_SOUND_STATE.audio[
-            soundName
-        ]
+        ADG_SOUND_STATE.muted
     ) {
 
-        return ADG_SOUND_STATE.audio[
-            soundName
-        ];
+        return 0;
 
     }
 
 
-    const source =
-        ADG_SOUND_CONFIG.sounds[
-            soundName
-        ];
-
-
-    if (!source) {
-
-        console.warn(
-            `Unknown ADG sound: ${soundName}`
-        );
-
-        return null;
-
-    }
-
-
-    const audio =
-        new Audio(
-            source
-        );
-
-
-    audio.preload =
-        "auto";
-
-
-    audio.volume =
-        ADG_SOUND_STATE.volume;
-
-
-    ADG_SOUND_STATE.audio[
-        soundName
-    ] =
-        audio;
-
-
-    return audio;
+    return (
+        ADG_SOUND_STATE.volume /
+        100
+    );
 
 }
 
 
 /* =========================================================
-   PLAY SOUND
+   AUDIO UNLOCK
    ========================================================= */
 
-function playSound(
-    soundName
+/*
+ * Browsers usually block autoplay with sound.
+ *
+ * After the player's first click/touch,
+ * ADG can safely start music.
+ */
+
+let adgAudioUnlocked =
+    false;
+
+
+function unlockAudio() {
+
+    if (
+        adgAudioUnlocked
+    ) {
+
+        return;
+
+    }
+
+
+    adgAudioUnlocked =
+        true;
+
+
+    if (
+        ADG_SOUND_STATE.music &&
+        !ADG_SOUND_STATE.muted
+    ) {
+
+        playMusic();
+
+    }
+
+}
+
+
+document.addEventListener(
+    "click",
+    unlockAudio,
+    {
+        once:
+            true
+    }
+);
+
+
+document.addEventListener(
+    "touchstart",
+    unlockAudio,
+    {
+        once:
+            true
+    }
+);
+
+
+document.addEventListener(
+    "keydown",
+    unlockAudio,
+    {
+        once:
+            true
+    }
+);
+
+
+/* =========================================================
+   MUSIC
+   ========================================================= */
+
+function playMusic(
+    name = null
 ) {
 
     if (
-        !ADG_SOUND_STATE.enabled ||
+        name
+    ) {
+
+        startMusic(
+            name
+        );
+
+        return;
+
+    }
+
+
+    const music =
+        ADG_SOUND_STATE.music;
+
+
+    if (
+        !music
+    ) {
+
+        return;
+
+    }
+
+
+    music.volume =
+        getActualVolume();
+
+
+    music.muted =
+        ADG_SOUND_STATE.muted;
+
+
+    if (
+        !adgAudioUnlocked
+    ) {
+
+        return;
+
+    }
+
+
+    const result =
+        music.play();
+
+
+    if (
+        result &&
+        typeof result.catch ===
+        "function"
+    ) {
+
+        result.catch(
+            () => {
+
+                /*
+                 * Autoplay may still be blocked.
+                 * This is normal.
+                 */
+
+            }
+        );
+
+    }
+
+}
+
+
+function startMusic(
+    name
+) {
+
+    const source =
+        ADG_SOUND_FILES.music[
+            name
+        ];
+
+
+    if (
+        !source
+    ) {
+
+        console.warn(
+            `[ADG SOUND] Unknown music: ${name}`
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Stop previous music.
+     */
+
+    stopMusic();
+
+
+    const music =
+        new Audio(
+            source
+        );
+
+
+    music.loop =
+        true;
+
+
+    music.preload =
+        "auto";
+
+
+    music.volume =
+        getActualVolume();
+
+
+    music.muted =
+        ADG_SOUND_STATE.muted;
+
+
+    ADG_SOUND_STATE.music =
+        music;
+
+
+    ADG_SOUND_STATE.musicName =
+        name;
+
+
+    playMusic();
+
+}
+
+
+function stopMusic() {
+
+    const music =
+        ADG_SOUND_STATE.music;
+
+
+    if (
+        !music
+    ) {
+
+        return;
+
+    }
+
+
+    music.pause();
+
+
+    try {
+
+        music.currentTime =
+            0;
+
+    } catch (
+        error
+    ) {
+
+        /* Ignore */
+
+    }
+
+
+    ADG_SOUND_STATE.music =
+        null;
+
+
+    ADG_SOUND_STATE.musicName =
+        null;
+
+}
+
+
+function pauseMusic() {
+
+    if (
+        ADG_SOUND_STATE.music
+    ) {
+
+        ADG_SOUND_STATE.music.pause();
+
+    }
+
+}
+
+
+function resumeMusic() {
+
+    playMusic();
+
+}
+
+
+/* =========================================================
+   SOUND EFFECTS
+   ========================================================= */
+
+function playSound(
+    name
+) {
+
+    const source =
+        ADG_SOUND_FILES.effects[
+            name
+        ];
+
+
+    if (
+        !source
+    ) {
+
+        console.warn(
+            `[ADG SOUND] Unknown sound: ${name}`
+        );
+
+        return;
+
+    }
+
+
+    if (
         ADG_SOUND_STATE.muted
     ) {
 
@@ -235,95 +567,36 @@ function playSound(
     }
 
 
-    const source =
-        ADG_SOUND_CONFIG.sounds[
-            soundName
-        ];
-
-
-    if (!source) {
-
-        console.warn(
-            `Unknown ADG sound: ${soundName}`
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Create a new Audio instance for effects so
-     * the same sound can be triggered repeatedly
-     * without interrupting an already-playing copy.
-     */
-
-    const audio =
+    const sound =
         new Audio(
             source
         );
 
 
-    audio.volume =
-        ADG_SOUND_STATE.volume;
+    sound.preload =
+        "auto";
 
 
-    audio.currentTime =
-        0;
+    sound.volume =
+        getActualVolume();
 
 
-    ADG_SOUND_STATE.currentSounds.add(
-        audio
-    );
-
-
-    const cleanup =
-        () => {
-
-            ADG_SOUND_STATE.currentSounds.delete(
-                audio
-            );
-
-        };
-
-
-    audio.addEventListener(
-        "ended",
-        cleanup,
-        {
-            once: true
-        }
-    );
-
-
-    audio.addEventListener(
-        "error",
-        cleanup,
-        {
-            once: true
-        }
-    );
-
-
-    const promise =
-        audio.play();
+    const result =
+        sound.play();
 
 
     if (
-        promise &&
-        typeof promise.catch ===
-            "function"
+        result &&
+        typeof result.catch ===
+        "function"
     ) {
 
-        promise.catch(
+        result.catch(
             () => {
 
                 /*
-                 * Browsers may block audio until
-                 * the user interacts with the page.
+                 * Missing file or autoplay block.
                  */
-
-                cleanup();
 
             }
         );
@@ -334,87 +607,83 @@ function playSound(
 
 
 /* =========================================================
-   SET MASTER VOLUME
+   VOLUME
    ========================================================= */
 
-function setMasterVolume(
+function setVolume(
     value
 ) {
 
-    let volume =
+    const volume =
         Number(
             value
         );
 
 
     if (
-        !Number.isFinite(
+        Number.isNaN(
             volume
         )
     ) {
 
-        volume =
-            ADG_SOUND_CONFIG.defaultVolume;
+        return;
 
     }
 
 
-    /*
-     * Accept either:
-     *
-     * 0 → 1
-     *
-     * or
-     *
-     * 0 → 100
-     */
-
-    if (
-        volume > 1
-    ) {
-
-        volume /=
-            100;
-
-    }
-
-
-    volume =
+    ADG_SOUND_STATE.volume =
         Math.max(
             0,
             Math.min(
-                1,
-                volume
+                100,
+                Math.round(
+                    volume
+                )
             )
         );
 
 
-    ADG_SOUND_STATE.volume =
-        volume;
+    /*
+     * Moving volume above 0 automatically unmutes.
+     */
+
+    if (
+        ADG_SOUND_STATE.volume > 0 &&
+        ADG_SOUND_STATE.muted
+    ) {
+
+        ADG_SOUND_STATE.muted =
+            false;
+
+    }
 
 
-    ADG_SOUND_STATE.muted =
-        volume === 0;
-
-
-    updateAudioVolumes();
+    updateMusicVolume();
 
     saveSoundSettings();
 
-    updateVolumeUI();
+    updateSoundUI();
 
 }
 
 
-/* =========================================================
-   GET MASTER VOLUME
-   ========================================================= */
+function updateMusicVolume() {
 
-function getMasterVolume() {
+    if (
+        !ADG_SOUND_STATE.music
+    ) {
 
-    return (
-        ADG_SOUND_STATE.volume
-    );
+        return;
+
+    }
+
+
+    ADG_SOUND_STATE.music.volume =
+        getActualVolume();
+
+
+    ADG_SOUND_STATE.music.muted =
+        ADG_SOUND_STATE.muted;
 
 }
 
@@ -423,115 +692,71 @@ function getMasterVolume() {
    MUTE
    ========================================================= */
 
-function muteSounds() {
-
-    ADG_SOUND_STATE.muted =
-        true;
-
-
-    updateAudioVolumes();
-
-    updateVolumeUI();
-
-}
-
-
-/* =========================================================
-   UNMUTE
-   ========================================================= */
-
-function unmuteSounds() {
-
-    ADG_SOUND_STATE.muted =
-        false;
-
-
-    if (
-        ADG_SOUND_STATE.volume ===
-        0
-    ) {
-
-        ADG_SOUND_STATE.volume =
-            ADG_SOUND_CONFIG.defaultVolume;
-
-    }
-
-
-    updateAudioVolumes();
-
-    updateVolumeUI();
-
-}
-
-
-/* =========================================================
-   TOGGLE MUTE
-   ========================================================= */
-
 function toggleMute() {
 
-    if (
-        ADG_SOUND_STATE.muted
-    ) {
+    ADG_SOUND_STATE.muted =
+        !ADG_SOUND_STATE.muted;
 
-        unmuteSounds();
 
-    } else {
+    updateMusicVolume();
 
-        muteSounds();
+    saveSoundSettings();
 
-    }
+    updateSoundUI();
 
 }
 
 
-/* =========================================================
-   UPDATE AUDIO VOLUMES
-   ========================================================= */
+function setMuted(
+    value
+) {
 
-function updateAudioVolumes() {
-
-    const volume =
-        ADG_SOUND_STATE.muted
-            ? 0
-            : ADG_SOUND_STATE.volume;
-
-
-    Object.values(
-        ADG_SOUND_STATE.audio
-    )
-    .forEach(
-        audio => {
-
-            audio.volume =
-                volume;
-
-        }
-    );
-
-
-    ADG_SOUND_STATE.currentSounds
-        .forEach(
-            audio => {
-
-                audio.volume =
-                    volume;
-
-            }
+    ADG_SOUND_STATE.muted =
+        Boolean(
+            value
         );
 
+
+    updateMusicVolume();
+
+    saveSoundSettings();
+
+    updateSoundUI();
+
 }
 
 
 /* =========================================================
-   VOLUME UI
+   SOUND UI
    ========================================================= */
 
-function updateVolumeUI() {
+function updateSoundUI() {
+
+    /*
+     * Supports both versions of your HTML.
+     */
 
     const volumeSliders =
         document.querySelectorAll(
-            "[data-adg-volume]"
+            "[data-adg-volume], [data-master-volume]"
+        );
+
+
+    const volumeLabels =
+        document.querySelectorAll(
+            "[data-adg-volume-label], [data-volume-value]"
+        );
+
+
+    const muteButtons =
+        document.querySelectorAll(
+            "[data-adg-mute], [data-mute-button]"
+        );
+
+
+    const volumeIcons =
+        document.querySelectorAll(
+            "[data-volume-icon]"
         );
 
 
@@ -539,48 +764,31 @@ function updateVolumeUI() {
         slider => {
 
             slider.value =
-                Math.round(
-                    ADG_SOUND_STATE.volume *
-                    100
-                );
+                ADG_SOUND_STATE.volume;
 
         }
     );
-
-
-    const volumeLabels =
-        document.querySelectorAll(
-            "[data-adg-volume-label]"
-        );
 
 
     volumeLabels.forEach(
         label => {
 
             label.textContent =
-                `${Math.round(
-                    ADG_SOUND_STATE.volume *
-                    100
-                )}%`;
+                `${ADG_SOUND_STATE.volume}%`;
 
         }
     );
 
 
-    const muteButtons =
-        document.querySelectorAll(
-            "[data-adg-mute]"
-        );
+    const icon =
+        ADG_SOUND_STATE.muted ||
+        ADG_SOUND_STATE.volume === 0
+            ? "🔇"
+            : "🔊";
 
 
     muteButtons.forEach(
         button => {
-
-            button.textContent =
-                ADG_SOUND_STATE.muted
-                    ? "🔇 Unmute"
-                    : "🔊 Mute";
-
 
             button.setAttribute(
                 "aria-pressed",
@@ -589,6 +797,22 @@ function updateVolumeUI() {
                 )
             );
 
+
+            button.textContent =
+                ADG_SOUND_STATE.muted
+                    ? "🔇 Unmute"
+                    : "🔊 Mute";
+
+        }
+    );
+
+
+    volumeIcons.forEach(
+        element => {
+
+            element.textContent =
+                icon;
+
         }
     );
 
@@ -596,25 +820,48 @@ function updateVolumeUI() {
 
 
 /* =========================================================
-   INITIALIZE VOLUME CONTROLS
+   CONNECT SOUND CONTROLS
    ========================================================= */
 
-function initializeVolumeControls() {
+function setupSoundControls() {
 
-    const sliders =
+    const volumeSliders =
         document.querySelectorAll(
-            "[data-adg-volume]"
+            "[data-adg-volume], [data-master-volume]"
         );
 
 
-    sliders.forEach(
+    const muteButtons =
+        document.querySelectorAll(
+            "[data-adg-mute], [data-mute-button]"
+        );
+
+
+    volumeSliders.forEach(
         slider => {
+
+            /*
+             * Avoid adding duplicate listeners.
+             */
+
+            if (
+                slider.dataset.adgSoundReady
+            ) {
+
+                return;
+
+            }
+
+
+            slider.dataset.adgSoundReady =
+                "true";
+
 
             slider.addEventListener(
                 "input",
                 event => {
 
-                    setMasterVolume(
+                    setVolume(
                         event.target.value
                     );
 
@@ -625,41 +872,168 @@ function initializeVolumeControls() {
     );
 
 
-    const muteButtons =
-        document.querySelectorAll(
-            "[data-adg-mute]"
-        );
-
-
     muteButtons.forEach(
         button => {
 
+            if (
+                button.dataset.adgSoundReady
+            ) {
+
+                return;
+
+            }
+
+
+            button.dataset.adgSoundReady =
+                "true";
+
+
             button.addEventListener(
                 "click",
-                toggleMute
+                () => {
+
+                    toggleMute();
+
+                }
             );
 
         }
     );
 
 
-    updateVolumeUI();
+    updateSoundUI();
 
 }
 
 
 /* =========================================================
-   SOUND UNLOCK
+   AUTO PAGE MUSIC
    ========================================================= */
 
-let soundUnlocked =
-    false;
+function detectPageMusic() {
 
+    const body =
+        document.body;
 
-function unlockSound() {
 
     if (
-        soundUnlocked
+        !body
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+     * Lobby / Home
+     */
+
+    if (
+        body.classList.contains(
+            "home-page"
+        ) ||
+
+        body.classList.contains(
+            "lobby-page"
+        ) ||
+
+        body.classList.contains(
+            "index-page"
+        )
+    ) {
+
+        return "lobby";
+
+    }
+
+
+    /*
+     * Draft
+     */
+
+    if (
+        body.classList.contains(
+            "draft-page"
+        )
+    ) {
+
+        return "draft";
+
+    }
+
+
+    /*
+     * Roles
+     */
+
+    if (
+        body.classList.contains(
+            "roles-page"
+        )
+    ) {
+
+        return "roles";
+
+    }
+
+
+    /*
+     * Battle
+     */
+
+    if (
+        body.classList.contains(
+            "battle-page"
+        ) ||
+
+        body.classList.contains(
+            "game-page"
+        )
+    ) {
+
+        return "battle";
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   PAGE VISIBILITY
+   ========================================================= */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            document.hidden
+        ) {
+
+            pauseMusic();
+
+        } else {
+
+            resumeMusic();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+function initializeSound() {
+
+    if (
+        ADG_SOUND_STATE.initialized
     ) {
 
         return;
@@ -667,54 +1041,56 @@ function unlockSound() {
     }
 
 
-    soundUnlocked =
+    ADG_SOUND_STATE.initialized =
         true;
 
 
-    /*
-     * Browser autoplay policies generally allow
-     * audio after a user interaction.
-     *
-     * We only unlock the audio system;
-     * we do not play an unwanted sound.
-     */
+    loadSoundSettings();
+
+    setupSoundControls();
+
+
+    const pageMusic =
+        detectPageMusic();
+
+
+    if (
+        pageMusic
+    ) {
+
+        startMusic(
+            pageMusic
+        );
+
+    }
+
+
+    console.log(
+        "[ADG SOUND] Ready"
+    );
 
 }
 
 
 /* =========================================================
-   USER INTERACTION UNLOCK
+   DOM READY
    ========================================================= */
 
-[
-    "click",
-    "pointerdown",
-    "keydown",
-    "touchstart"
-]
-.forEach(
-    eventName => {
+if (
+    document.readyState ===
+    "loading"
+) {
 
-        document.addEventListener(
-            eventName,
-            unlockSound,
-            {
-                once: true,
-                passive: true
-            }
-        );
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeSound
+    );
 
-    }
-);
+} else {
 
+    initializeSound();
 
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
-
-loadSoundSettings();
-
-initializeVolumeControls();
+}
 
 
 /* =========================================================
@@ -723,43 +1099,58 @@ initializeVolumeControls();
 
 window.ADG_SOUND = {
 
+    /*
+     * Music
+     */
+
+    startMusic,
+
+    playMusic,
+
+    stopMusic,
+
+    pauseMusic,
+
+    resumeMusic,
+
+
+    /*
+     * Sound effects
+     */
+
     play:
         playSound,
 
-    setVolume:
-        setMasterVolume,
 
-    getVolume:
-        getMasterVolume,
+    /*
+     * Volume
+     */
 
-    mute:
-        muteSounds,
+    setVolume,
 
-    unmute:
-        unmuteSounds,
+    toggleMute,
 
-    toggleMute:
-        toggleMute,
+    setMuted,
+
+
+    /*
+     * State
+     */
 
     state:
-        ADG_SOUND_STATE
+        ADG_SOUND_STATE,
+
+
+    /*
+     * Refresh controls
+     */
+
+    refreshUI:
+        updateSoundUI
 
 };
 
 
 /* =========================================================
-   BACKWARD-COMPATIBILITY ALIASES
-   ========================================================= */
-
-window.playADGSound =
-    playSound;
-
-
-window.setADGVolume =
-    setMasterVolume;
-
-
-/* =========================================================
    END OF SOUND.JS
    ========================================================= */
-
