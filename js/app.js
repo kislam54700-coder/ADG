@@ -1,18 +1,21 @@
 /* =========================================================
    ADG — APP.JS
-   Main Application / Match Lobby Client
+   Main Lobby / Match Client
    ========================================================= */
 
 "use strict";
 
-
 /* =========================================================
-   SOCKET
+   SERVER
    ========================================================= */
 
 const ADG_SERVER_URL =
     "https://adg-server-t6y1.onrender.com";
 
+
+/* =========================================================
+   SOCKET
+   ========================================================= */
 
 const appSocket = io(
     ADG_SERVER_URL,
@@ -20,7 +23,11 @@ const appSocket = io(
         transports: [
             "websocket",
             "polling"
-        ]
+        ],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        timeout: 10000
     }
 );
 
@@ -29,8 +36,8 @@ const appSocket = io(
    CONFIGURATION
    ========================================================= */
 
-const ADG_DEFAULT_ANIME =
-    "One Piece";
+const ADG_DEFAULT_BATTLE_NAME =
+    "Face to Face";
 
 
 /* =========================================================
@@ -45,8 +52,8 @@ const appState = {
     playerName:
         "",
 
-    anime:
-        ADG_DEFAULT_ANIME,
+    battleName:
+        ADG_DEFAULT_BATTLE_NAME,
 
     matchId:
         null,
@@ -72,58 +79,71 @@ const playerNameInput =
         "playerName"
     );
 
-
-const animeButtons =
-    document.querySelectorAll(
-        "[data-anime]"
-    );
-
-
 const createMatchButton =
     document.getElementById(
         "createMatchButton"
     );
-
 
 const joinMatchButton =
     document.getElementById(
         "joinMatchButton"
     );
 
+const findMatchButton =
+    document.getElementById(
+        "findMatchButton"
+    );
 
 const matchIdInput =
     document.getElementById(
         "matchId"
     );
 
-
-const findMatchButton =
-    document.getElementById(
-        "findMatchButton"
-    );
-
-
 const lobbyStatus =
     document.getElementById(
         "lobbyStatus"
     );
-
 
 const connectionStatus =
     document.getElementById(
         "connectionStatus"
     );
 
-
 const selectedAnime =
     document.getElementById(
         "selectedAnime"
     );
 
-
 const playerNameDisplay =
     document.getElementById(
         "playerNameDisplay"
+    );
+
+
+/* =========================================================
+   MATCH CODE DISPLAY
+   ========================================================= */
+
+/*
+ * Optional HTML elements.
+
+ * Add these IDs to index.html if you want
+ * the Match ID to appear automatically.
+ */
+
+const createdMatchId =
+    document.getElementById(
+        "createdMatchId"
+    );
+
+const copyMatchIdButton =
+    document.getElementById(
+        "copyMatchIdButton"
+    );
+
+const matchCodeBox =
+    document.getElementById(
+        "matchCodeBox"
     );
 
 
@@ -214,19 +234,16 @@ appState.playerName =
     ) ||
     "";
 
-
-appState.anime =
+appState.battleName =
     getSession(
-        "adg_anime"
+        "adg_battleName"
     ) ||
-    ADG_DEFAULT_ANIME;
-
+    ADG_DEFAULT_BATTLE_NAME;
 
 appState.matchId =
     getSession(
         "adg_matchId"
     );
-
 
 appState.playerNumber =
     Number(
@@ -256,7 +273,7 @@ if (
 ) {
 
     selectedAnime.textContent =
-        appState.anime;
+        appState.battleName;
 
 }
 
@@ -271,10 +288,6 @@ if (
 
 }
 
-
-selectAnimeButton(
-    appState.anime
-);
 
 updateConnectionUI(
     false
@@ -339,7 +352,7 @@ function showMessage(
                 );
 
             },
-            5000
+            8000
         );
 
 }
@@ -400,228 +413,55 @@ function updateConnectionUI(
 
 
 /* =========================================================
-   SOCKET CONNECT
+   UPDATE LOBBY BUTTONS
    ========================================================= */
 
-appSocket.on(
-    "connect",
-    () => {
+function updateLobbyButtons() {
 
-        updateConnectionUI(
-            true
-        );
+    const nameValid =
+        validatePlayerName()
+            .valid;
 
 
-        updateLobbyButtons();
-
-    }
-);
-
-
-/* =========================================================
-   SOCKET DISCONNECT
-   ========================================================= */
-
-appSocket.on(
-    "disconnect",
-    () => {
-
-        updateConnectionUI(
-            false
-        );
-
-
-        updateLobbyButtons();
-
-
-        showMessage(
-            "Connection lost. Reconnecting...",
-            "error"
-        );
-
-    }
-);
-
-
-/* =========================================================
-   SOCKET ERROR
-   ========================================================= */
-
-appSocket.on(
-    "connect_error",
-    error => {
-
-        updateConnectionUI(
-            false
-        );
-
-
-        console.warn(
-            "ADG socket connection error:",
-            error
-        );
-
-
-        showMessage(
-            "Unable to connect to the game server.",
-            "error"
-        );
-
-    }
-);
-
-
-/* =========================================================
-   ANIME SELECTION
-   ========================================================= */
-
-animeButtons.forEach(
-    button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const anime =
-                    button.dataset.anime;
-
-
-                if (
-                    !anime
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    button.disabled
-                ) {
-
-                    return;
-
-                }
-
-
-                selectAnime(
-                    anime
-                );
-
-            }
-        );
-
-    }
-);
-
-
-/* =========================================================
-   SELECT ANIME
-   ========================================================= */
-
-function selectAnime(
-    anime
-) {
-
-    appState.anime =
-        anime;
-
-
-    setSession(
-        "adg_anime",
-        anime
-    );
-
-
-    selectAnimeButton(
-        anime
-    );
+    const serverUnavailable =
+        !appState.connected;
 
 
     if (
-        selectedAnime
+        createMatchButton
     ) {
 
-        selectedAnime.textContent =
-            anime;
+        createMatchButton.disabled =
+            serverUnavailable ||
+            !nameValid ||
+            appState.searching;
 
     }
 
-}
+
+    if (
+        findMatchButton
+    ) {
+
+        findMatchButton.disabled =
+            serverUnavailable ||
+            !nameValid ||
+            appState.searching;
+
+    }
 
 
-/* =========================================================
-   SELECT ANIME BUTTON UI
-   ========================================================= */
+    if (
+        joinMatchButton
+    ) {
 
-function selectAnimeButton(
-    anime
-) {
+        joinMatchButton.disabled =
+            serverUnavailable ||
+            !nameValid ||
+            !validateMatchId().valid ||
+            appState.searching;
 
-    animeButtons.forEach(
-        button => {
-
-            const isSelected =
-                button.dataset.anime ===
-                anime;
-
-
-            button.classList.toggle(
-                "selected",
-                isSelected
-            );
-
-            button.setAttribute(
-                "aria-pressed",
-                String(
-                    isSelected
-                )
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   PLAYER NAME
-   ========================================================= */
-
-if (
-    playerNameInput
-) {
-
-    playerNameInput.addEventListener(
-        "input",
-        () => {
-
-            appState.playerName =
-                playerNameInput.value
-                    .trim();
-
-
-            setSession(
-                "adg_playerName",
-                appState.playerName
-            );
-
-
-            if (
-                playerNameDisplay
-            ) {
-
-                playerNameDisplay.textContent =
-                    appState.playerName ||
-                    "Player";
-
-            }
-
-
-            updateLobbyButtons();
-
-        }
-    );
+    }
 
 }
 
@@ -655,8 +495,7 @@ function validatePlayerName() {
 
 
     if (
-        name.length <
-        2
+        name.length < 2
     ) {
 
         return {
@@ -673,8 +512,7 @@ function validatePlayerName() {
 
 
     if (
-        name.length >
-        24
+        name.length > 24
     ) {
 
         return {
@@ -733,8 +571,7 @@ function validateMatchId() {
 
 
     if (
-        value.length >
-        64
+        value.length > 64
     ) {
 
         return {
@@ -764,55 +601,192 @@ function validateMatchId() {
 
 
 /* =========================================================
-   UPDATE LOBBY BUTTONS
+   PLAYER NAME
    ========================================================= */
 
-function updateLobbyButtons() {
+if (
+    playerNameInput
+) {
 
-    const nameValid =
-        validatePlayerName()
-            .valid;
+    playerNameInput.addEventListener(
+        "input",
+        () => {
 
-
-    const disabled =
-        !appState.connected ||
-        !nameValid ||
-        appState.searching;
-
-
-    if (
-        createMatchButton
-    ) {
-
-        createMatchButton.disabled =
-            disabled;
-
-    }
+            appState.playerName =
+                playerNameInput.value
+                    .trim();
 
 
-    if (
-        findMatchButton
-    ) {
-
-        findMatchButton.disabled =
-            disabled;
-
-    }
+            setSession(
+                "adg_playerName",
+                appState.playerName
+            );
 
 
-    if (
-        joinMatchButton
-    ) {
+            if (
+                playerNameDisplay
+            ) {
 
-        joinMatchButton.disabled =
-            !appState.connected ||
-            !nameValid ||
-            !validateMatchId().valid ||
-            appState.searching;
+                playerNameDisplay.textContent =
+                    appState.playerName ||
+                    "Player";
 
-    }
+            }
+
+
+            updateLobbyButtons();
+
+        }
+    );
 
 }
+
+
+/* =========================================================
+   MATCH ID INPUT
+   ========================================================= */
+
+if (
+    matchIdInput
+) {
+
+    matchIdInput.addEventListener(
+        "input",
+        () => {
+
+            updateLobbyButtons();
+
+        }
+    );
+
+
+    matchIdInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                joinMatch();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SOCKET CONNECT
+   ========================================================= */
+
+appSocket.on(
+    "connect",
+    () => {
+
+        updateConnectionUI(
+            true
+        );
+
+
+        updateLobbyButtons();
+
+
+        /*
+         * If the player already has an active match,
+         * tell the server that this socket belongs
+         * to that match.
+         */
+
+        if (
+            appState.matchId &&
+            appState.playerNumber
+        ) {
+
+            appSocket.emit(
+                "match:reconnect",
+                {
+                    matchId:
+                        appState.matchId,
+
+                    playerNumber:
+                        appState.playerNumber,
+
+                    playerName:
+                        appState.playerName
+                }
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SOCKET DISCONNECT
+   ========================================================= */
+
+appSocket.on(
+    "disconnect",
+    () => {
+
+        updateConnectionUI(
+            false
+        );
+
+
+        updateLobbyButtons();
+
+
+        if (
+            appState.matched
+        ) {
+
+            showMessage(
+                "Connection lost. Reconnecting...",
+                "warning"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SOCKET ERROR
+   ========================================================= */
+
+appSocket.on(
+    "connect_error",
+    error => {
+
+        console.warn(
+            "ADG connection error:",
+            error
+        );
+
+
+        updateConnectionUI(
+            false
+        );
+
+
+        updateLobbyButtons();
+
+
+        showMessage(
+            "Unable to connect to the ADG server.",
+            "error"
+        );
+
+    }
+);
 
 
 /* =========================================================
@@ -853,8 +827,15 @@ function createMatch() {
     }
 
 
+    clearMatchSession();
+
+
     appState.searching =
         true;
+
+
+    appState.matched =
+        false;
 
 
     updateLobbyButtons();
@@ -872,8 +853,8 @@ function createMatch() {
             playerName:
                 appState.playerName,
 
-            anime:
-                appState.anime
+            battleName:
+                appState.battleName
         }
     );
 
@@ -918,8 +899,15 @@ function findMatch() {
     }
 
 
+    clearMatchSession();
+
+
     appState.searching =
         true;
+
+
+    appState.matched =
+        false;
 
 
     updateLobbyButtons();
@@ -937,8 +925,8 @@ function findMatch() {
             playerName:
                 appState.playerName,
 
-            anime:
-                appState.anime
+            battleName:
+                appState.battleName
         }
     );
 
@@ -1002,7 +990,8 @@ function joinMatch() {
 
 
     const id =
-        matchIdInput.value.trim();
+        matchIdInput.value
+            .trim();
 
 
     appState.searching =
@@ -1033,7 +1022,7 @@ function joinMatch() {
 
 
 /* =========================================================
-   CREATE BUTTON
+   BUTTON EVENTS
    ========================================================= */
 
 if (
@@ -1048,10 +1037,6 @@ if (
 }
 
 
-/* =========================================================
-   FIND BUTTON
-   ========================================================= */
-
 if (
     findMatchButton
 ) {
@@ -1063,10 +1048,6 @@ if (
 
 }
 
-
-/* =========================================================
-   JOIN BUTTON
-   ========================================================= */
 
 if (
     joinMatchButton
@@ -1097,10 +1078,49 @@ appSocket.on(
         );
 
 
+        displayMatchId();
+
+
         showMessage(
-            `Match created: ${appState.matchId}`,
+            `Match created. Share this Match ID: ${appState.matchId}`,
             "success"
         );
+
+
+        updateLobbyButtons();
+
+    }
+);
+
+
+/* =========================================================
+   SERVER — MATCH WAITING
+   ========================================================= */
+
+appSocket.on(
+    "match:waiting",
+    data => {
+
+        appState.searching =
+            false;
+
+
+        handleMatchData(
+            data
+        );
+
+
+        displayMatchId();
+
+
+        showMessage(
+            data?.message ||
+            `Waiting for opponent. Match ID: ${appState.matchId}`,
+            "info"
+        );
+
+
+        updateLobbyButtons();
 
     }
 );
@@ -1128,6 +1148,9 @@ appSocket.on(
             "success"
         );
 
+
+        updateLobbyButtons();
+
     }
 );
 
@@ -1154,6 +1177,9 @@ appSocket.on(
             "success"
         );
 
+
+        updateLobbyButtons();
+
     }
 );
 
@@ -1168,6 +1194,7 @@ appSocket.on(
 
         appState.searching =
             false;
+
 
         appState.matched =
             true;
@@ -1184,6 +1211,9 @@ appSocket.on(
         );
 
 
+        updateLobbyButtons();
+
+
         setTimeout(
             () => {
 
@@ -1191,34 +1221,7 @@ appSocket.on(
                     "draft.html";
 
             },
-            500
-        );
-
-    }
-);
-
-
-/* =========================================================
-   SERVER — MATCH WAITING
-   ========================================================= */
-
-appSocket.on(
-    "match:waiting",
-    data => {
-
-        appState.searching =
-            false;
-
-
-        handleMatchData(
-            data
-        );
-
-
-        showMessage(
-            data?.message ||
-            "Waiting for another player...",
-            "info"
+            800
         );
 
     }
@@ -1261,6 +1264,7 @@ appSocket.on(
         appState.searching =
             false;
 
+
         appState.matched =
             false;
 
@@ -1270,6 +1274,9 @@ appSocket.on(
             "The match has ended.",
             "warning"
         );
+
+
+        clearMatchSession();
 
 
         updateLobbyButtons();
@@ -1312,7 +1319,10 @@ function handleMatchData(
 
 
     if (
-        data.playerNumber
+        data.playerNumber !==
+        undefined &&
+        data.playerNumber !==
+        null
     ) {
 
         appState.playerNumber =
@@ -1344,25 +1354,53 @@ function handleMatchData(
             data.playerName
         );
 
+
+        if (
+            playerNameInput
+        ) {
+
+            playerNameInput.value =
+                data.playerName;
+
+        }
+
+
+        if (
+            playerNameDisplay
+        ) {
+
+            playerNameDisplay.textContent =
+                data.playerName;
+
+        }
+
     }
 
 
+    /*
+     * Battle name.
+     *
+     * Supports both battleName and older anime
+     * fields so the client does not break if the
+     * server still sends anime temporarily.
+     */
+
+    const battleName =
+        data.battleName ||
+        data.anime;
+
+
     if (
-        data.anime
+        battleName
     ) {
 
-        appState.anime =
-            data.anime;
+        appState.battleName =
+            battleName;
 
 
         setSession(
-            "adg_anime",
-            data.anime
-        );
-
-
-        selectAnimeButton(
-            data.anime
+            "adg_battleName",
+            battleName
         );
 
 
@@ -1371,14 +1409,176 @@ function handleMatchData(
         ) {
 
             selectedAnime.textContent =
-                data.anime;
+                battleName;
 
         }
 
     }
 
 
+    displayMatchId();
+
+
     updateLobbyButtons();
+
+}
+
+
+/* =========================================================
+   DISPLAY MATCH ID
+   ========================================================= */
+
+function displayMatchId() {
+
+    if (
+        !appState.matchId
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * If you add:
+     *
+     * id="createdMatchId"
+     *
+     * this will display the generated code.
+     */
+
+    if (
+        createdMatchId
+    ) {
+
+        createdMatchId.textContent =
+            appState.matchId;
+
+    }
+
+
+    /*
+     * Show the Match ID container.
+     */
+
+    if (
+        matchCodeBox
+    ) {
+
+        matchCodeBox.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   COPY MATCH ID
+   ========================================================= */
+
+async function copyMatchId() {
+
+    if (
+        !appState.matchId
+    ) {
+
+        showMessage(
+            "No Match ID available.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            appState.matchId
+        );
+
+
+        showMessage(
+            "Match ID copied!",
+            "success"
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.warn(
+            error
+        );
+
+
+        /*
+         * Fallback for browsers where
+         * navigator.clipboard is unavailable.
+         */
+
+        const textArea =
+            document.createElement(
+                "textarea"
+            );
+
+
+        textArea.value =
+            appState.matchId;
+
+
+        document.body.appendChild(
+            textArea
+        );
+
+
+        textArea.select();
+
+
+        try {
+
+            document.execCommand(
+                "copy"
+            );
+
+
+            showMessage(
+                "Match ID copied!",
+                "success"
+            );
+
+        } catch (
+            copyError
+        ) {
+
+            showMessage(
+                `Match ID: ${appState.matchId}`,
+                "info"
+            );
+
+        }
+
+
+        document.body.removeChild(
+            textArea
+        );
+
+    }
+
+}
+
+
+if (
+    copyMatchIdButton
+) {
+
+    copyMatchIdButton.addEventListener(
+        "click",
+        copyMatchId
+    );
 
 }
 
@@ -1403,7 +1603,11 @@ function cancelSearch() {
 
 
     appSocket.emit(
-        "match:cancel"
+        "match:cancel",
+        {
+            matchId:
+                appState.matchId
+        }
     );
 
 
@@ -1419,28 +1623,52 @@ function cancelSearch() {
 
 
 /* =========================================================
-   KEYBOARD SHORTCUTS
+   CLEAR MATCH SESSION
    ========================================================= */
 
-if (
-    matchIdInput
-) {
+function clearMatchSession() {
 
-    matchIdInput.addEventListener(
-        "keydown",
-        event => {
+    appState.matchId =
+        null;
 
-            if (
-                event.key ===
-                "Enter"
-            ) {
 
-                joinMatch();
+    appState.playerNumber =
+        null;
 
-            }
 
-        }
+    appState.matched =
+        false;
+
+
+    removeSession(
+        "adg_matchId"
     );
+
+
+    removeSession(
+        "adg_playerNumber"
+    );
+
+
+    if (
+        createdMatchId
+    ) {
+
+        createdMatchId.textContent =
+            "";
+
+    }
+
+
+    if (
+        matchCodeBox
+    ) {
+
+        matchCodeBox.classList.add(
+            "hidden"
+        );
+
+    }
 
 }
 
@@ -1467,20 +1695,15 @@ document.addEventListener(
 
 
 /* =========================================================
-   CLEAR OLD SESSION
+   BEFORE UNLOAD
    ========================================================= */
 
-function clearMatchSession() {
-
-    removeSession(
-        "adg_matchId"
-    );
-
-    removeSession(
-        "adg_playerNumber"
-    );
-
-}
+/*
+ * Do not disconnect manually here.
+ *
+ * Socket.IO should handle reconnection automatically,
+ * especially when navigating from index.html to draft.html.
+ */
 
 
 /* =========================================================
@@ -1504,7 +1727,7 @@ window.ADG_APP = {
 
     cancelSearch,
 
-    selectAnime,
+    copyMatchId,
 
     clearMatchSession
 
