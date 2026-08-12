@@ -1887,7 +1887,105 @@ textarea:focus-visible {
     }
 
 }
+.roles-card {
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+}
 
+.roles-card img,
+.roles-character-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.roles-character-name {
+    margin-top: 10px;
+}
+
+.role-select {
+    margin-top: 12px;
+}
+
+.roles-progress-track {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--bg-input);
+}
+
+.roles-progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 0.25s ease;
+}
+
+.roles-progress-header {
+    margin-bottom: 10px;
+}
+
+.roles-description {
+    margin-top: 10px;
+    color: var(--text-muted);
+}
+
+.adg-match-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 9px 13px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+}
+
+.adg-match-code span {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.adg-match-code strong {
+    letter-spacing: 1px;
+}
+
+.adg-match-code button {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.roles-actions {
+    margin-top: 24px;
+}
+
+.adg-sound-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+.adg-volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#adgVolumeSlider {
+    width: 140px;
+    padding: 0;
+}
 
 /* =========================================================
    END OF STYLE.CSS
